@@ -1,0 +1,42 @@
+{
+    "name": "luzrain/phprunner",
+    "description": "High performance PHP application server",
+    "keywords": ["phprunner", "async", "http", "server", "process"],
+    "homepage": "https://github.com/luzrain/phprunner",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anton Zenkov",
+            "email": "anton.z@live.com",
+            "homepage": "https://github.com/luzrain/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-posix": "*",
+        "ext-pcntl": "*",
+        "psr/http-message": "^2.0",
+        "psr/log": "^3.0",
+        "revolt/event-loop": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit" : "^10.4",
+        "friendsofphp/php-cs-fixer": "^3.38",
+        "vimeo/psalm": "^5.15"
+    },
+    "autoload": {
+        "psr-4": {
+            "Luzrain\\PhpRunner\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Luzrain\\PhpRunner\\Test\\": "tests/"
+        }
+    },
+    "suggest": {
+        "ext-uv": "For better performance"
+    }
+}
