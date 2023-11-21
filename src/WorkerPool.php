@@ -20,13 +20,13 @@ final class WorkerPool
         $this->pidMap = new \WeakMap();
     }
 
-    public function addWorker(Worker $worker): void
+    public function addWorker(WorkerProcess $worker): void
     {
         $this->pool[spl_object_id($worker)] = $worker;
         $this->pidMap[$worker] = [];
     }
 
-    public function addPid(Worker $worker, int $pid): void
+    public function addPid(WorkerProcess $worker, int $pid): void
     {
         if (!isset($this->pool[spl_object_id($worker)])) {
             throw new PHPRunnerException('Worker is not fount in pool');
@@ -35,7 +35,7 @@ final class WorkerPool
         $this->pidMap[$worker][] = $pid;
     }
 
-    public function deletePid(Worker $worker, int $pid): void
+    public function deletePid(WorkerProcess $worker, int $pid): void
     {
         if (!isset($this->pool[spl_object_id($worker)])) {
             throw new PHPRunnerException('Worker is unregistered in pool');
@@ -46,7 +46,7 @@ final class WorkerPool
         $this->pidMap[$worker] = \array_values($pids);
     }
 
-    public function getWorkerByPid(int $pid): Worker
+    public function getWorkerByPid(int $pid): WorkerProcess
     {
         foreach ($this->pidMap as $worker => $pids) {
             if (\in_array($pid, $pids)) {
@@ -58,7 +58,7 @@ final class WorkerPool
     }
 
     /**
-     * @return \Generator<Worker>
+     * @return \Generator<WorkerProcess>
      */
     public function getWorkers(): \Generator
     {
@@ -70,7 +70,7 @@ final class WorkerPool
     /**
      * @return \Generator<int>
      */
-    public function getAliveWorkerPids(Worker $worker): \Generator
+    public function getAliveWorkerPids(WorkerProcess $worker): \Generator
     {
         foreach ($this->pidMap[$worker] as $pids) {
             yield $pids;

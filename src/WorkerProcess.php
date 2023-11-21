@@ -7,7 +7,7 @@ namespace Luzrain\PhpRunner;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 
-class Worker
+class WorkerProcess
 {
     private LoggerInterface $logger;
     private Driver $eventLoop;

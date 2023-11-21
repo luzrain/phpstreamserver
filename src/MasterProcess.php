@@ -6,7 +6,6 @@ namespace Luzrain\PhpRunner;
 
 use Luzrain\PhpRunner\Exception\PHPRunnerException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
-use Luzrain\PhpRunner\Internal\Logger;
 use Luzrain\PhpRunner\Internal\StdoutHandler;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
@@ -14,28 +13,26 @@ use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\DriverFactory;
 use Revolt\EventLoop\Suspension;
 
-final class Server
+final class MasterProcess
 {
-    public const VERSION = '0.0.1';
-
     private const STATUS_STARTING = 1;
     private const STATUS_RUNNING = 2;
     private const STATUS_SHUTDOWN = 3;
     private const STATUS_RELOADING = 4;
 
     private static bool $registered = false;
-    private string $startFile;
-    private string $pidFile;
-    private int $masterPid;
+    private readonly string $startFile;
+    private readonly string $pidFile;
+    private readonly int $masterPid;
     private Driver $eventLoop;
     private Suspension $suspension;
-    private WorkerPool $pool;
     private int $status = self::STATUS_STARTING;
     private int $exitCode = 0;
 
     public function __construct(
-        private Config|null $config = null,
-        private LoggerInterface|null $logger = null,
+        private WorkerPool $pool,
+        private readonly Config $config,
+        private readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'])) {
             throw new \RuntimeException('Works in command line mode only');
@@ -46,18 +43,9 @@ final class Server
         }
 
         self::$registered = true;
-        $this->pool = new WorkerPool();
-        $this->config ??= new Config();
     }
 
-    public function addWorker(Worker ...$workers): void
-    {
-        foreach ($workers as $worker) {
-            $this->pool->addWorker($worker);
-        }
-    }
-
-    public function run(): never
+    public function run(bool $isDaemon = false): never
     {
         $this->initServer();
         $this->saveMasterPid();
@@ -72,8 +60,6 @@ final class Server
     // Runs in master process
     private function initServer(): void
     {
-        $this->logger ??= new Logger(stdOut: true, logFile: $this->config->logFile);
-
         StdoutHandler::register($this->config->stdOutPipe);
         ErrorHandler::register($this->logger);
 
@@ -127,7 +113,7 @@ final class Server
         });
     }
 
-    private function spawnWorker(Worker $worker): bool
+    private function spawnWorker(WorkerProcess $worker): bool
     {
         $pid = \pcntl_fork();
         if ($pid > 0) {
@@ -155,7 +141,7 @@ final class Server
     }
 
     // Runs in forked process
-    private function prepareWorker(Worker $worker): Worker
+    private function prepareWorker(WorkerProcess $worker): WorkerProcess
     {
         $this->eventLoop->stop();
         unset($this->suspension);
@@ -176,7 +162,7 @@ final class Server
         return $worker;
     }
 
-    private function onWorkerStop(Worker $worker, int $pid, int $exitCode): void
+    private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void
     {
         switch ($this->status) {
             case self::STATUS_SHUTDOWN:
