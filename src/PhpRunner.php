@@ -42,7 +42,7 @@ final class PhpRunner
             new StartCommand($this->pool, $this->config, $this->logger),
             new StopCommand(),
             new ReloadCommand(),
-            new StatusCommand(),
+            new StatusCommand($this->pool),
         ))->run();
     }
 }

@@ -26,7 +26,7 @@ final class StartCommand implements Command
 
     public function getUsageExample(): string
     {
-        return '%php_bin% %start_file% start [-d|--daemon]';
+        return '%php_bin% %start_file% start [--daemon]';
     }
 
     public function run(array $arguments): never

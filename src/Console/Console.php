@@ -60,10 +60,10 @@ final class Console
         foreach ($this->commands as $command) {
             echo '  ' . str_replace(['%php_bin%', '%start_file%'], [PHP_BINARY, $startFile], $command->getUsageExample()) . "\n";
         }
-//        echo "Usage:\n";
-//        echo "  $phpBin $file start [-d|--daemon]\n";
-//        echo "  $phpBin $file stop\n";
-//        echo "  $phpBin $file reload\n";
-//        echo "  $phpBin $file status [--connections]\n";
+
+        echo "Options:\n";
+        echo "  --help\n";
+        echo "  --no-ansi\n";
+        echo "  --json\n";
     }
 }
