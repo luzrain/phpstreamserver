@@ -56,13 +56,17 @@ final class StatusCommand implements Command
     {
         $status = (new Status())->getData();
 
-        return (string) (new Table(border: false))
-            ->setHeaderTitle('Status')
+        return "❯ PHPRunner - PHP application server\n" . (new Table(indent: 1))
             ->addRows([
-                ['PHP version:', $status['php_version']],
-                ['PHPRunner version:', $status['phprunner_version']],
-                ['Event loop driver:', $status['event_loop']],
-                ['Status:', $status['status']],
+                ['PHP version:', sprintf('%s', $status['php_version'])],
+                ['PHPRunner version:', sprintf('%s', $status['phprunner_version'])],
+                ['Event loop driver:', sprintf('%s', $status['event_loop'])],
+                ['Loaded:', '/app/.stuff/test.php'],
+                //['Status:', sprintf('<color;fg=green>%s</>', 'active (running)')],
+                ['Status:', sprintf('<color;fg=red>%s</>', 'inactive')],
+                ['Workers:', '2'],
+                ['Processes:', '<color;fg=gray>0</>'],
+                ['Memory:', '<color;fg=gray>0M</>'],
             ])
         ;
     }
@@ -71,9 +75,8 @@ final class StatusCommand implements Command
     {
         $status = (new WorkersStatus($this->pool))->getData();
 
-        return (string) (new Table(border: false))
-            ->setHeaderTitle('Workers')
-            ->setHeaders([
+        return "❯ Workers\n" . (new Table(indent: 1))
+            ->setHeaderRow([
                 'User',
                 'Worker',
                 'Count',
@@ -87,32 +90,24 @@ final class StatusCommand implements Command
     {
         $status = (new ProcessesStatus($this->pool))->getData();
 
-        return (string) (new Table(border: false))
-            ->setHeaderTitle('Workers')
-            ->setHeaders([
-                'User',
+        return "❯ Processes\n" . (new Table(indent: 1))
+            ->setHeaderRow([
                 'Pid',
+                'User',
                 'Memory',
                 'Worker',
                 'Connections',
                 'Requests',
             ])
             ->addRows($status['processes'])
-            ->addRow(Table::SEPARATOT)
-            ->addRow([
-                'Total:',
-                //"\033[47;30m" . 'Total:' . "\033[0m",
-                '',
-                '0M',
-                '',
-                '0',
-                '0',
-            ])
         ;
     }
 
     private function showConnections(): string
     {
-        return "TODO\n";
+        $t = "<fg=red;bg=test>ddd</fg>\n";
+        $t .= "<fg=test>ddd2</fg>";
+
+        return $t . "\n";
     }
 }

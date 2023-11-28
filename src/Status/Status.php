@@ -26,10 +26,13 @@ final class Status
      */
     public function getData(): array
     {
+        $eventLoop = (new DriverFactory())->create();
+        $refl = new \ReflectionObject($eventLoop);
+
         return [
             'php_version' => PHP_VERSION,
             'phprunner_version' => PhpRunner::VERSION,
-            'event_loop' => ((new DriverFactory())->create())::class,
+            'event_loop' => $refl->getShortName(),
             'status' => self::STATUS_SHUTDOWN,
         ];
     }

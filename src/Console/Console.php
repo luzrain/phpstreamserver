@@ -56,12 +56,12 @@ final class Console
         $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         $startFile = \end($backtrace)['file'];
 
-        echo "Usage:\n";
+        echo "<fg=green>Usage:</>\n";
         foreach ($this->commands as $command) {
             echo '  ' . str_replace(['%php_bin%', '%start_file%'], [PHP_BINARY, $startFile], $command->getUsageExample()) . "\n";
         }
 
-        echo "Options:\n";
+        echo "<fg=green>Options:</>\n";
         echo "  --help\n";
         echo "  --no-ansi\n";
         echo "  --json\n";

@@ -10,6 +10,7 @@ use Luzrain\PhpRunner\Console\Command\StatusCommand;
 use Luzrain\PhpRunner\Console\Command\StopCommand;
 use Luzrain\PhpRunner\Console\Console;
 use Luzrain\PhpRunner\Internal\Logger;
+use Luzrain\PhpRunner\Internal\StdoutHandler;
 use Psr\Log\LoggerInterface;
 
 final class PhpRunner
@@ -38,6 +39,8 @@ final class PhpRunner
 
     public function run(): never
     {
+        StdoutHandler::register($this->config->stdOutPipe);
+
         (new Console(
             new StartCommand($this->pool, $this->config, $this->logger),
             new StopCommand(),

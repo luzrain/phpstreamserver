@@ -60,7 +60,6 @@ final class MasterProcess
     // Runs in master process
     private function initServer(): void
     {
-        StdoutHandler::register($this->config->stdOutPipe);
         ErrorHandler::register($this->logger);
 
         // Start file

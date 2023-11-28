@@ -28,8 +28,8 @@ final class ProcessesStatus
 
         foreach ($this->pool->getWorkers() as $worker) {
             $rows['processes'][] = [
-                'user' => '-',
                 'pid' => '-',
+                'user' => '-',
                 'memory' => '0M',
                 'name' => $worker->name,
                 'connections' => 0,
