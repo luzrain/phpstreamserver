@@ -13,6 +13,7 @@ final class WorkerPool
 {
     private array $pool;
     private \WeakMap $pidMap;
+    private array $socketCallbackMap;
 
     public function __construct()
     {
@@ -26,24 +27,23 @@ final class WorkerPool
         $this->pidMap[$worker] = [];
     }
 
-    public function addPid(WorkerProcess $worker, int $pid): void
+    public function addChild(WorkerProcess $worker, int $pid, string $socketCallbackId): void
     {
         if (!isset($this->pool[spl_object_id($worker)])) {
             throw new PHPRunnerException('Worker is not fount in pool');
         }
 
         $this->pidMap[$worker][] = $pid;
+        $this->socketCallbackMap[$pid] = $socketCallbackId;
     }
 
-    public function deletePid(WorkerProcess $worker, int $pid): void
+    public function deleteChild(int $pid): void
     {
-        if (!isset($this->pool[spl_object_id($worker)])) {
-            throw new PHPRunnerException('Worker is unregistered in pool');
-        }
-
+        $worker = $this->getWorkerByPid($pid);
         $pids = $this->pidMap[$worker];
         unset($pids[\array_search($pid, $pids)]);
         $this->pidMap[$worker] = \array_values($pids);
+        unset($this->socketCallbackMap[$pid]);
     }
 
     public function getWorkerByPid(int $pid): WorkerProcess
@@ -87,5 +87,15 @@ final class WorkerPool
                 yield $pid;
             }
         }
+    }
+
+    public function getWorkerCount(): int
+    {
+        return \count($this->pool);
+    }
+
+    public function getSocketCallbackIdByPid(int $pid): string
+    {
+        return $this->socketCallbackMap[$pid];
     }
 }

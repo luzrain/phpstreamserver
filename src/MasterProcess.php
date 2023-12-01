@@ -6,7 +6,7 @@ namespace Luzrain\PhpRunner;
 
 use Luzrain\PhpRunner\Exception\PHPRunnerException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
-use Luzrain\PhpRunner\Internal\StdoutHandler;
+use Luzrain\PhpRunner\Internal\Functions;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -39,36 +39,36 @@ final class MasterProcess
         }
 
         if (self::$registered) {
-            throw new \RuntimeException('Only one instance of server can be registered');
+            throw new \RuntimeException('Only one instance of server can be instantiated');
         }
 
         self::$registered = true;
+        $this->startFile = Functions::getStartFile();
+        $this->pidFile = $this->config->pidFile ?? sprintf('%s/phprunner.%s.pid', sys_get_temp_dir(), hash('xxh64', $this->startFile));
+
+        ErrorHandler::register($this->logger);
     }
 
     public function run(bool $isDaemon = false): never
     {
+        if ($this->getStatus() === self::STATUS_RUNNING) {
+            $this->logger->error('Master process already running');
+            exit;
+        }
+
         $this->initServer();
         $this->saveMasterPid();
         $this->initSignalHandler();
         $this->status = self::STATUS_RUNNING;
         $this->spawnWorkers();
-        ($worker = $this->suspension->suspend())
-            ? exit($this->prepareWorker($worker)->run())
+        ([$worker, $parentSocket] = $this->suspension->suspend())
+            ? exit($this->prepareWorker($worker, $parentSocket)->run())
             : exit($this->exitCode);
     }
 
     // Runs in master process
     private function initServer(): void
     {
-        ErrorHandler::register($this->logger);
-
-        // Start file
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        $this->startFile = end($backtrace)['file'];
-
-        // Pid file
-        $this->pidFile = $this->config->pidFile ?? sprintf('%s/phprunner.%s.pid', sys_get_temp_dir(), hash('xxh64', $this->startFile));
-
         cli_set_process_title(sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
 
         // Init event loop.
@@ -77,7 +77,6 @@ final class MasterProcess
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
     }
-
 
     private function saveMasterPid(): void
     {
@@ -114,14 +113,28 @@ final class MasterProcess
 
     private function spawnWorker(WorkerProcess $worker): bool
     {
+        $pair = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = \pcntl_fork();
         if ($pid > 0) {
             // Master process.
-            $this->pool->addPid($worker, $pid);
+            fclose($pair[0]);
+            unset($pair[0]);
+            $callbackId = $this->eventLoop->onReadable($pair[1], function (string $id, mixed $resource) use ($worker, $pid) {
+                $buffer = '';
+                while (($c = \fgetc($resource) ?: "\0") !== "\0") {
+                    $buffer .= $c;
+                }
+                if ($buffer !== '') {
+                    $this->onMessageFromWorker($worker, $pid, \unserialize($buffer));
+                }
+            });
+            $this->pool->addChild($worker, $pid, $callbackId);
             return false;
         } elseif ($pid === 0) {
             // Child process
-            $this->suspension->resume($worker);
+            fclose($pair[1]);
+            unset($pair[1]);
+            $this->suspension->resume([$worker, $pair[0]]);
             return true;
         } else {
             throw new PHPRunnerException('fork fail');
@@ -134,13 +147,18 @@ final class MasterProcess
         while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
             $exitCode = \pcntl_wexitstatus($status) ?: 0;
             $worker = $this->pool->getWorkerByPid($pid);
-            $this->pool->deletePid($worker, $pid);
+            $callbackId = $this->pool->getSocketCallbackIdByPid($pid);
+            $this->eventLoop->cancel($callbackId);
+            $this->pool->deleteChild($pid);
             $this->onWorkerStop($worker, $pid, $exitCode);
         }
     }
 
-    // Runs in forked process
-    private function prepareWorker(WorkerProcess $worker): WorkerProcess
+    /**
+     * Runs in forked process
+     * @param resource $parentSocket
+     */
+    private function prepareWorker(WorkerProcess $worker, mixed $parentSocket): WorkerProcess
     {
         $this->eventLoop->stop();
         unset($this->suspension);
@@ -156,6 +174,7 @@ final class MasterProcess
         $worker->setDependencies(
             $this->eventLoop,
             $this->logger,
+            $parentSocket,
         );
 
         return $worker;
@@ -179,6 +198,12 @@ final class MasterProcess
         }
     }
 
+    private function onMessageFromWorker(WorkerProcess $worker, int $pid, mixed $message): void
+    {
+        dump(sprintf("message from worker[%s]:", $pid));
+        dump($message);
+    }
+
     public function stop(int $code = 0): void
     {
         if ($this->status === self::STATUS_SHUTDOWN) {
@@ -198,5 +223,13 @@ final class MasterProcess
             }
             $this->suspension->resume();
         });
+    }
+
+    public function getStatus(): int
+    {
+        $masterPid = \is_file($this->pidFile) ? (int)\file_get_contents($this->pidFile) : 0;
+        $isRunning = !empty($masterPid) && \posix_getpid() !== $masterPid && \posix_kill($masterPid, 0);
+
+        return $isRunning ? self::STATUS_RUNNING : $this->status;
     }
 }

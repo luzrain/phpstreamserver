@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner;
 
+use Luzrain\PhpRunner\Internal\Functions;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 
@@ -11,6 +12,11 @@ class WorkerProcess
 {
     private LoggerInterface $logger;
     private Driver $eventLoop;
+
+    /**
+     * @var resource parent socket for interprocess communication
+     */
+    private mixed $parentSocket;
 
     private int $exitCode = 0;
 
@@ -31,10 +37,11 @@ class WorkerProcess
     /**
      * @internal
      */
-    final public function setDependencies(Driver $eventLoop, LoggerInterface $logger): void
+    final public function setDependencies(Driver $eventLoop, LoggerInterface $logger, mixed $socket): void
     {
         $this->eventLoop = $eventLoop;
         $this->logger = $logger;
+        $this->parentSocket = $socket;
     }
 
     /**
@@ -73,6 +80,12 @@ class WorkerProcess
         }
     }
 
+    private function sendToParent(mixed $data): void
+    {
+        \fwrite($this->parentSocket, \serialize($data) . "\0");
+        \fflush($this->parentSocket);
+    }
+
     private function initSignalHandler(): void
     {
         foreach ([SIGTERM] as $signo) {
@@ -86,7 +99,7 @@ class WorkerProcess
 
     private function setUserAndGroup(): void
     {
-        $currentUser = (\posix_getpwuid(\posix_getuid()) ?: [])['name'] ?? 'unknown';
+        $currentUser = Functions::getCurrentUser();
         $user = $this->user ?? $currentUser;
 
         if (\posix_getuid() !== 0 && $user !== $currentUser) {
