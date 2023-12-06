@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Console\Command;
 
 use Luzrain\PhpRunner\Console\Command;
+use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\MasterProcess;
 
 final class StatusCommand implements Command
@@ -34,22 +35,37 @@ final class StatusCommand implements Command
     {
         $status = $this->masterProcess->getStatus();
 
-        dump($status);
+        return ($status->isRunning ? '<color;fg=green>●</>' : '●') . " PHPRunner - PHP application server\n" . (new Table(indent: 1))
+            ->addRows([
+                ['PHP version:', $status->phpVersion],
+                ['PHPRunner version:', $status->phpRunnerVersion],
+                ['Event loop driver:', $status->eventLoop],
+                ['Start file:', $status->startFile],
+                ['Status:', $status->isRunning
+                    ? '<color;fg=green>active</> since ' . $status->startedAt->format(\DateTimeInterface::ATOM)
+                    : '<color;fg=red>inactive</>'
+                ],
+                ['Workers count:', $status->workersCount],
+                ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],
+                ['Memory usage:', $status->totalMemory > 0 ? $this->humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
+            ])
+        ;
+    }
 
-        return '';
-
-//        return "<color;fg=green>●</> PHPRunner - PHP application server\n" . (new Table(indent: 1))
-//            ->addRows([
-//                ['PHP version:', $status['php_version']],
-//                ['PHPRunner version:', $status['phprunner_version']],
-//                ['Event loop driver:', $status['event_loop']],
-//                ['Start file:', $status['start_file']],
-//                //['Status:', sprintf('<color;fg=red>%s</>', 'inactive')],
-//                ['Status:', sprintf('<color;fg=green>%s</> since Tue 2023-11-28 06:18:54 UTC', 'active')],
-//                ['Workers count:', $status['workers_count']],
-//                ['Processes count:', '<color;fg=gray>0</>'],
-//                ['Memory usage:', '<color;fg=gray>0M</>'],
-//            ])
-//        ;
+    private function humanFileSize(int $bytes): string
+    {
+        if ($bytes < 1024) {
+            return "$bytes B";
+        }
+        $bytes = \round($bytes / 1024, 0);
+        if ($bytes < 1024) {
+            return "$bytes KB";
+        }
+        $bytes = \round($bytes / 1024, 1);
+        if ($bytes < 1024) {
+            return "$bytes MB";
+        }
+        $bytes = \round($bytes / 1024, 1);
+        return "$bytes GB";
     }
 }

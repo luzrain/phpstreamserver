@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Status;
 
+use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\MasterProcess;
 use Luzrain\PhpRunner\PhpRunner;
 use Revolt\EventLoop\DriverFactory;
@@ -17,8 +18,10 @@ final readonly class MasterProcessStatus
     public string $phpVersion;
     public string $phpRunnerVersion;
     public string $eventLoop;
+    public string $startFile;
     public int $totalMemory;
     public int $workersCount;
+    public int $processesCount;
 
     /**
      * @param list<WorkerStatus> $workers
@@ -40,11 +43,13 @@ final readonly class MasterProcessStatus
         $this->phpVersion = PHP_VERSION;
         $this->phpRunnerVersion = PhpRunner::VERSION;
         $this->eventLoop = $eventLoopName;
+        $this->startFile = Functions::getStartFile();
         $totalMemory = $this->memory;
         foreach ($processes as $process) {
             $totalMemory += $process->memory;
         }
         $this->totalMemory = $totalMemory;
         $this->workersCount = \count($this->workers);
+        $this->processesCount = \count($this->processes);
     }
 }
