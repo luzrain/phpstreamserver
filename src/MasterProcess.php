@@ -7,6 +7,9 @@ namespace Luzrain\PhpRunner;
 use Luzrain\PhpRunner\Exception\PHPRunnerException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PhpRunner\Status\MasterProcessStatus;
+use Luzrain\PhpRunner\Status\WorkerProcessStatus;
+use Luzrain\PhpRunner\Status\WorkerStatus;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -15,17 +18,18 @@ use Revolt\EventLoop\Suspension;
 
 final class MasterProcess
 {
-    private const STATUS_STARTING = 1;
-    private const STATUS_RUNNING = 2;
-    private const STATUS_SHUTDOWN = 3;
-    private const STATUS_RELOADING = 4;
+    public const STATUS_STARTING = 1;
+    public const STATUS_RUNNING = 2;
+    public const STATUS_SHUTDOWN = 3;
+    public const STATUS_RELOADING = 4;
 
     private static bool $registered = false;
     private readonly string $startFile;
     private readonly string $pidFile;
-    private readonly int $masterPid;
+    private readonly string $pipeFile;
     private Driver $eventLoop;
     private Suspension $suspension;
+    private \DateTimeImmutable $startedAt;
     private int $status = self::STATUS_STARTING;
     private int $exitCode = 0;
 
@@ -44,32 +48,42 @@ final class MasterProcess
 
         self::$registered = true;
         $this->startFile = Functions::getStartFile();
-        $this->pidFile = $this->config->pidFile ?? sprintf('%s/phprunner.%s.pid', sys_get_temp_dir(), hash('xxh64', $this->startFile));
+        $this->pidFile = $this->config->pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
+        $this->pipeFile = sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
 
         ErrorHandler::register($this->logger);
     }
 
     public function run(bool $isDaemon = false): never
     {
-        if ($this->getStatus() === self::STATUS_RUNNING) {
+        if ($this->isRunning()) {
             $this->logger->error('Master process already running');
             exit;
         }
 
         $this->initServer();
         $this->saveMasterPid();
+        $this->createMasterPipe();
         $this->initSignalHandler();
-        $this->status = self::STATUS_RUNNING;
         $this->spawnWorkers();
-        ([$worker, $parentSocket] = $this->suspension->suspend())
-            ? exit($this->prepareWorker($worker, $parentSocket)->run())
-            : exit($this->exitCode);
+        $this->status = self::STATUS_RUNNING;
+        $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
+            ? $this->prepareWorker($worker, $parentSocket)->run()
+            : $this->exitCode;
+
+        if (!isset($worker)) {
+            $this->onMasterShutdown();
+        }
+
+        exit($exitCode);
     }
 
     // Runs in master process
     private function initServer(): void
     {
         cli_set_process_title(sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
+
+        $this->startedAt = new \DateTimeImmutable('now');
 
         // Init event loop.
         // Force use StreamSelectDriver in the master process because it uses pcntl_signal to handle signals, and it works better for this case.
@@ -80,19 +94,26 @@ final class MasterProcess
 
     private function saveMasterPid(): void
     {
-        $this->masterPid = \posix_getpid();
-        if (false === \file_put_contents($this->pidFile, $this->masterPid)) {
-            throw new PHPRunnerException(\sprintf('Can\'t save pid to %s', $this->masterPid));
+        if (false === \file_put_contents($this->pidFile, \posix_getpid())) {
+            throw new PHPRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
+        }
+    }
+
+    private function createMasterPipe(): void
+    {
+        if(!file_exists($this->pipeFile)) {
+            \posix_mkfifo($this->pipeFile, 0644);
         }
     }
 
     private function initSignalHandler(): void
     {
-        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD] as $signo) {
+        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1] as $signo) {
             $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
                 match ($signo) {
                     SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT => $this->stop(),
                     SIGCHLD => $this->watchWorkers(),
+                    SIGUSR1 => $this->pipeStatus(),
                 };
             });
         }
@@ -119,16 +140,7 @@ final class MasterProcess
             // Master process.
             fclose($pair[0]);
             unset($pair[0]);
-            $callbackId = $this->eventLoop->onReadable($pair[1], function (string $id, mixed $resource) use ($worker, $pid) {
-                $buffer = '';
-                while (($c = \fgetc($resource) ?: "\0") !== "\0") {
-                    $buffer .= $c;
-                }
-                if ($buffer !== '') {
-                    $this->onMessageFromWorker($worker, $pid, \unserialize($buffer));
-                }
-            });
-            $this->pool->addChild($worker, $pid, $callbackId);
+            $this->pool->addChild($worker, $pid, $pair[1]);
             return false;
         } elseif ($pid === 0) {
             // Child process
@@ -147,8 +159,6 @@ final class MasterProcess
         while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
             $exitCode = \pcntl_wexitstatus($status) ?: 0;
             $worker = $this->pool->getWorkerByPid($pid);
-            $callbackId = $this->pool->getSocketCallbackIdByPid($pid);
-            $this->eventLoop->cancel($callbackId);
             $this->pool->deleteChild($pid);
             $this->onWorkerStop($worker, $pid, $exitCode);
         }
@@ -198,10 +208,15 @@ final class MasterProcess
         }
     }
 
-    private function onMessageFromWorker(WorkerProcess $worker, int $pid, mixed $message): void
+    private function onMasterShutdown(): void
     {
-        dump(sprintf("message from worker[%s]:", $pid));
-        dump($message);
+        if (\file_exists($this->pidFile)) {
+            \unlink($this->pidFile);
+        }
+
+        if (\file_exists($this->pipeFile)) {
+            \unlink($this->pipeFile);
+        }
     }
 
     public function stop(int $code = 0): void
@@ -225,11 +240,95 @@ final class MasterProcess
         });
     }
 
-    public function getStatus(): int
+    private function getMasterPid(): int
     {
-        $masterPid = \is_file($this->pidFile) ? (int)\file_get_contents($this->pidFile) : 0;
-        $isRunning = !empty($masterPid) && \posix_getpid() !== $masterPid && \posix_kill($masterPid, 0);
+        return \is_file($this->pidFile) ? (int)\file_get_contents($this->pidFile) : 0;
+    }
 
-        return $isRunning ? self::STATUS_RUNNING : $this->status;
+    private function isRunning(): bool
+    {
+        $masterPid = $this->getMasterPid();
+        return !empty($masterPid) && \posix_getpid() !== $masterPid && \posix_kill($masterPid, 0);
+    }
+
+    private function pipeStatus(): void
+    {
+        $pids = \iterator_to_array($this->pool->getAlivePids());
+        $callbackIds = [];
+        $data = [];
+        $fallbackId = '';
+
+        foreach ($pids as $pid) {
+            $fd = $this->pool->getChildSocketByPid($pid);
+            $callbackIds[] = $this->eventLoop->onReadable($fd, function (string $id, mixed $fd) use (&$pids, &$callbackIds, &$data, &$fallbackId) {
+                $this->eventLoop->cancel($id);
+                $dataReceived = Functions::streamRead($fd);
+                if ($dataReceived !== '') {
+                    $data[] = \unserialize($dataReceived);
+                }
+                if (\count($data) === \count($pids)) {
+                    $this->eventLoop->cancel($fallbackId);
+                    $this->onWorkersStatusReady($data);
+                    unset($pids, $callbackIds, $data, $fallbackId);
+                }
+            });
+        }
+
+        $fallbackId = $this->eventLoop->delay(4, function () use (&$pids, &$callbackIds, &$data, &$fallbackId) {
+            \array_walk($callbackIds, $this->eventLoop->cancel(...));
+            $this->onWorkersStatusReady($data);
+            unset($pids, $callbackIds, $data, $fallbackId);
+        });
+
+        \array_walk($pids, fn ($pid) => \posix_kill($pid, SIGUSR1));
+    }
+
+    /**
+     * @param list<WorkerProcessStatus> $processes
+     */
+    private function onWorkersStatusReady(array $processes): void
+    {
+        $status = new MasterProcessStatus(
+            pid: \posix_getpid(),
+            user: Functions::getCurrentUser(),
+            memory: \memory_get_usage(),
+            startedAt: $this->startedAt,
+            status: $this->status,
+            workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
+                user: $worker->user ?? Functions::getCurrentUser(),
+                name: $worker->name,
+                count: $worker->count,
+            ), \iterator_to_array($this->pool->getWorkers())),
+            processes: $processes,
+        );
+
+        $fd = \fopen($this->pipeFile, 'w');
+        Functions::streamWrite($fd, \serialize($status));
+    }
+
+    public function getStatus(): MasterProcessStatus
+    {
+        if ($this->isRunning() && \file_exists($this->pipeFile)) {
+            \posix_kill($this->getMasterPid(), SIGUSR1);
+            $fd = \fopen($this->pipeFile, 'r');
+            $data = Functions::streamRead($fd, true);
+            /** @var MasterProcessStatus $status */
+            $status = \unserialize($data);
+        } else {
+            $status = new MasterProcessStatus(
+                pid: 0,
+                user: Functions::getCurrentUser(),
+                memory: 0,
+                startedAt: null,
+                status: self::STATUS_SHUTDOWN,
+                workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
+                    user: $worker->user ?? Functions::getCurrentUser(),
+                    name: $worker->name,
+                    count: $worker->count,
+                ), \iterator_to_array($this->pool->getWorkers())),
+            );
+        }
+
+        return $status;
     }
 }

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner;
 
+use Luzrain\PhpRunner\Console\Command\ConnectionsCommand;
+use Luzrain\PhpRunner\Console\Command\ProcessesCommand;
 use Luzrain\PhpRunner\Console\Command\ReloadCommand;
 use Luzrain\PhpRunner\Console\Command\StartCommand;
 use Luzrain\PhpRunner\Console\Command\StatusCommand;
 use Luzrain\PhpRunner\Console\Command\StopCommand;
+use Luzrain\PhpRunner\Console\Command\WorkersCommand;
 use Luzrain\PhpRunner\Console\Console;
 use Luzrain\PhpRunner\Internal\Logger;
 use Luzrain\PhpRunner\Internal\StdoutHandler;
@@ -41,11 +44,16 @@ final class PhpRunner
     {
         StdoutHandler::register($this->config->stdOutPipe);
 
+        $masterProcess = new MasterProcess($this->pool, $this->config, $this->logger);
+
         (new Console(
-            new StartCommand($this->pool, $this->config, $this->logger),
+            new StartCommand($masterProcess),
             new StopCommand(),
             new ReloadCommand(),
-            new StatusCommand($this->pool),
+            new StatusCommand($masterProcess),
+            new WorkersCommand($this->pool),
+            new ProcessesCommand($this->pool),
+            new ConnectionsCommand(),
         ))->run();
     }
 }

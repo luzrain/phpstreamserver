@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Console;
 
+use Luzrain\PhpRunner\Internal\Functions;
+
 /**
  * @internal
  */
@@ -53,15 +55,12 @@ final class Console
 
     private function showHelp(): void
     {
-        $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        $startFile = \end($backtrace)['file'];
-
-        echo "<fg=green>Usage:</>\n";
+        echo "<color;fg=green>Usage:</>\n";
         foreach ($this->commands as $command) {
-            echo '  ' . str_replace(['%php_bin%', '%start_file%'], [PHP_BINARY, $startFile], $command->getUsageExample()) . "\n";
+            echo '  ' . str_replace(['%php_bin%', '%start_file%'], [PHP_BINARY, Functions::getStartFile()], $command->getUsageExample()) . "\n";
         }
 
-        echo "<fg=green>Options:</>\n";
+        echo "<color;fg=green>Options:</>\n";
         echo "  --help\n";
         echo "  --no-ansi\n";
         echo "  --json\n";

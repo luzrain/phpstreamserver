@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner;
 
 use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 
@@ -12,6 +13,7 @@ class WorkerProcess
 {
     private LoggerInterface $logger;
     private Driver $eventLoop;
+    private \DateTimeImmutable $startedAt;
 
     /**
      * @var resource parent socket for interprocess communication
@@ -26,8 +28,8 @@ class WorkerProcess
         public readonly bool $reloadable = true,
         public readonly int $ttl = 0,
         public readonly int $maxMemory = 0,
-        public readonly string|null $user = null,
-        public readonly string|null $group = null,
+        public string|null $user = null,
+        public string|null $group = null,
         private readonly \Closure|null $onStart = null,
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
@@ -58,6 +60,8 @@ class WorkerProcess
 
     private function initWorker(): void
     {
+        $this->startedAt = new \DateTimeImmutable('now');
+
         // onStart callback
         if($this->onStart !== null) {
             $this->eventLoop->defer(function (): void {
@@ -80,18 +84,13 @@ class WorkerProcess
         }
     }
 
-    private function sendToParent(mixed $data): void
-    {
-        \fwrite($this->parentSocket, \serialize($data) . "\0");
-        \fflush($this->parentSocket);
-    }
-
     private function initSignalHandler(): void
     {
-        foreach ([SIGTERM] as $signo) {
+        foreach ([SIGTERM, SIGUSR1] as $signo) {
             $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
                 match ($signo) {
                     SIGTERM => $this->stop(),
+                    SIGUSR1 => $this->uploadStatusData(),
                 };
             });
         }
@@ -100,18 +99,18 @@ class WorkerProcess
     private function setUserAndGroup(): void
     {
         $currentUser = Functions::getCurrentUser();
-        $user = $this->user ?? $currentUser;
+        $this->user ??= $currentUser;
 
-        if (\posix_getuid() !== 0 && $user !== $currentUser) {
+        if (\posix_getuid() !== 0 && $this->user !== $currentUser) {
             $this->logger->warning('You must have the root privileges to change the user and group', ['worker' => $this->name]);
             return;
         }
 
         // Get uid
-        if ($userInfo = \posix_getpwnam($user)) {
+        if ($userInfo = \posix_getpwnam($this->user)) {
             $uid = $userInfo['uid'];
         } else {
-            $this->logger->warning(sprintf('User "%s" does not exist', $user), ['worker' => $this->name]);
+            $this->logger->warning(sprintf('User "%s" does not exist', $this->user), ['worker' => $this->name]);
             return;
         }
 
@@ -143,5 +142,16 @@ class WorkerProcess
         } finally {
             $this->eventLoop->stop();
         }
+    }
+
+    private function uploadStatusData(): void
+    {
+        Functions::streamWrite($this->parentSocket, \serialize(new WorkerProcessStatus(
+            pid: \posix_getpid(),
+            user: $this->user,
+            memory: \memory_get_usage(),
+            name: $this->name,
+            startedAt: $this->startedAt,
+        )));
     }
 }

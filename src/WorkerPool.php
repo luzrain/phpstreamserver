@@ -11,13 +11,12 @@ use Luzrain\PhpRunner\Exception\PHPRunnerException;
  */
 final class WorkerPool
 {
-    private array $pool;
+    private array $pool = [];
     private \WeakMap $pidMap;
-    private array $socketCallbackMap;
+    private array $socketMap = [];
 
     public function __construct()
     {
-        $this->pool = [];
         $this->pidMap = new \WeakMap();
     }
 
@@ -27,14 +26,17 @@ final class WorkerPool
         $this->pidMap[$worker] = [];
     }
 
-    public function addChild(WorkerProcess $worker, int $pid, string $socketCallbackId): void
+    /**
+     * @param resource $socket
+     */
+    public function addChild(WorkerProcess $worker, int $pid, mixed $socket): void
     {
         if (!isset($this->pool[spl_object_id($worker)])) {
             throw new PHPRunnerException('Worker is not fount in pool');
         }
 
         $this->pidMap[$worker][] = $pid;
-        $this->socketCallbackMap[$pid] = $socketCallbackId;
+        $this->socketMap[$pid] = $socket;
     }
 
     public function deleteChild(int $pid): void
@@ -43,7 +45,8 @@ final class WorkerPool
         $pids = $this->pidMap[$worker];
         unset($pids[\array_search($pid, $pids)]);
         $this->pidMap[$worker] = \array_values($pids);
-        unset($this->socketCallbackMap[$pid]);
+        fclose($this->socketMap[$pid]);
+        unset($this->socketMap[$pid]);
     }
 
     public function getWorkerByPid(int $pid): WorkerProcess
@@ -94,8 +97,16 @@ final class WorkerPool
         return \count($this->pool);
     }
 
-    public function getSocketCallbackIdByPid(int $pid): string
+    public function getProcessesCount(): int
     {
-        return $this->socketCallbackMap[$pid];
+        return \iterator_count($this->getAlivePids());
+    }
+
+    /**
+     * @return resource
+     */
+    public function getChildSocketByPid(int $pid): mixed
+    {
+        return $this->socketMap[$pid];
     }
 }
