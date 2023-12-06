@@ -292,6 +292,7 @@ final class MasterProcess
             memory: \memory_get_usage(),
             startedAt: $this->startedAt,
             status: $this->status,
+            startFile: $this->startFile,
             workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
                 user: $worker->user ?? Functions::getCurrentUser(),
                 name: $worker->name,
@@ -319,6 +320,7 @@ final class MasterProcess
                 memory: 0,
                 startedAt: null,
                 status: self::STATUS_SHUTDOWN,
+                startFile: $this->startFile,
                 workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
                     user: $worker->user ?? Functions::getCurrentUser(),
                     name: $worker->name,
