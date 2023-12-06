@@ -50,8 +50,6 @@ final class MasterProcess
         $this->startFile = Functions::getStartFile();
         $this->pidFile = $this->config->pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
         $this->pipeFile = sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
-
-        ErrorHandler::register($this->logger);
     }
 
     public function run(bool $isDaemon = false): never
