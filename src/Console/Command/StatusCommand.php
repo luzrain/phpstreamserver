@@ -43,7 +43,7 @@ final class StatusCommand implements Command
                 ['Start file:', $status->startFile],
                 ['Status:', $status->isRunning
                     ? '<color;fg=green>active</> since ' . $status->startedAt->format(\DateTimeInterface::RFC7231)
-                    : '<color;fg=red>inactive</>'
+                    : 'inactive'
                 ],
                 ['Workers count:', $status->workersCount],
                 ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],

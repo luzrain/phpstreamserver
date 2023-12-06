@@ -63,6 +63,5 @@ final class Console
         echo "<color;fg=green>Options:</>\n";
         echo "  --help\n";
         echo "  --no-ansi\n";
-        echo "  --json\n";
     }
 }
