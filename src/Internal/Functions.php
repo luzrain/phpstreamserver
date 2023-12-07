@@ -48,4 +48,21 @@ final class Functions
         \fwrite($resource, $data);
         \fflush($resource);
     }
+
+    public static function humanFileSize(int $bytes): string
+    {
+        if ($bytes < 1024) {
+            return "$bytes B";
+        }
+        $bytes = \round($bytes / 1024, 0);
+        if ($bytes < 1024) {
+            return "$bytes KB";
+        }
+        $bytes = \round($bytes / 1024, 1);
+        if ($bytes < 1024) {
+            return "$bytes MB";
+        }
+        $bytes = \round($bytes / 1024, 1);
+        return "$bytes GB";
+    }
 }

@@ -53,7 +53,7 @@ final class PhpRunner
             new ReloadCommand(),
             new StatusCommand($masterProcess),
             new WorkersCommand($masterProcess),
-            new ProcessesCommand($this->pool),
+            new ProcessesCommand($masterProcess),
             new ConnectionsCommand(),
         ))->run();
     }

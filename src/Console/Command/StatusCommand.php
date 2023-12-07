@@ -6,6 +6,7 @@ namespace Luzrain\PhpRunner\Console\Command;
 
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
+use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\MasterProcess;
 
 final class StatusCommand implements Command
@@ -47,25 +48,8 @@ final class StatusCommand implements Command
                 ],
                 ['Workers count:', $status->workersCount],
                 ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],
-                ['Memory usage:', $status->totalMemory > 0 ? $this->humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
+                ['Memory usage:', $status->totalMemory > 0 ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
             ])
         ;
-    }
-
-    private function humanFileSize(int $bytes): string
-    {
-        if ($bytes < 1024) {
-            return "$bytes B";
-        }
-        $bytes = \round($bytes / 1024, 0);
-        if ($bytes < 1024) {
-            return "$bytes KB";
-        }
-        $bytes = \round($bytes / 1024, 1);
-        if ($bytes < 1024) {
-            return "$bytes MB";
-        }
-        $bytes = \round($bytes / 1024, 1);
-        return "$bytes GB";
     }
 }

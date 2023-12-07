@@ -115,6 +115,7 @@ class WorkerProcess
 
         if (\posix_getuid() !== 0 && $this->user !== $currentUser) {
             $this->logger->warning('You must have the root privileges to change the user and group', ['worker' => $this->name]);
+            $this->user = $currentUser;
             return;
         }
 
@@ -123,6 +124,7 @@ class WorkerProcess
             $uid = $userInfo['uid'];
         } else {
             $this->logger->warning(sprintf('User "%s" does not exist', $this->user), ['worker' => $this->name]);
+            $this->user = $currentUser;
             return;
         }
 
@@ -140,6 +142,7 @@ class WorkerProcess
         if ($uid !== \posix_getuid() || $gid !== \posix_getgid()) {
             if (!\posix_setgid($gid) || !\posix_initgroups($userInfo['name'], $gid) || !\posix_setuid($uid)) {
                 $this->logger->warning('Changing guid or uid fails', ['worker' => $this->name]);
+                $this->user = $currentUser;
             }
         }
     }
