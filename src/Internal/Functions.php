@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Internal;
 
+use Luzrain\PhpRunner\Exception\UserChangeException;
+
 /**
  * @internal
  */
@@ -64,5 +66,41 @@ final class Functions
         }
         $bytes = \round($bytes / 1024, 1);
         return "$bytes GB";
+    }
+
+    /**
+     * @throws UserChangeException
+     */
+    public static function setUserAndGroup(string|null $user = null, string|null $group = null): void
+    {
+        $currentUser = self::getCurrentUser();
+        $user ??= $currentUser;
+
+        if (\posix_getuid() !== 0 && $user !== $currentUser) {
+            throw new UserChangeException('You must have the root privileges to change the user and group');
+        }
+
+        // Get uid
+        if ($userInfo = \posix_getpwnam($user)) {
+            $uid = $userInfo['uid'];
+        } else {
+            throw new UserChangeException(sprintf('User "%s" does not exist', $user));
+        }
+
+        // Get gid
+        if ($group === null) {
+            $gid = $userInfo['gid'];
+        } elseif ($groupInfo = \posix_getgrnam($group)) {
+            $gid = $groupInfo['gid'];
+        } else {
+            throw new UserChangeException(sprintf('Group "%s" does not exist', $group));
+        }
+
+        // Set uid and gid
+        if ($uid !== \posix_getuid() || $gid !== \posix_getgid()) {
+            if (!\posix_setgid($gid) || !\posix_initgroups($userInfo['name'], $gid) || !\posix_setuid($uid)) {
+                throw new UserChangeException('Changing guid or uid fails');
+            }
+        }
     }
 }

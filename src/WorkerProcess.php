@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner;
 
+use Luzrain\PhpRunner\Exception\UserChangeException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
@@ -118,37 +119,11 @@ class WorkerProcess
         $currentUser = Functions::getCurrentUser();
         $this->user ??= $currentUser;
 
-        if (\posix_getuid() !== 0 && $this->user !== $currentUser) {
-            $this->logger->warning('You must have the root privileges to change the user and group', ['worker' => $this->name]);
+        try {
+            Functions::setUserAndGroup($this->user, $this->group);
+        } catch (UserChangeException $e) {
+            $this->logger->warning($e->getMessage(), ['worker' => $this->name]);
             $this->user = $currentUser;
-            return;
-        }
-
-        // Get uid
-        if ($userInfo = \posix_getpwnam($this->user)) {
-            $uid = $userInfo['uid'];
-        } else {
-            $this->logger->warning(sprintf('User "%s" does not exist', $this->user), ['worker' => $this->name]);
-            $this->user = $currentUser;
-            return;
-        }
-
-        // Get gid
-        if ($this->group === null) {
-            $gid = $userInfo['gid'];
-        } elseif ($groupInfo = \posix_getgrnam($this->group)) {
-            $gid = $groupInfo['gid'];
-        } else {
-            $this->logger->warning(sprintf('Group "%s" does not exist', $this->group), ['worker' => $this->name]);
-            return;
-        }
-
-        // Set uid and gid
-        if ($uid !== \posix_getuid() || $gid !== \posix_getgid()) {
-            if (!\posix_setgid($gid) || !\posix_initgroups($userInfo['name'], $gid) || !\posix_setuid($uid)) {
-                $this->logger->warning('Changing guid or uid fails', ['worker' => $this->name]);
-                $this->user = $currentUser;
-            }
         }
     }
 
