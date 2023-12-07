@@ -4,22 +4,15 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Console\Command;
 
-use Luzrain\PhpRunner\Config;
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\MasterProcess;
-use Luzrain\PhpRunner\PhpRunner;
-use Luzrain\PhpRunner\Status\ProcessesStatus;
-use Luzrain\PhpRunner\Status\MasterProcessStatus;
-use Luzrain\PhpRunner\Status\WorkersStatus;
-use Luzrain\PhpRunner\WorkerPool;
-use Luzrain\PhpRunner\WorkerProcess;
-use Psr\Log\LoggerInterface;
+use Luzrain\PhpRunner\Status\WorkerStatus;
 
 final class WorkersCommand implements Command
 {
     public function __construct(
-        private WorkerPool $pool,
+        private MasterProcess $masterProcess,
     ) {
     }
 
@@ -41,7 +34,7 @@ final class WorkersCommand implements Command
 
     private function show(): string
     {
-        $status = (new WorkersStatus($this->pool))->getData();
+        $status = $this->masterProcess->getStatus();
 
         return "❯ Workers\n" . (new Table(indent: 1))
             ->setHeaderRow([
@@ -50,7 +43,14 @@ final class WorkersCommand implements Command
                 'Count',
                 'Listen',
             ])
-            ->addRows($status)
+            ->addRows(array_map(function (WorkerStatus $workerStatus) {
+                return [
+                    $workerStatus->user,
+                    $workerStatus->name,
+                    $workerStatus->count,
+                    '-'
+                ];
+            }, $status->workers))
         ;
     }
 }
