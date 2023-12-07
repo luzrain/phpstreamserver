@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Console\Command;
 
 use Luzrain\PhpRunner\Console\Command;
+use Luzrain\PhpRunner\MasterProcess;
 
 final class StopCommand implements Command
 {
+    public function __construct(
+        private MasterProcess $masterProcess,
+    ) {
+    }
+
     public function getCommand(): string
     {
         return 'stop';
@@ -20,7 +26,7 @@ final class StopCommand implements Command
 
     public function run(array $arguments): never
     {
-        echo "Stop all\n";
+        $this->masterProcess->stop();
         exit;
     }
 }

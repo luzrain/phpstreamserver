@@ -204,6 +204,17 @@ final class MasterProcess
 
     public function stop(int $code = 0): void
     {
+        if (($masterPid = $this->getMasterPid()) !== \posix_getpid()) {
+            // If it called from outside working process
+            if ($this->isRunning()) {
+                $this->logger->info('PHPRunner stopping ...');
+                \posix_kill($masterPid, SIGTERM);
+            } else {
+                $this->logger->error('PHPRunner is not running');
+            }
+            return;
+        }
+
         if ($this->status === self::STATUS_SHUTDOWN) {
             return;
         }
@@ -231,6 +242,7 @@ final class MasterProcess
     private function isRunning(): bool
     {
         $masterPid = $this->getMasterPid();
+
         return !empty($masterPid) && \posix_getpid() !== $masterPid && \posix_kill($masterPid, 0);
     }
 

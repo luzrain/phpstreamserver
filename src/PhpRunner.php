@@ -49,7 +49,7 @@ final class PhpRunner
 
         (new Console(
             new StartCommand($masterProcess),
-            new StopCommand(),
+            new StopCommand($masterProcess),
             new ReloadCommand(),
             new StatusCommand($masterProcess),
             new WorkersCommand($this->pool),
