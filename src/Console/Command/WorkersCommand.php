@@ -28,29 +28,24 @@ final class WorkersCommand implements Command
 
     public function run(array $arguments): never
     {
-        echo $this->show();
-        exit;
-    }
-
-    private function show(): string
-    {
         $status = $this->masterProcess->getStatus();
 
-        return "❯ Workers\n" . (new Table(indent: 1))
+        echo "❯ Workers\n";
+
+        echo (new Table(indent: 1))
             ->setHeaderRow([
                 'User',
                 'Worker',
                 'Count',
                 'Listen',
             ])
-            ->addRows(array_map(function (WorkerStatus $workerStatus) {
-                return [
-                    $workerStatus->user,
-                    $workerStatus->name,
-                    $workerStatus->count,
-                    '-'
-                ];
-            }, $status->workers))
-        ;
+            ->addRows(\array_map(array: $status->workers, callback: fn (WorkerStatus $w) => [
+                $w->user,
+                $w->name,
+                $w->count,
+                '-',
+            ]));
+
+        exit;
     }
 }

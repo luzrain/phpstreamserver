@@ -28,15 +28,11 @@ final class StatusCommand implements Command
 
     public function run(array $arguments): never
     {
-        echo $this->show();
-        exit;
-    }
-
-    private function show(): string
-    {
         $status = $this->masterProcess->getStatus();
 
-        return ($status->isRunning ? '<color;fg=green>●</>' : '●') . " PHPRunner - PHP application server\n" . (new Table(indent: 1))
+        echo ($status->isRunning ? '<color;fg=green>●</>' : '●') . " PHPRunner - PHP application server\n";
+
+        echo (new Table(indent: 1))
             ->addRows([
                 ['PHPRunner version:', $status->phpRunnerVersion],
                 ['PHP version:', $status->phpVersion],
@@ -49,7 +45,8 @@ final class StatusCommand implements Command
                 ['Workers count:', $status->workersCount],
                 ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],
                 ['Memory usage:', $status->totalMemory > 0 ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
-            ])
-        ;
+            ]);
+
+        exit;
     }
 }
