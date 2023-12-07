@@ -16,6 +16,10 @@ use Revolt\EventLoop\DriverFactory;
  */
 class WorkerProcess
 {
+    final public const RELOAD_EXIT_CODE = 100;
+    final public const TTL_EXIT_CODE = 101;
+    final public const MAX_MEMORY_EXIT_CODE = 102;
+
     private LoggerInterface $logger;
     private Driver $eventLoop;
     private \DateTimeImmutable $startedAt;
@@ -84,7 +88,7 @@ class WorkerProcess
         // Watch ttl
         if ($this->ttl > 0) {
             $this->eventLoop->delay($this->ttl, function (): void {
-                $this->stop();
+                $this->stop(self::TTL_EXIT_CODE);
             });
         }
 
@@ -98,11 +102,12 @@ class WorkerProcess
 
     private function initSignalHandler(): void
     {
-        foreach ([SIGTERM, SIGUSR1] as $signo) {
+        foreach ([SIGTERM, SIGUSR1, SIGUSR2] as $signo) {
             $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
                 match ($signo) {
                     SIGTERM => $this->stop(),
                     SIGUSR1 => $this->pipeStatus(),
+                    SIGUSR2 => $this->reload(),
                 };
             });
         }
@@ -153,6 +158,18 @@ class WorkerProcess
         try {
             if($this->onStop !== null) {
                 ($this->onStop)();
+            }
+        } finally {
+            $this->eventLoop->stop();
+        }
+    }
+
+    private function reload(): void
+    {
+        $this->exitCode = self::RELOAD_EXIT_CODE;
+        try {
+            if($this->onReload !== null) {
+                ($this->onReload)();
             }
         } finally {
             $this->eventLoop->stop();

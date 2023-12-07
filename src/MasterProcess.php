@@ -20,7 +20,6 @@ final class MasterProcess
     public const STATUS_STARTING = 1;
     public const STATUS_RUNNING = 2;
     public const STATUS_SHUTDOWN = 3;
-    public const STATUS_RELOADING = 4;
 
     private static bool $registered = false;
     private readonly string $startFile;
@@ -105,12 +104,13 @@ final class MasterProcess
 
     private function initSignalHandler(): void
     {
-        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1] as $signo) {
+        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1, SIGUSR2] as $signo) {
             $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
                 match ($signo) {
                     SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT => $this->stop(),
                     SIGCHLD => $this->watchWorkers(),
                     SIGUSR1 => $this->pipeStatus(),
+                    SIGUSR2 => $this->reload(),
                 };
             });
         }
@@ -176,17 +176,22 @@ final class MasterProcess
     private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void
     {
         switch ($this->status) {
+            case self::STATUS_RUNNING:
+                match ($exitCode) {
+                    $worker::RELOAD_EXIT_CODE => $this->logger->info(sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
+                    $worker::TTL_EXIT_CODE => $this->logger->info(sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->name, $pid)),
+                    $worker::MAX_MEMORY_EXIT_CODE => $this->logger->info(sprintf('Worker %s[pid:%d] reloaded (Memory consumption exceeded)', $worker->name, $pid)),
+                    default => $this->logger->warning(sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
+                };
+                // Restart worker
+                $this->spawnWorker($worker);
+                break;
             case self::STATUS_SHUTDOWN:
                 if ($this->pool->getProcessesCount() === 0) {
                     // All processes are stopped now
                     $this->logger->info('PHPRunner stopped');
                     $this->suspension->resume();
                 }
-                break;
-            case self::STATUS_RUNNING:
-                $this->logger->notice(sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode));
-                // Restart worker
-                $this->spawnWorker($worker);
                 break;
         }
     }
@@ -204,23 +209,25 @@ final class MasterProcess
 
     public function stop(int $code = 0): void
     {
-        if (($masterPid = $this->getMasterPid()) !== \posix_getpid()) {
+        if (!$this->isRunning()) {
+            $this->logger->error('PHPRunner is not running');
+            return;
+        }
+
+        $this->logger->info('PHPRunner stopping ...');
+
+        if (($masterPid = $this->getPid()) !== \posix_getpid()) {
             // If it called from outside working process
-            if ($this->isRunning()) {
-                $this->logger->info('PHPRunner stopping ...');
-                \posix_kill($masterPid, SIGTERM);
-            } else {
-                $this->logger->error('PHPRunner is not running');
-            }
+            \posix_kill($masterPid, SIGTERM);
             return;
         }
 
         if ($this->status === self::STATUS_SHUTDOWN) {
             return;
         }
+
         $this->status = self::STATUS_SHUTDOWN;
         $this->exitCode = $code;
-        $this->logger->info('PHPRunner stopping ...');
         foreach ($this->pool->getAlivePids() as $pid) {
             \posix_kill($pid, SIGTERM);
         }
@@ -234,16 +241,38 @@ final class MasterProcess
         });
     }
 
-    private function getMasterPid(): int
+    public function reload(): void
+    {
+        if (!$this->isRunning()) {
+            $this->logger->error('PHPRunner is not running');
+            return;
+        }
+
+        $this->logger->info('PHPRunner reloading ...');
+
+        if (($masterPid = $this->getPid()) !== \posix_getpid()) {
+            // If it called from outside working process
+            \posix_kill($masterPid, SIGUSR2);
+            return;
+        }
+
+        foreach ($this->pool->getAlivePids() as $pid) {
+            \posix_kill($pid, SIGUSR2);
+        }
+    }
+
+    private function getPid(): int
     {
         return \is_file($this->pidFile) ? (int)\file_get_contents($this->pidFile) : 0;
     }
 
     private function isRunning(): bool
     {
-        $masterPid = $this->getMasterPid();
+        if ($this->status === self::STATUS_RUNNING) {
+            return true;
+        }
 
-        return !empty($masterPid) && \posix_getpid() !== $masterPid && \posix_kill($masterPid, 0);
+        return !empty($this->getPid()) && \posix_kill($this->getPid(), 0);
     }
 
     private function pipeStatus(): void
@@ -305,7 +334,7 @@ final class MasterProcess
     public function getStatus(): MasterProcessStatus
     {
         if ($this->isRunning() && \file_exists($this->pipeFile)) {
-            \posix_kill($this->getMasterPid(), SIGUSR1);
+            \posix_kill($this->getPid(), SIGUSR1);
             $fd = \fopen($this->pipeFile, 'r');
             $data = Functions::streamRead($fd, true);
             /** @var MasterProcessStatus $status */

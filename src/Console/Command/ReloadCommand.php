@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Console\Command;
 
-use Luzrain\PhpRunner\Config;
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\MasterProcess;
-use Luzrain\PhpRunner\WorkerPool;
-use Psr\Log\LoggerInterface;
 
 final class ReloadCommand implements Command
 {
-    public function __construct()
-    {
+    public function __construct(
+        private MasterProcess $masterProcess,
+    ) {
     }
 
     public function getCommand(): string
@@ -28,6 +26,7 @@ final class ReloadCommand implements Command
 
     public function run(array $arguments): never
     {
+        $this->masterProcess->reload();
         exit;
     }
 }

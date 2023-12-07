@@ -45,12 +45,13 @@ final class PhpRunner
     {
         StdoutHandler::register($this->config->stdOutPipe);
         ErrorHandler::register($this->logger);
+
         $masterProcess = new MasterProcess($this->pool, $this->config, $this->logger);
 
         (new Console(
             new StartCommand($masterProcess),
             new StopCommand($masterProcess),
-            new ReloadCommand(),
+            new ReloadCommand($masterProcess),
             new StatusCommand($masterProcess),
             new WorkersCommand($masterProcess),
             new ProcessesCommand($masterProcess),
