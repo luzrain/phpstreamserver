@@ -17,9 +17,9 @@ use Revolt\EventLoop\Suspension;
 
 final class MasterProcess
 {
-    public const STATUS_STARTING = 1;
-    public const STATUS_RUNNING = 2;
-    public const STATUS_SHUTDOWN = 3;
+    private const STATUS_STARTING = 1;
+    private const STATUS_RUNNING = 2;
+    private const STATUS_SHUTDOWN = 3;
 
     private static bool $registered = false;
     private readonly string $startFile;
@@ -317,7 +317,7 @@ final class MasterProcess
             user: Functions::getCurrentUser(),
             memory: \memory_get_usage(),
             startedAt: $this->startedAt,
-            status: $this->status,
+            isRunning: $this->isRunning(),
             startFile: $this->startFile,
             workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
                 user: $worker->user ?? Functions::getCurrentUser(),
@@ -345,7 +345,7 @@ final class MasterProcess
                 user: Functions::getCurrentUser(),
                 memory: 0,
                 startedAt: null,
-                status: self::STATUS_SHUTDOWN,
+                isRunning: false,
                 startFile: $this->startFile,
                 workers: \array_map(fn (WorkerProcess $worker) => new WorkerStatus(
                     user: $worker->user ?? Functions::getCurrentUser(),

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Status;
 
-use Luzrain\PhpRunner\MasterProcess;
 use Luzrain\PhpRunner\PhpRunner;
 use Revolt\EventLoop\DriverFactory;
 
@@ -13,7 +12,6 @@ use Revolt\EventLoop\DriverFactory;
  */
 final readonly class MasterProcessStatus
 {
-    public bool $isRunning;
     public string $phpVersion;
     public string $phpRunnerVersion;
     public string $eventLoop;
@@ -30,7 +28,7 @@ final readonly class MasterProcessStatus
         public string $user,
         public int $memory,
         public \DateTimeImmutable|null $startedAt,
-        public int $status,
+        public bool $isRunning,
         public string $startFile,
         public array $workers,
         public array $processes = [],
@@ -38,7 +36,6 @@ final readonly class MasterProcessStatus
         $eventLoop = (new DriverFactory())->create();
         $eventLoopName = (new \ReflectionObject($eventLoop))->getShortName();
 
-        $this->isRunning = $this->status === MasterProcess::STATUS_RUNNING;
         $this->phpVersion = PHP_VERSION;
         $this->phpRunnerVersion = PhpRunner::VERSION;
         $this->eventLoop = $eventLoopName;
