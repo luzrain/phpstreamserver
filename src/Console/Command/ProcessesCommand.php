@@ -45,7 +45,7 @@ final class ProcessesCommand implements Command
                 ])
                 ->addRows(\array_map(array: $status->processes, callback: fn (WorkerProcessStatus $w) => [
                     $w->pid,
-                    $w->user,
+                    $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
                     Functions::humanFileSize($w->memory),
                     $w->name,
                     '<color;fg=gray>0</>',
