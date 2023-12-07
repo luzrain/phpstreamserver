@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner;
 
+use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
+use Revolt\EventLoop\DriverFactory;
 
+/**
+ * @internal
+ */
 class WorkerProcess
 {
     private LoggerInterface $logger;
@@ -39,11 +44,14 @@ class WorkerProcess
     /**
      * @internal
      */
-    final public function setDependencies(Driver $eventLoop, LoggerInterface $logger, mixed $socket): void
+    final public function preInitWorker(LoggerInterface $logger, mixed $parentSocket): self
     {
-        $this->eventLoop = $eventLoop;
+        \cli_set_process_title(sprintf('PHPRunner: worker process  %s', $this->name));
+
         $this->logger = $logger;
-        $this->parentSocket = $socket;
+        $this->parentSocket = $parentSocket;
+
+        return $this;
     }
 
     /**
@@ -61,6 +69,10 @@ class WorkerProcess
     private function initWorker(): void
     {
         $this->startedAt = new \DateTimeImmutable('now');
+
+        // Init new event loop for worker process
+        $this->eventLoop = (new DriverFactory())->create();
+        $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
 
         // onStart callback
         if($this->onStart !== null) {
@@ -90,7 +102,7 @@ class WorkerProcess
             $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
                 match ($signo) {
                     SIGTERM => $this->stop(),
-                    SIGUSR1 => $this->uploadStatusData(),
+                    SIGUSR1 => $this->pipeStatus(),
                 };
             });
         }
@@ -144,7 +156,7 @@ class WorkerProcess
         }
     }
 
-    private function uploadStatusData(): void
+    private function pipeStatus(): void
     {
         Functions::streamWrite($this->parentSocket, \serialize(new WorkerProcessStatus(
             pid: \posix_getpid(),

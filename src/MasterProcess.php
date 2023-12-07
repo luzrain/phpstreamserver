@@ -13,7 +13,6 @@ use Luzrain\PhpRunner\Status\WorkerStatus;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
-use Revolt\EventLoop\DriverFactory;
 use Revolt\EventLoop\Suspension;
 
 final class MasterProcess
@@ -66,7 +65,7 @@ final class MasterProcess
         $this->spawnWorkers();
         $this->status = self::STATUS_RUNNING;
         $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
-            ? $this->prepareWorker($worker, $parentSocket)->run()
+            ? $this->preInitWorker($worker, $parentSocket)->run()
             : $this->exitCode;
 
         if (!isset($worker)) {
@@ -79,7 +78,7 @@ final class MasterProcess
     // Runs in master process
     private function initServer(): void
     {
-        cli_set_process_title(sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
+        \cli_set_process_title(sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
 
         $this->startedAt = new \DateTimeImmutable('now');
 
@@ -99,7 +98,7 @@ final class MasterProcess
 
     private function createMasterPipe(): void
     {
-        if(!file_exists($this->pipeFile)) {
+        if(!\file_exists($this->pipeFile)) {
             \posix_mkfifo($this->pipeFile, 0644);
         }
     }
@@ -166,34 +165,20 @@ final class MasterProcess
      * Runs in forked process
      * @param resource $parentSocket
      */
-    private function prepareWorker(WorkerProcess $worker, mixed $parentSocket): WorkerProcess
+    private function preInitWorker(WorkerProcess $worker, mixed $parentSocket): WorkerProcess
     {
         $this->eventLoop->stop();
-        unset($this->suspension);
-        unset($this->eventLoop);
-        unset($this->pool);
+        unset($this->suspension, $this->eventLoop, $this->pool);
 
-        // Init new event loop for worker process
-        $this->eventLoop = (new DriverFactory())->create();
-        $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
-
-        \cli_set_process_title(sprintf('PHPRunner: worker process  %s', $worker->name));
-
-        $worker->setDependencies(
-            $this->eventLoop,
-            $this->logger,
-            $parentSocket,
-        );
-
-        return $worker;
+        return $worker->preInitWorker($this->logger, $parentSocket);
     }
 
     private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void
     {
         switch ($this->status) {
             case self::STATUS_SHUTDOWN:
-                if (iterator_count($this->pool->getAlivePids()) === 0) {
-                    // All workers are stopped now
+                if ($this->pool->getProcessesCount() === 0) {
+                    // All processes are stopped now
                     $this->logger->info('PHPRunner stopped');
                     $this->suspension->resume();
                 }
@@ -266,7 +251,7 @@ final class MasterProcess
                 }
                 if (\count($data) === \count($pids)) {
                     $this->eventLoop->cancel($fallbackId);
-                    $this->onWorkersStatusReady($data);
+                    $this->onAllWorkersStatusReady($data);
                     unset($pids, $callbackIds, $data, $fallbackId);
                 }
             });
@@ -274,7 +259,7 @@ final class MasterProcess
 
         $fallbackId = $this->eventLoop->delay(4, function () use (&$pids, &$callbackIds, &$data, &$fallbackId) {
             \array_walk($callbackIds, $this->eventLoop->cancel(...));
-            $this->onWorkersStatusReady($data);
+            $this->onAllWorkersStatusReady($data);
             unset($pids, $callbackIds, $data, $fallbackId);
         });
 
@@ -284,7 +269,7 @@ final class MasterProcess
     /**
      * @param list<WorkerProcessStatus> $processes
      */
-    private function onWorkersStatusReady(array $processes): void
+    private function onAllWorkersStatusReady(array $processes): void
     {
         $status = new MasterProcessStatus(
             pid: \posix_getpid(),
@@ -321,7 +306,7 @@ final class MasterProcess
                 startedAt: null,
                 status: self::STATUS_SHUTDOWN,
                 startFile: $this->startFile,
-                workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
+                workers: \array_map(fn (WorkerProcess $worker) => new WorkerStatus(
                     user: $worker->user ?? Functions::getCurrentUser(),
                     name: $worker->name,
                     count: $worker->count,

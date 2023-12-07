@@ -37,8 +37,8 @@ final class StatusCommand implements Command
 
         return ($status->isRunning ? '<color;fg=green>●</>' : '●') . " PHPRunner - PHP application server\n" . (new Table(indent: 1))
             ->addRows([
-                ['PHP version:', $status->phpVersion],
                 ['PHPRunner version:', $status->phpRunnerVersion],
+                ['PHP version:', $status->phpVersion],
                 ['Event loop driver:', $status->eventLoop],
                 ['Start file:', $status->startFile],
                 ['Status:', $status->isRunning

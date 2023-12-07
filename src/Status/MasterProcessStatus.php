@@ -42,11 +42,13 @@ final readonly class MasterProcessStatus
         $this->phpVersion = PHP_VERSION;
         $this->phpRunnerVersion = PhpRunner::VERSION;
         $this->eventLoop = $eventLoopName;
+
         $totalMemory = $this->memory;
         foreach ($processes as $process) {
             $totalMemory += $process->memory;
         }
         $this->totalMemory = $totalMemory;
+
         $this->workersCount = \count($this->workers);
         $this->processesCount = \count($this->processes);
     }
