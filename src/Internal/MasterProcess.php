@@ -80,7 +80,7 @@ final class MasterProcess
         $this->status = self::STATUS_RUNNING;
         $this->logger->info('PHPRunner has started');
         $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
-            ? $this->preInitWorker($worker, $parentSocket)->run()
+            ? $this->initWorker($worker, $parentSocket)->run()
             : $this->exitCode;
 
         if (!isset($worker)) {
@@ -196,12 +196,12 @@ final class MasterProcess
      * Runs in forked process
      * @param resource $parentSocket
      */
-    private function preInitWorker(WorkerProcess $worker, mixed $parentSocket): WorkerProcess
+    private function initWorker(WorkerProcess $worker, mixed $parentSocket): WorkerProcess
     {
         $this->eventLoop->stop();
         unset($this->suspension, $this->eventLoop, $this->pool);
 
-        return $worker->preInitWorker($this->logger, $parentSocket);
+        return $worker->setDependencies($this->logger, $parentSocket);
     }
 
     private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void

@@ -18,8 +18,8 @@ class WorkerProcess
     final public const TTL_EXIT_CODE = 101;
     final public const MAX_MEMORY_EXIT_CODE = 102;
 
-    private LoggerInterface $logger;
-    private Driver $eventLoop;
+    protected readonly LoggerInterface $logger;
+    protected readonly Driver $eventLoop;
     private \DateTimeImmutable $startedAt;
 
     /**
@@ -46,10 +46,8 @@ class WorkerProcess
     /**
      * @internal
      */
-    final public function preInitWorker(LoggerInterface $logger, mixed $parentSocket): self
+    final public function setDependencies(LoggerInterface $logger, mixed $parentSocket): self
     {
-        \cli_set_process_title(sprintf('PHPRunner: worker process  %s', $this->name));
-
         $this->logger = $logger;
         $this->parentSocket = $parentSocket;
 
@@ -70,6 +68,8 @@ class WorkerProcess
 
     private function initWorker(): void
     {
+        \cli_set_process_title(sprintf('PHPRunner: worker process  %s', $this->name));
+
         $this->startedAt = new \DateTimeImmutable('now');
 
         // Init new event loop for worker process
@@ -93,7 +93,9 @@ class WorkerProcess
         // Watch max memory
         if ($this->maxMemory > 0) {
             $this->eventLoop->repeat(15, function (): void {
-                // TODO
+                if (\max(\memory_get_peak_usage(), \memory_get_usage()) > $this->maxMemory) {
+                    $this->stop(self::MAX_MEMORY_EXIT_CODE);
+                }
             });
         }
     }
