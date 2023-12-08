@@ -347,7 +347,7 @@ final class MasterProcess
             startedAt: $this->startedAt,
             isRunning: $this->isRunning(),
             startFile: $this->startFile,
-            workers: array_map(fn (WorkerProcess $worker) => new WorkerStatus(
+            workers: \array_map(fn (WorkerProcess $worker) => new WorkerStatus(
                 user: $worker->user ?? Functions::getCurrentUser(),
                 name: $worker->name,
                 count: $worker->count,

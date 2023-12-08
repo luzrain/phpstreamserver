@@ -9,7 +9,7 @@ use Luzrain\PhpRunner\Internal\Functions;
 /**
  * @internal
  */
-final class Console
+final class App
 {
     private array $commands;
 
@@ -24,32 +24,34 @@ final class Console
 
         if (\in_array('-h', $arguments) || \in_array('--help', $arguments)) {
             $this->showHelp();
-            exit;
+            exit(0);
         }
 
         foreach ($this->commands as $command) {
-            if ($command->getCommand() === $option) {
+            if ($command->getOption() === $option) {
                 $command->run($arguments);
+                exit(0);
             }
         }
 
         $this->showHelp();
-        exit;
+        exit(0);
     }
 
     /**
-     * @param string $command
+     * @param string $cmd
      * @return array{string, array}
      */
-    private function parseCommand(string $command): array
+    private function parseCommand(string $cmd): array
     {
-        if ($command === '') {
+        if ($cmd === '') {
             $argv = $_SERVER['argv'];
             unset($argv[0]);
-            $command = \implode(' ', $argv);
+            $cmd = \implode(' ', $argv);
         }
 
-        $parts = \explode(' ', $command, 2);
+        $parts = \explode(' ', $cmd, 2);
+
         return [$parts[0] ?? '', \array_filter(\explode(' ', $parts[1] ?? ''))];
     }
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Console\Command;
+namespace Luzrain\PhpRunner\Command;
 
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\MasterProcess;
@@ -14,7 +14,7 @@ final class StopCommand implements Command
     ) {
     }
 
-    public function getCommand(): string
+    public function getOption(): string
     {
         return 'stop';
     }
@@ -24,9 +24,8 @@ final class StopCommand implements Command
         return '%php_bin% %start_file% stop';
     }
 
-    public function run(array $arguments): never
+    public function run(array $arguments): void
     {
         $this->masterProcess->stop();
-        exit;
     }
 }

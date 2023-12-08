@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner;
 
-use Luzrain\PhpRunner\Console\Command\ConnectionsCommand;
-use Luzrain\PhpRunner\Console\Command\ProcessesCommand;
-use Luzrain\PhpRunner\Console\Command\ReloadCommand;
-use Luzrain\PhpRunner\Console\Command\StartCommand;
-use Luzrain\PhpRunner\Console\Command\StatusCommand;
-use Luzrain\PhpRunner\Console\Command\StopCommand;
-use Luzrain\PhpRunner\Console\Command\WorkersCommand;
-use Luzrain\PhpRunner\Console\Console;
+use Luzrain\PhpRunner\Command\ConnectionsCommand;
+use Luzrain\PhpRunner\Command\ProcessesCommand;
+use Luzrain\PhpRunner\Command\ReloadCommand;
+use Luzrain\PhpRunner\Command\StartCommand;
+use Luzrain\PhpRunner\Command\StatusCommand;
+use Luzrain\PhpRunner\Command\StopCommand;
+use Luzrain\PhpRunner\Command\WorkersCommand;
+use Luzrain\PhpRunner\Console\App;
 use Luzrain\PhpRunner\Internal\Logger;
 use Psr\Log\LoggerInterface;
 
@@ -43,7 +43,7 @@ final class PhpRunner
     {
         $masterProcess = new MasterProcess($this->pool, $this->config, $this->logger);
 
-        (new Console(
+        (new App(
             new StartCommand($masterProcess),
             new StopCommand($masterProcess),
             new ReloadCommand($masterProcess),

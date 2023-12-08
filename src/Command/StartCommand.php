@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Console\Command;
+namespace Luzrain\PhpRunner\Command;
 
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
@@ -16,7 +16,7 @@ final class StartCommand implements Command
     ) {
     }
 
-    public function getCommand(): string
+    public function getOption(): string
     {
         return 'start';
     }
@@ -26,7 +26,7 @@ final class StartCommand implements Command
         return '%php_bin% %start_file% start [--daemon]';
     }
 
-    public function run(array $arguments): never
+    public function run(array $arguments): void
     {
         $isDaemon = \in_array('-d', $arguments) || \in_array('--daemon', $arguments);
         $status = $this->masterProcess->getStatus();

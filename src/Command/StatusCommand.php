@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Console\Command;
+namespace Luzrain\PhpRunner\Command;
 
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
@@ -16,7 +16,7 @@ final class StatusCommand implements Command
     ) {
     }
 
-    public function getCommand(): string
+    public function getOption(): string
     {
         return 'status';
     }
@@ -26,7 +26,7 @@ final class StatusCommand implements Command
         return '%php_bin% %start_file% status';
     }
 
-    public function run(array $arguments): never
+    public function run(array $arguments): void
     {
         $status = $this->masterProcess->getStatus();
 
@@ -46,7 +46,5 @@ final class StatusCommand implements Command
                 ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],
                 ['Memory usage:', $status->totalMemory > 0 ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
             ]);
-
-        exit;
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Console\Command;
+namespace Luzrain\PhpRunner\Command;
 
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
@@ -16,7 +16,7 @@ final class WorkersCommand implements Command
     ) {
     }
 
-    public function getCommand(): string
+    public function getOption(): string
     {
         return 'workers';
     }
@@ -26,7 +26,7 @@ final class WorkersCommand implements Command
         return '%php_bin% %start_file% workers';
     }
 
-    public function run(array $arguments): never
+    public function run(array $arguments): void
     {
         $status = $this->masterProcess->getStatus();
 
@@ -45,7 +45,5 @@ final class WorkersCommand implements Command
                 $w->count,
                 '-',
             ]));
-
-        exit;
     }
 }

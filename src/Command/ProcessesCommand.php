@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Console\Command;
+namespace Luzrain\PhpRunner\Command;
 
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
@@ -17,7 +17,7 @@ final class ProcessesCommand implements Command
     ) {
     }
 
-    public function getCommand(): string
+    public function getOption(): string
     {
         return 'processes';
     }
@@ -27,7 +27,7 @@ final class ProcessesCommand implements Command
         return '%php_bin% %start_file% processes';
     }
 
-    public function run(array $arguments): never
+    public function run(array $arguments): void
     {
         $status = $this->masterProcess->getStatus();
 
@@ -54,7 +54,5 @@ final class ProcessesCommand implements Command
         } else {
             echo "  <color;fg=yellow>There are no running processes</>\n";
         }
-
-        exit;
     }
 }
