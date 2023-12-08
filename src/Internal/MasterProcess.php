@@ -2,20 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner;
+namespace Luzrain\PhpRunner\Internal;
 
+use Luzrain\PhpRunner\Config;
 use Luzrain\PhpRunner\Console\StdoutHandler;
 use Luzrain\PhpRunner\Exception\PHPRunnerException;
-use Luzrain\PhpRunner\Internal\ErrorHandler;
-use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerStatus;
+use Luzrain\PhpRunner\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
 
+/**
+ * @internal
+ */
 final class MasterProcess
 {
     private const STATUS_STARTING = 1;
@@ -336,7 +339,7 @@ final class MasterProcess
     }
 
     /**
-     * @param list<WorkerProcessStatus> $processes
+     * @param WorkerProcessStatus $processes
      */
     private function onAllWorkersStatusReady(array $processes): void
     {

@@ -7,7 +7,7 @@ namespace Luzrain\PhpRunner\Command;
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\Internal\Functions;
-use Luzrain\PhpRunner\MasterProcess;
+use Luzrain\PhpRunner\Internal\MasterProcess;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 
 final class ProcessesCommand implements Command

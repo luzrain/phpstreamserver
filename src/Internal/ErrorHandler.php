@@ -7,6 +7,9 @@ namespace Luzrain\PhpRunner\Internal;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
+/**
+ * @internal
+ */
 final class ErrorHandler
 {
     private const ERRORS = [

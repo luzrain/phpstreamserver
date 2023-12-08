@@ -12,9 +12,6 @@ use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;
 
-/**
- * @internal
- */
 class WorkerProcess
 {
     final public const RELOAD_EXIT_CODE = 100;

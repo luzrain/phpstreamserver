@@ -13,6 +13,8 @@ use Luzrain\PhpRunner\Command\StopCommand;
 use Luzrain\PhpRunner\Command\WorkersCommand;
 use Luzrain\PhpRunner\Console\App;
 use Luzrain\PhpRunner\Internal\Logger;
+use Luzrain\PhpRunner\Internal\MasterProcess;
+use Luzrain\PhpRunner\Internal\WorkerPool;
 use Psr\Log\LoggerInterface;
 
 final class PhpRunner
@@ -22,19 +24,16 @@ final class PhpRunner
     private WorkerPool $pool;
 
     public function __construct(
-        private Config|null $config = null,
+        private readonly Config $config = new Config(),
         private LoggerInterface|null $logger = null,
     ) {
-        $this->config ??= new Config();
         $this->logger ??= new Logger($this->config->logFile);
         $this->pool = new WorkerPool();
     }
 
     public function addWorker(WorkerProcess ...$workers): self
     {
-        foreach ($workers as $worker) {
-            $this->pool->addWorker($worker);
-        }
+        \array_walk($workers, $this->pool->addWorker(...));
 
         return $this;
     }

@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner;
+namespace Luzrain\PhpRunner\Internal;
 
 use Luzrain\PhpRunner\Exception\PHPRunnerException;
+use Luzrain\PhpRunner\WorkerProcess;
 
 /**
  * @internal

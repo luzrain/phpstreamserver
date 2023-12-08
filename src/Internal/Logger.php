@@ -7,6 +7,9 @@ namespace Luzrain\PhpRunner\Internal;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
+/**
+ * @internal
+ */
 final class Logger implements LoggerInterface
 {
     use LoggerTrait;
@@ -31,7 +34,7 @@ final class Logger implements LoggerInterface
         echo $message . "\n";
 
         if ($this->logFile !== null) {
-            file_put_contents($this->logFile, $message . "\n", FILE_APPEND);
+            \file_put_contents($this->logFile, $message . "\n", FILE_APPEND);
         }
     }
 
@@ -39,16 +42,16 @@ final class Logger implements LoggerInterface
     {
         $context = $this->normalizeContext($context);
 
-        if (str_contains($message, '{')) {
+        if (\str_contains($message, '{')) {
             $replacements = [];
             foreach ($context as $key => $val) {
-                $replacements["{{$key}}"] = is_array($val) ? '[array]' : (string) $val;
+                $replacements["{{$key}}"] = \is_array($val) ? '[array]' : (string) $val;
             }
-            $message = strtr($message, $replacements);
+            $message = \strtr($message, $replacements);
         }
 
-        $formattedMessage = sprintf('%s [%s] %s', date(\DateTimeInterface::RFC3339), $level, $message);
-        $formattedContext = !empty($context) ? ' ' . json_encode($context, self::DEFAULT_JSON_FLAGS) : '';
+        $formattedMessage = \sprintf('%s [%s] %s', \date(\DateTimeInterface::RFC3339), $level, $message);
+        $formattedContext = !empty($context) ? ' ' . \json_encode($context, self::DEFAULT_JSON_FLAGS) : '';
 
         return $formattedMessage . $formattedContext;
     }
@@ -60,10 +63,10 @@ final class Logger implements LoggerInterface
                 is_array($val) => $this->normalizeContext($val),
                 $val instanceof \Throwable => $this->formatException($val),
                 $val instanceof \DateTimeInterface => $val->format(\DateTimeInterface::RFC3339),
-                $val instanceof \JsonSerializable => json_decode($val->jsonSerialize()),
+                $val instanceof \JsonSerializable => \json_decode($val->jsonSerialize()),
                 $val instanceof \Stringable => (string) $val,
-                is_scalar($val) || is_null($val) => $val,
-                is_object($val) => '[object ' . $val::class . ']',
+                \is_scalar($val) || \is_null($val) => $val,
+                \is_object($val) => '[object ' . $val::class . ']',
                 default => '[' . \get_debug_type($val) . ']',
             };
         }
@@ -73,7 +76,7 @@ final class Logger implements LoggerInterface
 
     private function formatException(\Throwable $e): string
     {
-        return sprintf(
+        return \sprintf(
             "[object] (%s(code:%d): %s at %s:%d)\n[stacktrace]\n%s",
             $e::class,
             $e->getCode(),

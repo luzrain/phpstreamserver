@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Command;
 
 use Luzrain\PhpRunner\Console\Command;
-use Luzrain\PhpRunner\MasterProcess;
+use Luzrain\PhpRunner\Internal\MasterProcess;
 
 final class StopCommand implements Command
 {

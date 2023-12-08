@@ -6,9 +6,6 @@ namespace Luzrain\PhpRunner\Console;
 
 use Luzrain\PhpRunner\Internal\Functions;
 
-/**
- * @internal
- */
 final class App
 {
     private array $commands;
