@@ -12,9 +12,7 @@ use Luzrain\PhpRunner\Console\Command\StatusCommand;
 use Luzrain\PhpRunner\Console\Command\StopCommand;
 use Luzrain\PhpRunner\Console\Command\WorkersCommand;
 use Luzrain\PhpRunner\Console\Console;
-use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Logger;
-use Luzrain\PhpRunner\Internal\StdoutHandler;
 use Psr\Log\LoggerInterface;
 
 final class PhpRunner
@@ -28,7 +26,7 @@ final class PhpRunner
         private LoggerInterface|null $logger = null,
     ) {
         $this->config ??= new Config();
-        $this->logger ??= new Logger(stdOut: true, logFile: $this->config->logFile);
+        $this->logger ??= new Logger($this->config->logFile);
         $this->pool = new WorkerPool();
     }
 
@@ -43,9 +41,6 @@ final class PhpRunner
 
     public function run(): never
     {
-        StdoutHandler::register($this->config->stdOutPipe);
-        ErrorHandler::register($this->logger);
-
         $masterProcess = new MasterProcess($this->pool, $this->config, $this->logger);
 
         (new Console(

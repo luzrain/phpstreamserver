@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner;
 
+use Luzrain\PhpRunner\Console\StdoutHandler;
 use Luzrain\PhpRunner\Exception\PHPRunnerException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
@@ -44,17 +45,28 @@ final class MasterProcess
             throw new \RuntimeException('Only one instance of server can be instantiated');
         }
 
+        StdoutHandler::register();
+        ErrorHandler::register($this->logger);
+
         self::$registered = true;
         $this->startFile = Functions::getStartFile();
         $this->pidFile = $this->config->pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
         $this->pipeFile = sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
     }
 
-    public function run(bool $isDaemon = false): never
+    public function run(bool $daemonize = false): never
     {
         if ($this->isRunning()) {
             $this->logger->error('Master process already running');
-            exit;
+            exit(1);
+        }
+
+        if ($daemonize && $this->daemonize()) {
+            // Runs in caller process
+            exit(0);
+        } elseif ($daemonize) {
+            // Runs in daemonized process
+            StdoutHandler::reset();
         }
 
         $this->initServer();
@@ -63,6 +75,7 @@ final class MasterProcess
         $this->initSignalHandler();
         $this->spawnWorkers();
         $this->status = self::STATUS_RUNNING;
+        $this->logger->info('PHPRunner has started');
         $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
             ? $this->preInitWorker($worker, $parentSocket)->run()
             : $this->exitCode;
@@ -86,6 +99,21 @@ final class MasterProcess
         $this->eventLoop = new StreamSelectDriver();
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
+    }
+
+    private function daemonize(): bool
+    {
+        $pid = \pcntl_fork();
+        if ($pid === -1) {
+            throw new PHPRunnerException('Fork fail');
+        }
+        if ($pid > 0) {
+            return true;
+        }
+        if (\posix_setsid() === -1) {
+            throw new PHPRunnerException('Setsid fail');
+        }
+        return false;
     }
 
     private function saveMasterPid(): void
@@ -134,7 +162,7 @@ final class MasterProcess
         $pair = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = \pcntl_fork();
         if ($pid > 0) {
-            // Master process.
+            // Master process
             fclose($pair[0]);
             unset($pair[0]);
             $this->pool->addChild($worker, $pid, $pair[1]);

@@ -28,9 +28,11 @@ final class StartCommand implements Command
 
     public function run(array $arguments): never
     {
+        $isDaemon = \in_array('-d', $arguments) || \in_array('--daemon', $arguments);
         $status = $this->masterProcess->getStatus();
 
         echo "❯ PHPRunner - PHP application server\n";
+
         echo (new Table(indent: 1))
             ->addRows([
                 ['PHP version:', $status->phpVersion],
@@ -40,6 +42,7 @@ final class StartCommand implements Command
             ])
         ;
         echo "❯ Workers\n";
+
         echo (new Table(indent: 1))
             ->setHeaderRow([
                 'User',
@@ -57,9 +60,10 @@ final class StartCommand implements Command
             }, $status->workers))
         ;
 
-        echo "Press Ctrl+C to stop.\n";
+        if (!$isDaemon) {
+            echo "Press Ctrl+C to stop.\n";
+        }
 
-        $isDaemon = \in_array('-d', $arguments) || \in_array('--daemon', $arguments);
         $this->masterProcess->run($isDaemon);
     }
 }

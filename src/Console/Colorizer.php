@@ -21,6 +21,10 @@ final class Colorizer
         'gray' => ['90', '100'],
     ];
 
+    private function __construct()
+    {
+    }
+
     /**
      * @param resource $stream
      */
@@ -65,6 +69,6 @@ final class Colorizer
             $string = \substr_replace($string, $formattedString, $pos, $len);
         }
 
-        return \strip_tags($string);
+        return $string;
     }
 }

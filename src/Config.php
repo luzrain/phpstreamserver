@@ -8,11 +8,6 @@ final readonly class Config
 {
     public function __construct(
         /**
-         * @var resource|string
-         */
-        public mixed $stdOutPipe = 'php://stdout',
-
-        /**
          * @var string|null file to write logs (only works with default logger)
          */
         public string|null $logFile = null,

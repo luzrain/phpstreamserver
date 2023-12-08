@@ -13,14 +13,14 @@ final class Logger implements LoggerInterface
 
     private const DEFAULT_JSON_FLAGS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR;
 
-    public function __construct(private bool $stdOut = true, private string|null $logFile = null)
+    public function __construct(private readonly string|null $logFile = null)
     {
-        if ($this->logFile !== null && !is_file($this->logFile)) {
-            if (!is_dir(dirname($this->logFile))) {
-                mkdir(dirname($this->logFile), 0777, true);
+        if ($this->logFile !== null && !\is_file($this->logFile)) {
+            if (!\is_dir(\dirname($this->logFile))) {
+                \mkdir(\dirname($this->logFile), 0777, true);
             }
-            touch($this->logFile);
-            chmod($this->logFile, 0644);
+            \touch($this->logFile);
+            \chmod($this->logFile, 0644);
         }
     }
 
@@ -28,9 +28,7 @@ final class Logger implements LoggerInterface
     {
         $message = $this->format((string)$level, (string)$message, $context);
 
-        if ($this->stdOut) {
-            echo $message . "\n";
-        }
+        echo $message . "\n";
 
         if ($this->logFile !== null) {
             file_put_contents($this->logFile, $message . "\n", FILE_APPEND);
@@ -55,7 +53,7 @@ final class Logger implements LoggerInterface
         return $formattedMessage . $formattedContext;
     }
 
-    private function normalizeContext(array $context): mixed
+    private function normalizeContext(array $context): array
     {
         foreach ($context as $key => $val) {
             $context[$key] = match(true) {
