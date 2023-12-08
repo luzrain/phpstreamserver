@@ -63,6 +63,7 @@ class WorkerProcess
         $this->initWorker();
         $this->initSignalHandler();
         $this->eventLoop->run();
+
         return $this->exitCode;
     }
 
@@ -140,6 +141,10 @@ class WorkerProcess
 
     private function reload(): void
     {
+        if (!$this->reloadable) {
+            return;
+        }
+
         $this->exitCode = self::RELOAD_EXIT_CODE;
         try {
             if($this->onReload !== null) {
