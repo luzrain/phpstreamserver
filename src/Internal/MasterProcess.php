@@ -6,7 +6,7 @@ namespace Luzrain\PhpRunner\Internal;
 
 use Luzrain\PhpRunner\Config;
 use Luzrain\PhpRunner\Console\StdoutHandler;
-use Luzrain\PhpRunner\Exception\PHPRunnerException;
+use Luzrain\PhpRunner\Exception\PhpRunnerException;
 use Luzrain\PhpRunner\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerStatus;
@@ -108,13 +108,13 @@ final class MasterProcess
     {
         $pid = \pcntl_fork();
         if ($pid === -1) {
-            throw new PHPRunnerException('Fork fail');
+            throw new PhpRunnerException('Fork fail');
         }
         if ($pid > 0) {
             return true;
         }
         if (\posix_setsid() === -1) {
-            throw new PHPRunnerException('Setsid fail');
+            throw new PhpRunnerException('Setsid fail');
         }
         return false;
     }
@@ -122,7 +122,7 @@ final class MasterProcess
     private function saveMasterPid(): void
     {
         if (false === \file_put_contents($this->pidFile, \posix_getpid())) {
-            throw new PHPRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
+            throw new PhpRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
     }
 
@@ -177,7 +177,7 @@ final class MasterProcess
             $this->suspension->resume([$worker, $pair[0]]);
             return true;
         } else {
-            throw new PHPRunnerException('fork fail');
+            throw new PhpRunnerException('fork fail');
         }
     }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Internal;
 
-use Luzrain\PhpRunner\Exception\PHPRunnerException;
+use Luzrain\PhpRunner\Exception\PhpRunnerException;
 use Luzrain\PhpRunner\WorkerProcess;
 
 /**
@@ -33,7 +33,7 @@ final class WorkerPool
     public function addChild(WorkerProcess $worker, int $pid, mixed $socket): void
     {
         if (!isset($this->pool[spl_object_id($worker)])) {
-            throw new PHPRunnerException('Worker is not fount in pool');
+            throw new PhpRunnerException('Worker is not fount in pool');
         }
 
         $this->pidMap[$worker][] = $pid;
@@ -58,7 +58,7 @@ final class WorkerPool
             }
         }
 
-        throw new PHPRunnerException(sprintf('No workers found associated with %d pid', $pid));
+        throw new PhpRunnerException(sprintf('No workers found associated with %d pid', $pid));
     }
 
     /**
