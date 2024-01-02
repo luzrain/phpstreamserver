@@ -35,11 +35,11 @@ final class Colorizer
             return false;
         }
 
-        if (\getenv('TERM_PROGRAM') === 'Hyper') {
-            return true;
-        }
-
-        return \stream_isatty($stream);
+        return \getenv('TERM_PROGRAM') === 'Hyper'
+            || \getenv('ANSICON') !== false
+            || \getenv('ConEmuANSI') === 'ON'
+            || \str_starts_with((string) \getenv('TERM'), 'xterm')
+            || \stream_isatty($stream);
     }
 
     /**
