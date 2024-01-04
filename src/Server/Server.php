@@ -4,88 +4,118 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server;
 
+use Luzrain\PhpRunner\Exception\TlsHandshakeException;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Connection\TcpConnection;
 use Luzrain\PhpRunner\Server\Connection\UdpConnection;
+use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
 use Revolt\EventLoop\Driver;
 
 final class Server
 {
+    private string $transport;
+    private string $host;
+    private int $port;
+    private array $socketContextData = [];
+    private Driver $eventLoop;
+
     /**
      * Default backlog. Backlog is the maximum length of the queue of pending connections.
-     *
-     * @var int
      */
     private const DEFAULT_BACKLOG = 102400;
-
-    private bool $reusePort = false;
 
     /**
      * @param null|\Closure(ConnectionInterface): void $onConnect
      * @param null|\Closure(ConnectionInterface, string): void $onMessage
      * @param null|\Closure(ConnectionInterface):void $onClose
-     * @param null|\Closure(ConnectionInterface):void $onBufferDrain
-     * @param null|\Closure(ConnectionInterface):void $onBufferFull
      * @param null|\Closure(ConnectionInterface, int, string):void $onError
      */
     public function __construct(
-        private readonly Driver $eventLoop,
-        private readonly \Closure|null $onConnect = null,
-        private readonly \Closure|null $onMessage = null,
-        private readonly \Closure|null $onClose = null,
-        private readonly \Closure|null $onBufferDrain = null,
-        private readonly \Closure|null $onBufferFull = null,
-        private readonly \Closure|null $onError = null,
+        string $listen,
+        private ProtocolInterface $protocol,
+        private bool $tls = false,
+        string $tlsCertificate = '',
+        string $tlsCertificateKey = '',
+        private \Closure|null $onConnect = null,
+        private \Closure|null $onMessage = null,
+        private \Closure|null $onClose = null,
+        private \Closure|null $onError = null,
     ) {
+        [$this->transport, $this->host, $this->port] = $this->parseListenAddress($listen);
+
+        $this->socketContextData['socket']['backlog'] = self::DEFAULT_BACKLOG;
+        $this->socketContextData['socket']['so_reuseport'] = 1;
+        if ($tls && $tlsCertificate !== '') {
+            $this->socketContextData['ssl']['local_cert'] = $tlsCertificate;
+        }
+        if ($tls && $tlsCertificateKey !== '') {
+            $this->socketContextData['ssl']['local_pk'] = $tlsCertificateKey;
+        }
     }
 
-    public function listen(string $listen): void
+    private function parseListenAddress(string $listen): array
     {
-        $transport = \parse_url($listen, PHP_URL_SCHEME);
+        $parts = \parse_url($listen);
+        $transport = \strtolower($parts['scheme'] ?? 'tcp');
+        $host = $parts['host'] ?? '';
+        $port = $parts['port'] ?? 0;
 
-        $socketContextData = [];
-        $socketContextData['socket']['backlog'] ??= self::DEFAULT_BACKLOG;
-        if ($this->reusePort) {
-            $socketContextData['socket']['so_reuseport'] ??= 1;
+        if (!\in_array($transport, ['tcp', 'udp'])) {
+            throw new \InvalidArgumentException(\sprintf('Invalid transport. Should be either "tcp" or "udp", "%s" given.', $transport));
+        }
+        if (empty($host)) {
+            throw new \InvalidArgumentException('Invalid address. Should not be empty');
+        }
+        if ($port <= 0) {
+            throw new \InvalidArgumentException('Invalid port. Should be greater than 0.');
         }
 
-        // create a server socket
+        return [$transport, $host, $port];
+    }
+
+    public function start(Driver $eventLoop): void
+    {
         $errno = 0;
         $errmsg = '';
-        $flags = $transport === 'udp' ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
-        $mainSocket = \stream_socket_server($listen, $errno, $errmsg, $flags, \stream_context_create($socketContextData));
+        $flags = $this->transport === 'udp' ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
+        $listenAddress = "{$this->transport}://{$this->host}:{$this->port}";
+        $socketContext = \stream_context_create($this->socketContextData);
+        $mainSocket = \stream_socket_server($listenAddress, $errno, $errmsg, $flags, $socketContext);
         \stream_set_blocking($mainSocket, false);
-
-        $transport === 'tcp'
+        $this->eventLoop = $eventLoop;
+        $this->transport === 'tcp'
             ? $this->eventLoop->onReadable($mainSocket, $this->acceptTcpConnection(...))
             : $this->eventLoop->onReadable($mainSocket, $this->acceptUdpConnection(...))
         ;
     }
 
     /**
+     * @param string $id callback id
      * @param resource $socket
      */
     private function acceptUdpConnection(string $id, mixed $socket): void
     {
         new UdpConnection(
             socket: $socket,
-            onMessage: $this->onMessage
+            onMessage: $this->onMessage,
         );
     }
 
     /**
+     * @param string $id callback id
      * @param resource $socket
+     * @throws TlsHandshakeException
      */
     private function acceptTcpConnection(string $id, mixed $socket): void
     {
         new TcpConnection(
             socket: $socket,
             eventLoop: $this->eventLoop,
+            protocol: clone $this->protocol,
+            tls: $this->tls,
             onConnect: $this->onConnect,
             onMessage: $this->onMessage,
             onClose: $this->onClose,
-            onBufferDrain: $this->onBufferDrain,
-            onBufferFull: $this->onBufferFull,
             onError: $this->onError,
         );
     }

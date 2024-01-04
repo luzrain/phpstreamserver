@@ -7,6 +7,7 @@ namespace Luzrain\PhpRunner;
 use Luzrain\PhpRunner\Exception\UserChangeException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
@@ -40,6 +41,7 @@ class WorkerProcess
         private readonly \Closure|null $onStart = null,
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
+        private readonly Server|null $server = null,
     ) {
     }
 
@@ -62,9 +64,23 @@ class WorkerProcess
         $this->setUserAndGroup();
         $this->initWorker();
         $this->initSignalHandler();
+        $this->server?->start($this->eventLoop);
         $this->eventLoop->run();
 
         return $this->exitCode;
+    }
+
+    private function setUserAndGroup(): void
+    {
+        $currentUser = Functions::getCurrentUser();
+        $this->user ??= $currentUser;
+
+        try {
+            Functions::setUserAndGroup($this->user, $this->group);
+        } catch (UserChangeException $e) {
+            $this->logger->warning($e->getMessage(), ['worker' => $this->name]);
+            $this->user = $currentUser;
+        }
     }
 
     private function initWorker(): void
@@ -111,19 +127,6 @@ class WorkerProcess
                     SIGUSR2 => $this->reload(),
                 };
             });
-        }
-    }
-
-    private function setUserAndGroup(): void
-    {
-        $currentUser = Functions::getCurrentUser();
-        $this->user ??= $currentUser;
-
-        try {
-            Functions::setUserAndGroup($this->user, $this->group);
-        } catch (UserChangeException $e) {
-            $this->logger->warning($e->getMessage(), ['worker' => $this->name]);
-            $this->user = $currentUser;
         }
     }
 

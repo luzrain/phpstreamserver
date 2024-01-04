@@ -339,7 +339,7 @@ final class MasterProcess
     }
 
     /**
-     * @param WorkerProcessStatus $processes
+     * @param list<WorkerProcessStatus> $processes
      */
     private function onAllWorkersStatusReady(array $processes): void
     {

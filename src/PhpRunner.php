@@ -20,6 +20,7 @@ use Psr\Log\LoggerInterface;
 final class PhpRunner
 {
     public const VERSION = '0.0.1';
+    public const VERSION_STRING = 'phprunner/' . self::VERSION;
 
     private WorkerPool $pool;
 

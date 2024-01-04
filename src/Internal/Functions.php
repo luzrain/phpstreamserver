@@ -103,4 +103,9 @@ final class Functions
             }
         }
     }
+
+    public static function reportErrors(): bool
+    {
+        return (\error_reporting() & \E_ERROR) === \E_ERROR;
+    }
 }

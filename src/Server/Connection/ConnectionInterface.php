@@ -6,10 +6,12 @@ namespace Luzrain\PhpRunner\Server\Connection;
 
 interface ConnectionInterface
 {
+    public const READ_BUFFER_SIZE = 102400;
+    public const WRITE_BUFFER_SIZE = 204800;
     public const CONNECT_FAIL = 1;
     public const SEND_FAIL = 2;
 
-    public function send(string|\Stringable $sendBuffer): bool;
+    public function send(mixed $response): bool;
     public function getRemoteAddress(): string;
     public function getRemoteIp(): string;
     public function getRemotePort(): int;

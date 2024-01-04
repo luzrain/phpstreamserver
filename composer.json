@@ -19,7 +19,8 @@
         "ext-pcntl": "*",
         "psr/http-message": "^2.0",
         "psr/log": "^3.0",
-        "revolt/event-loop": "^1.0"
+        "revolt/event-loop": "^1.0",
+        "nyholm/psr7": "^1.8"
     },
     "require-dev": {
         "phpunit/phpunit" : "^10.4",

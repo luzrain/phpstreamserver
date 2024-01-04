@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server\Connection;
 
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
+use Luzrain\PhpRunner\Exception\EncodeTypeError;
+use Luzrain\PhpRunner\Exception\SendTypeError;
+use Luzrain\PhpRunner\Exception\TlsHandshakeException;
+use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
 use Revolt\EventLoop\Driver;
 
 final class TcpConnection implements ConnectionInterface
@@ -13,25 +16,15 @@ final class TcpConnection implements ConnectionInterface
     public const STATUS_CLOSING = 2;
     public const STATUS_CLOSED = 3;
 
-    public const READ_BUFFER_SIZE = 87380;
-
-    /**
-     * @var \WeakMap<self, array>
-     */
-    private static \WeakMap $connections;
-
-    /**
-     * Sets the maximum send buffer size for the current connection.
-     * OnBufferFull callback will be emitted When send buffer is full.
-     */
-    public int $maxSendBufferSize = 1048576;
-
     /**
      * @var resource
      */
     private readonly mixed $socket;
-    protected string $recvBuffer = '';
-    protected string $sendBuffer = '';
+    private \Generator|null $sendBufferLevel1 = null;
+    private string $sendBufferLevel2 = '';
+    private string $sendBufferCallbackId = '';
+    private string $onReadableCallbackId = '';
+    private int $status = self::STATUS_ESTABLISHED;
 
     private string $remoteAddress;
     private string $remoteIp;
@@ -40,39 +33,55 @@ final class TcpConnection implements ConnectionInterface
     private string $localIp;
     private int $localPort;
 
-    private string $onReadableCallbackId;
-    private string $onWritableCallbackId = '';
-    private int $status = self::STATUS_ESTABLISHED;
-    private bool $tlsHandshakeCompleted = false;
-
     // Statistics
     private int $bytesRead = 0;
     private int $bytesWritten = 0;
+    private int $requestsCount = 0;
+
+    /**
+     * @var \WeakMap<self, array>
+     */
+    private static \WeakMap $connections;
 
     /**
      * @param resource $socket
      * @param null|\Closure(self):void $onConnect
      * @param null|\Closure(self, string):void $onMessage
      * @param null|\Closure(self):void $onClose
-     * @param null|\Closure(self):void $onBufferDrain
-     * @param null|\Closure(self):void $onBufferFull
      * @param null|\Closure(self, int, string):void $onError
      */
     public function __construct(
         mixed $socket,
         private readonly Driver $eventLoop,
+        private readonly ProtocolInterface $protocol,
         private readonly bool $tls = false,
         private readonly \Closure|null $onConnect = null,
         private readonly \Closure|null $onMessage = null,
         private readonly \Closure|null $onClose = null,
-        private readonly \Closure|null $onBufferDrain = null,
-        private readonly \Closure|null $onBufferFull = null,
         private readonly \Closure|null $onError = null,
     ) {
-        $this->socket = \stream_socket_accept($socket, 0, $remoteAddress) ?: throw new PhpRunnerException('Socket creation error');
+        $clientSocket = \stream_socket_accept($socket, 0, $remoteAddress);
+        if ($clientSocket === false) {
+            if ($this->onError) {
+                ($this->onError)($this, self::CONNECT_FAIL, 'connection failed');
+            }
+            return;
+        }
+        $this->socket = $clientSocket;
         $this->remoteAddress = $remoteAddress;
-        $this->onReadableCallbackId = $this->eventLoop->onReadable($this->socket, $this->baseRead(...));
+
+        // TLS handshake
+        if ($this->tls) {
+            try {
+                $this->doTlsHandshake($this->socket);
+            } catch (TlsHandshakeException $e) {
+                $this->protocol->onException($this, $e);
+                throw $e;
+            }
+        }
+
         \stream_set_blocking($this->socket, false);
+        $this->onReadableCallbackId = $this->eventLoop->onReadable($this->socket, $this->baseRead(...));
 
         if ($this->onConnect !== null) {
             ($this->onConnect)($this);
@@ -84,172 +93,94 @@ final class TcpConnection implements ConnectionInterface
         //self::$connections[$this] = [];
     }
 
+    /**
+     * @param resource $socket
+     * @throws TlsHandshakeException
+     */
+    private function doTlsHandshake(mixed $socket): void
+    {
+        $error = '';
+        \set_error_handler(static function (int $type, string $message) use(&$error): bool {
+            $error = $message;
+            return true;
+        });
+        $tlsHandshakeCompleted = (bool) \stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_SERVER);
+        \restore_error_handler();
+        if (!$tlsHandshakeCompleted) {
+            throw new TlsHandshakeException($error);
+        }
+    }
+
     public function baseRead(string $id, mixed $socket): void
     {
-        // TLS handshake
-        if ($this->tls === true && $this->tlsHandshakeCompleted === false) {
-            if ($this->doTlsHandshake()) {
-                if ($this->sendBuffer !== '') {
-                    $this->onWritableCallbackId = $this->eventLoop->onWritable($socket, $this->baseWrite(...));
-                }
-            } else {
-                return;
-            }
-        }
-
-        $buffer = \fread($socket, self::READ_BUFFER_SIZE);
+        $recvBuffer = \fread($socket, self::READ_BUFFER_SIZE);
 
         // Check connection closed
-        if ($buffer === '' || $buffer === false) {
-            if (\feof($socket) || $buffer === false) {
-                $this->destroy();
-                return;
-            }
-        } else {
-            $this->recvBuffer .= $buffer;
-            $this->bytesRead += \strlen($buffer);
-        }
-
-        if ($this->onMessage !== null && $this->recvBuffer !== '') {
-            ($this->onMessage)($this, $this->recvBuffer);
-        }
-
-        // Clean receive buffer.
-        $this->recvBuffer = '';
-    }
-
-    public function baseWrite(string $id, mixed $socket): void
-    {
-        $len = \fwrite($socket, $this->sendBuffer, $this->tls ? 8192 : null);
-        if ($len === \strlen($this->sendBuffer)) {
-            $this->eventLoop->cancel($id);
-            $this->sendBuffer = '';
-            $this->bytesWritten += $len;
-            if ($this->onBufferDrain) {
-                ($this->onBufferDrain)($this);
-            }
-            if ($this->status === self::STATUS_CLOSING) {
-                $this->destroy();
-            }
-        } elseif ($len > 0) {
-            $this->sendBuffer = \substr($this->sendBuffer, $len);
-            $this->bytesWritten += $len;
-        } else {
-            //++self::$statistics['send_fail'];
+        if (\feof($socket) || $recvBuffer === false) {
             $this->destroy();
+            return;
+        }
+
+        $this->bytesRead += \strlen($recvBuffer);
+
+        try {
+            if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
+                $this->requestsCount++;
+                if ($this->onMessage !== null) {
+                    ($this->onMessage)($this, $package);
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->protocol->onException($this, $e);
         }
     }
 
-    private function doTlsHandshake(): bool
-    {
-        // Connection closed?
-        if (\feof($this->socket)) {
-            $this->destroy();
-            return false;
-        }
-
-        // @todo: deprecate ssl?
-        $type = STREAM_CRYPTO_METHOD_SSLv2_SERVER | STREAM_CRYPTO_METHOD_SSLv23_SERVER;
-        $ret = \stream_socket_enable_crypto($this->socket, true, $type);
-
-        if ($ret === false || 0 === $ret) {
-            $this->destroy();
-            return false;
-        }
-
-        $this->tlsHandshakeCompleted = true;
-        return true;
-    }
-
-
-    public function send(string|\Stringable $sendBuffer): bool
+    public function send(mixed $response): bool
     {
         if ($this->status === self::STATUS_CLOSING || $this->status === self::STATUS_CLOSED) {
             return false;
         }
 
-        $sendBuffer = (string) $sendBuffer;
-
-        if ($this->tls && !$this->tlsHandshakeCompleted) {
-            if ($this->sendBuffer !== '' && $this->isBufferFull()) {
-                //++self::$statistics['send_fail'];
-                return false;
-            }
-            $this->sendBuffer .= $sendBuffer;
-            $this->checkBufferWillFull();
-            return false;
+        try {
+            $this->sendBufferLevel1 = $this->protocol->encode($this, $response);
+            $this->sendBufferLevel2 = $this->sendBufferLevel1->current();
+            $this->eventLoop->onWritable($this->socket, $this->baseWrite(...));
+        } catch (EncodeTypeError $e) {
+            $typeError = new SendTypeError(self::class, $e->acceptType, $e->givenType);
+            $this->protocol->onException($this, $typeError);
+            throw $typeError;
         }
 
-        // Attempt to send data directly
-        if ($this->sendBuffer === '') {
-            if ($this->tls) {
-                $this->onWritableCallbackId = $this->eventLoop->onWritable($this->socket, $this->baseWrite(...));
-                $this->sendBuffer = $sendBuffer;
-                $this->checkBufferWillFull();
-                return false;
-            }
+        return true;
+    }
 
-            $len = \fwrite($this->socket, $sendBuffer);
-
-            // Send successful
-            if ($len === \strlen($sendBuffer)) {
-                $this->bytesWritten += $len;
-                return true;
-            }
-            // Send only part of the data
-            if ($len > 0) {
-                $this->sendBuffer = \substr($sendBuffer, $len);
-                $this->bytesWritten += $len;
+    private function baseWrite(string $id, mixed $socket): void
+    {
+        $len = \fwrite($socket, $this->sendBufferLevel2);
+        if ($len === \strlen($this->sendBufferLevel2)) {
+            if ($this->sendBufferLevel1->valid()) {
+                $this->sendBufferLevel1->next();
+                $this->sendBufferLevel2 = $this->sendBufferLevel1->current() ?? '';
             } else {
-                // Connection closed?
-                if (\feof($this->socket)) {
-                    //++self::$statistics['send_fail'];
+                $this->eventLoop->cancel($id);
+                $this->sendBufferLevel1 = null;
+                $this->sendBufferLevel2 = '';
+
+                if ($this->status === self::STATUS_CLOSING) {
                     $this->destroy();
-                    if ($this->onError) {
-                        ($this->onError)($this, static::SEND_FAIL, 'connection closed');
-                    }
-                    return false;
                 }
-                $this->sendBuffer = $sendBuffer;
             }
-            $this->onWritableCallbackId = $this->eventLoop->onWritable($this->socket, $this->baseWrite(...));
-            // Check if send buffer will be full.
-            $this->checkBufferWillFull();
-            return true;
-        }
-
-        if ($this->isBufferFull()) {
+            $this->bytesWritten += $len;
+        } elseif ($len > 0) {
+            $this->sendBufferLevel2 = \substr($this->sendBufferLevel2, $len);
+            $this->bytesWritten += $len;
+        } else {
             //++self::$statistics['send_fail'];
-            return false;
-        }
-
-        $this->sendBuffer .= $sendBuffer;
-        // Check if send buffer is full.
-        $this->checkBufferWillFull();
-        return false;
-    }
-
-    protected function isBufferFull(): bool
-    {
-        // Buffer has been marked as full but still has data to send then the packet is discarded.
-        if (\strlen($this->sendBuffer) >= $this->maxSendBufferSize) {
+            $this->eventLoop->cancel($id);
+            $this->destroy();
             if ($this->onError) {
-                ($this->onError)($this, self::SEND_FAIL, 'Send buffer full and drop package');
+                ($this->onError)($this, self::SEND_FAIL, 'connection closed');
             }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Check whether send buffer will be full.
-     *
-     * @return void
-     */
-    protected function checkBufferWillFull(): void
-    {
-        if ($this->onBufferFull && \strlen($this->sendBuffer) >= $this->maxSendBufferSize) {
-            ($this->onBufferFull)($this);
         }
     }
 
@@ -300,7 +231,10 @@ final class TcpConnection implements ConnectionInterface
         }
 
         $this->status = self::STATUS_CLOSING;
-        $this->sendBuffer === '' ? $this->destroy() : $this->eventLoop->disable($this->onReadableCallbackId);
+        $this->sendBufferLevel1 === null && $this->sendBufferLevel2 === ''
+            ? $this->destroy()
+            : $this->eventLoop->disable($this->onReadableCallbackId)
+        ;
     }
 
     private function destroy(): void
@@ -311,19 +245,17 @@ final class TcpConnection implements ConnectionInterface
 
         \fclose($this->socket);
         $this->eventLoop->cancel($this->onReadableCallbackId);
-        $this->eventLoop->cancel($this->onWritableCallbackId);
+        $this->eventLoop->cancel($this->sendBufferCallbackId);
         $this->status = self::STATUS_CLOSED;
-        $this->tlsHandshakeCompleted = false;
-        $this->sendBuffer = '';
-        $this->recvBuffer = '';
-
-        if ($this->onClose !== null) {
-            ($this->onClose)($this);
-        }
+        $this->sendBufferLevel1 = null;
+        $this->sendBufferLevel2 = '';
     }
 
     public function __destruct()
     {
         //self::$statistics['connection_count']--;
+        if ($this->onClose !== null) {
+            ($this->onClose)($this);
+        }
     }
 }

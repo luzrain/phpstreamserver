@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Internal;
 
+use Luzrain\PhpRunner\Exception\HttpException;
+use Luzrain\PhpRunner\Exception\TlsHandshakeException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
@@ -67,14 +69,18 @@ final class ErrorHandler
 
     public static function handleException(\Throwable $exception): void
     {
-        register_shutdown_function(register_shutdown_function(...), fn () => exit(255));
-
         $message = match (true) {
             $exception instanceof \Error => 'Uncaught Error: ' . $exception->getMessage(),
             $exception instanceof \ErrorException => 'Uncaught: ' . $exception->getMessage(),
             default => 'Uncaught Exception: ' . $exception->getMessage(),
         };
 
-        self::$logger->critical($message, ['exception' => $exception]);
+        $level = match ($exception::class) {
+            TlsHandshakeException::class => LogLevel::WARNING,
+            HttpException::class => LogLevel::INFO,
+            default => LogLevel::CRITICAL,
+        };
+
+        self::$logger->log($level, $message, ['exception' => $exception]);
     }
 }

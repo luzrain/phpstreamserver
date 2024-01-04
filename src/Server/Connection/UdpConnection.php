@@ -34,9 +34,9 @@ final class UdpConnection implements ConnectionInterface
         //ConnectionInterface::$statistics['total_request']++;
     }
 
-    public function send(string|\Stringable $sendBuffer): bool
+    public function send(mixed $response): bool
     {
-        return \stream_socket_sendto($this->socket, (string) $sendBuffer, 0, $this->getRemoteAddress()) !== false;
+        return \stream_socket_sendto($this->socket, (string) $response, 0, $this->getRemoteAddress()) !== false;
     }
 
     public function getRemoteAddress(): string
