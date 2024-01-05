@@ -372,7 +372,7 @@ final class MasterProcess
             $status = \unserialize($data);
         } else {
             $status = new MasterProcessStatus(
-                pid: 0,
+                pid: null,
                 user: Functions::getCurrentUser(),
                 memory: 0,
                 startedAt: null,

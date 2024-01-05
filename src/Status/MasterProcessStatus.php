@@ -27,7 +27,7 @@ final readonly class MasterProcessStatus implements \JsonSerializable
      * @param list<WorkerProcessStatus> $processes
      */
     public function __construct(
-        public int $pid,
+        public int|null $pid,
         public string $user,
         public int $memory,
         public \DateTimeImmutable|null $startedAt,
