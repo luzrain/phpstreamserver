@@ -10,5 +10,5 @@ interface Command
 
     public function getUsageExample(): string;
 
-    public function run(array $arguments): void;
+    public function run(array $arguments): int;
 }

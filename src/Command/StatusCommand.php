@@ -26,7 +26,7 @@ final class StatusCommand implements Command
         return '%php_bin% %start_file% status';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         $status = $this->masterProcess->getStatus();
 
@@ -46,5 +46,7 @@ final class StatusCommand implements Command
                 ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],
                 ['Memory usage:', $status->totalMemory > 0 ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
             ]);
+
+        return 0;
     }
 }

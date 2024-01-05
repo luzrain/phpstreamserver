@@ -26,7 +26,7 @@ final class WorkersCommand implements Command
         return '%php_bin% %start_file% workers';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         $status = $this->masterProcess->getStatus();
 
@@ -45,5 +45,7 @@ final class WorkersCommand implements Command
                 $w->count,
                 '-',
             ]));
+
+        return 0;
     }
 }

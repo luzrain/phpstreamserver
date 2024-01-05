@@ -24,8 +24,10 @@ final class ReloadCommand implements Command
         return '%php_bin% %start_file% reload';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         $this->masterProcess->reload();
+
+        return 0;
     }
 }

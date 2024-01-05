@@ -24,8 +24,10 @@ final class StopCommand implements Command
         return '%php_bin% %start_file% stop';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         $this->masterProcess->stop();
+
+        return 0;
     }
 }

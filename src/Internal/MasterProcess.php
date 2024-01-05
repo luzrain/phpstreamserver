@@ -57,16 +57,16 @@ final class MasterProcess
         $this->pipeFile = sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
     }
 
-    public function run(bool $daemonize = false): never
+    public function run(bool $daemonize = false): int
     {
         if ($this->isRunning()) {
             $this->logger->error('Master process already running');
-            exit(1);
+            return 1;
         }
 
         if ($daemonize && $this->daemonize()) {
             // Runs in caller process
-            exit(0);
+            return 0;
         } elseif ($daemonize) {
             // Runs in daemonized process
             StdoutHandler::reset();
@@ -87,7 +87,7 @@ final class MasterProcess
             $this->onMasterShutdown();
         }
 
-        exit($exitCode);
+        return $exitCode;
     }
 
     // Runs in master process

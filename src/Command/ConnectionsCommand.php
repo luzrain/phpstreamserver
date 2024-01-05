@@ -22,8 +22,10 @@ final class ConnectionsCommand implements Command
         return '%php_bin% %start_file% connections';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         echo "TODO\n";
+
+        return 0;
     }
 }

@@ -23,34 +23,34 @@ final class PhpRunner
     public const VERSION_STRING = 'phprunner/' . self::VERSION;
 
     private WorkerPool $pool;
+    private MasterProcess $masterProcess;
 
     public function __construct(
-        private readonly Config $config = new Config(),
-        private LoggerInterface|null $logger = null,
+        Config $config = new Config(),
+        LoggerInterface|null $logger = null,
     ) {
-        $this->logger ??= new Logger($this->config->logFile);
+        $logger ??= new Logger($config->logFile);
         $this->pool = new WorkerPool();
+        $this->masterProcess = new MasterProcess($this->pool, $config, $logger);
     }
 
-    public function addWorker(WorkerProcess ...$workers): self
+    public function addWorkers(WorkerProcess ...$workers): self
     {
         \array_walk($workers, $this->pool->addWorker(...));
 
         return $this;
     }
 
-    public function run(): never
+    public function run(string $cmd = ''): int
     {
-        $masterProcess = new MasterProcess($this->pool, $this->config, $this->logger);
-
-        (new App(
-            new StartCommand($masterProcess),
-            new StopCommand($masterProcess),
-            new ReloadCommand($masterProcess),
-            new StatusCommand($masterProcess),
-            new WorkersCommand($masterProcess),
-            new ProcessesCommand($masterProcess),
+        return (new App(
+            new StartCommand($this->masterProcess),
+            new StopCommand($this->masterProcess),
+            new ReloadCommand($this->masterProcess),
+            new StatusCommand($this->masterProcess),
+            new WorkersCommand($this->masterProcess),
+            new ProcessesCommand($this->masterProcess),
             new ConnectionsCommand(),
-        ))->run();
+        ))->run($cmd);
     }
 }

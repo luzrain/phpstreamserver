@@ -27,7 +27,7 @@ final class ProcessesCommand implements Command
         return '%php_bin% %start_file% processes';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         $status = $this->masterProcess->getStatus();
 
@@ -54,5 +54,7 @@ final class ProcessesCommand implements Command
         } else {
             echo "  <color;fg=yellow>There are no running processes</>\n";
         }
+
+        return 0;
     }
 }

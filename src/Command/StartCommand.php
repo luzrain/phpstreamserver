@@ -26,7 +26,7 @@ final class StartCommand implements Command
         return '%php_bin% %start_file% start [--daemon]';
     }
 
-    public function run(array $arguments): void
+    public function run(array $arguments): int
     {
         $isDaemon = \in_array('-d', $arguments) || \in_array('--daemon', $arguments);
         $status = $this->masterProcess->getStatus();
@@ -64,6 +64,6 @@ final class StartCommand implements Command
             echo "Press Ctrl+C to stop.\n";
         }
 
-        $this->masterProcess->run($isDaemon);
+        return $this->masterProcess->run($isDaemon);
     }
 }

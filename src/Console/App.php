@@ -15,24 +15,24 @@ final class App
         $this->commands = $commands;
     }
 
-    public function run(string $cmd = ''): never
+    public function run(string $cmd = ''): int
     {
         [$option, $arguments] = $this->parseCommand($cmd);
 
         if (\in_array('-h', $arguments) || \in_array('--help', $arguments)) {
             $this->showHelp();
-            exit(0);
+            return 0;
         }
 
         foreach ($this->commands as $command) {
             if ($command->getOption() === $option) {
                 $command->run($arguments);
-                exit(0);
+                return 0;
             }
         }
 
         $this->showHelp();
-        exit(0);
+        return 0;
     }
 
     /**
