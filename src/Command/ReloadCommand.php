@@ -14,14 +14,14 @@ final class ReloadCommand implements Command
     ) {
     }
 
-    public function getOption(): string
+    public function getCommand(): string
     {
         return 'reload';
     }
 
-    public function getUsageExample(): string
+    public function getHelp(): string
     {
-        return '%php_bin% %start_file% reload';
+        return 'Reload server';
     }
 
     public function run(array $arguments): int

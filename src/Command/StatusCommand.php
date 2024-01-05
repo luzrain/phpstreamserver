@@ -16,14 +16,14 @@ final class StatusCommand implements Command
     ) {
     }
 
-    public function getOption(): string
+    public function getCommand(): string
     {
         return 'status';
     }
 
-    public function getUsageExample(): string
+    public function getHelp(): string
     {
-        return '%php_bin% %start_file% status';
+        return 'Show server status';
     }
 
     public function run(array $arguments): int

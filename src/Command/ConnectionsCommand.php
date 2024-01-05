@@ -12,14 +12,14 @@ final class ConnectionsCommand implements Command
     {
     }
 
-    public function getOption(): string
+    public function getCommand(): string
     {
         return 'connections';
     }
 
-    public function getUsageExample(): string
+    public function getHelp(): string
     {
-        return '%php_bin% %start_file% connections';
+        return 'Show active connections';
     }
 
     public function run(array $arguments): int

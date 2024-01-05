@@ -16,14 +16,14 @@ final class WorkersCommand implements Command
     ) {
     }
 
-    public function getOption(): string
+    public function getCommand(): string
     {
         return 'workers';
     }
 
-    public function getUsageExample(): string
+    public function getHelp(): string
     {
-        return '%php_bin% %start_file% workers';
+        return 'Show workers status';
     }
 
     public function run(array $arguments): int

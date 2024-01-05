@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Console;
 
+/**
+ * @internal
+ */
 final class Table implements \Stringable
 {
     public const SEPARATOR = '%SEPARATOR%';

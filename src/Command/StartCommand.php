@@ -16,14 +16,14 @@ final class StartCommand implements Command
     ) {
     }
 
-    public function getOption(): string
+    public function getCommand(): string
     {
         return 'start';
     }
 
-    public function getUsageExample(): string
+    public function getHelp(): string
     {
-        return '%php_bin% %start_file% start [--daemon]';
+        return 'Start server';
     }
 
     public function run(array $arguments): int
@@ -32,7 +32,6 @@ final class StartCommand implements Command
         $status = $this->masterProcess->getStatus();
 
         echo "❯ PHPRunner - PHP application server\n";
-
         echo (new Table(indent: 1))
             ->addRows([
                 ['PHP version:', $status->phpVersion],
@@ -41,8 +40,8 @@ final class StartCommand implements Command
                 ['Workers count:', $status->workersCount],
             ])
         ;
-        echo "❯ Workers\n";
 
+        echo "❯ Workers\n";
         echo (new Table(indent: 1))
             ->setHeaderRow([
                 'User',

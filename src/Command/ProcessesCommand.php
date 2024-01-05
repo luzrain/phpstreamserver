@@ -17,14 +17,14 @@ final class ProcessesCommand implements Command
     ) {
     }
 
-    public function getOption(): string
+    public function getCommand(): string
     {
         return 'processes';
     }
 
-    public function getUsageExample(): string
+    public function getHelp(): string
     {
-        return '%php_bin% %start_file% processes';
+        return 'Show processes status';
     }
 
     public function run(array $arguments): int

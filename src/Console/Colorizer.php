@@ -43,6 +43,14 @@ final class Colorizer
     }
 
     /**
+     * Remove colorize tags
+     */
+    public static function stripTags(string $string): string
+    {
+        return \preg_replace('/<color;.+?>([^<>]*)<\/(?:color)?>/', "$1", $string);
+    }
+
+    /**
      * Colorize string in terminal. Usage: <color;fg=green>green text</>
      */
     public static function colorize(string $string): string
@@ -69,6 +77,6 @@ final class Colorizer
             $string = \substr_replace($string, $formattedString, $pos, $len);
         }
 
-        return $string;
+        return self::stripTags($string);
     }
 }

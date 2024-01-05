@@ -52,8 +52,8 @@ final class StdoutHandler
         \ob_start(static function (string $chunk, int $phase) use ($hasColorSupport, $stream) : string {
             $isWrite = ($phase & \PHP_OUTPUT_HANDLER_WRITE) === \PHP_OUTPUT_HANDLER_WRITE;
             if ($isWrite && $chunk !== '') {
-                $text = $hasColorSupport ? Colorizer::colorize($chunk) : $chunk;
-                \fwrite($stream, \strip_tags($text));
+                $text = $hasColorSupport ? Colorizer::colorize($chunk) : Colorizer::stripTags($chunk);
+                \fwrite($stream, $text);
                 \fflush($stream);
             }
 
