@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner;
 
 use Luzrain\PhpRunner\Command\ConnectionsCommand;
+use Luzrain\PhpRunner\Command\StatusJsonCommand;
 use Luzrain\PhpRunner\Command\ProcessesCommand;
 use Luzrain\PhpRunner\Command\ReloadCommand;
 use Luzrain\PhpRunner\Command\StartCommand;
@@ -50,7 +51,8 @@ final class PhpRunner
             new StatusCommand($this->masterProcess),
             new WorkersCommand($this->masterProcess),
             new ProcessesCommand($this->masterProcess),
-            new ConnectionsCommand(),
+            new ConnectionsCommand($this->masterProcess),
+            new StatusJsonCommand($this->masterProcess),
         ))->run($cmd);
     }
 }

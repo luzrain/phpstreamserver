@@ -7,7 +7,7 @@ namespace Luzrain\PhpRunner\Command;
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Internal\MasterProcess;
 
-final class ConnectionsCommand implements Command
+final class StatusJsonCommand implements Command
 {
     public function __construct(
         private MasterProcess $masterProcess,
@@ -16,17 +16,18 @@ final class ConnectionsCommand implements Command
 
     public function getCommand(): string
     {
-        return 'connections';
+        return 'status-json';
     }
 
     public function getHelp(): string
     {
-        return 'Show active connections';
+        return 'Print status info in json format';
     }
 
     public function run(array $arguments): int
     {
-        echo "TODO\n";
+        $status = $this->masterProcess->getStatus();
+        echo \json_encode($status);
 
         return 0;
     }

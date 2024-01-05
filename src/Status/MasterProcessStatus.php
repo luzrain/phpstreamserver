@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Status;
 
+use Luzrain\PhpRunner\Internal\JsonSerializible;
 use Luzrain\PhpRunner\PhpRunner;
 use Revolt\EventLoop\DriverFactory;
 
 /**
  * @internal
  */
-final readonly class MasterProcessStatus
+final readonly class MasterProcessStatus implements \JsonSerializable
 {
+    use JsonSerializible;
+
     public string $phpVersion;
     public string $phpRunnerVersion;
     public string $eventLoop;
@@ -39,13 +42,7 @@ final readonly class MasterProcessStatus
         $this->phpVersion = PHP_VERSION;
         $this->phpRunnerVersion = PhpRunner::VERSION;
         $this->eventLoop = $eventLoopName;
-
-        $totalMemory = $this->memory;
-        foreach ($processes as $process) {
-            $totalMemory += $process->memory;
-        }
-        $this->totalMemory = $totalMemory;
-
+        $this->totalMemory = \array_sum(\array_map(fn(WorkerProcessStatus $p) => $p->memory, $this->processes));
         $this->workersCount = \count($this->workers);
         $this->processesCount = \count($this->processes);
     }
