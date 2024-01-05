@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Internal;
 
-use Luzrain\PhpRunner\Config;
 use Luzrain\PhpRunner\Console\StdoutHandler;
 use Luzrain\PhpRunner\Exception\PhpRunnerException;
 use Luzrain\PhpRunner\Status\MasterProcessStatus;
@@ -36,8 +35,9 @@ final class MasterProcess
     private int $exitCode = 0;
 
     public function __construct(
+        string|null $pidFile,
+        private readonly int $stopTimeout,
         private WorkerPool $pool,
-        private readonly Config $config,
         private readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'])) {
@@ -53,7 +53,7 @@ final class MasterProcess
 
         self::$registered = true;
         $this->startFile = Functions::getStartFile();
-        $this->pidFile = $this->config->pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
+        $this->pidFile = $pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
         $this->pipeFile = sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
     }
 
@@ -262,11 +262,11 @@ final class MasterProcess
         foreach ($this->pool->getAlivePids() as $pid) {
             \posix_kill($pid, SIGTERM);
         }
-        $this->eventLoop->delay($this->config->stopTimeout, function () {
+        $this->eventLoop->delay($this->stopTimeout, function () {
             foreach ($this->pool->getAlivePids() as $pid) {
                 \posix_kill($pid, SIGKILL);
                 $worker = $this->pool->getWorkerByPid($pid);
-                $this->logger->notice(sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->config->stopTimeout));
+                $this->logger->notice(sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
             }
             $this->suspension->resume();
         });

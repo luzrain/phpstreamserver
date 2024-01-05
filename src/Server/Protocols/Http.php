@@ -90,7 +90,7 @@ final class Http implements ProtocolInterface
         }
         $msg .= "\r\n";
 
-        if ($response->getBody()->getSize() <= $connection) {
+        if (($response->getBody()->getSize() ?? 0) <= $connection::WRITE_BUFFER_SIZE) {
             $msg .= $response->getBody()->getContents();
             yield $msg;
         } else {

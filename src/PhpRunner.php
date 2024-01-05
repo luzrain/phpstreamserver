@@ -27,12 +27,33 @@ final class PhpRunner
     private MasterProcess $masterProcess;
 
     public function __construct(
-        Config $config = new Config(),
+        /**
+         * Defines a file that will store the process ID of the main process.
+         */
+        string|null $pidFile = null,
+
+        /**
+         * Defines a file that will store logs. Only works with default logger.
+         */
+        string|null $logFile = null,
+
+        /**
+         * Timeout in seconds that master process will be waiting before force kill child processes after sending stop command.
+         */
+        public int $stopTimeout = 3,
+
+        /**
+         * PSR-3 compatible logger
+         */
         LoggerInterface|null $logger = null,
     ) {
-        $logger ??= new Logger($config->logFile);
         $this->pool = new WorkerPool();
-        $this->masterProcess = new MasterProcess($this->pool, $config, $logger);
+        $this->masterProcess = new MasterProcess(
+            pidFile: $pidFile,
+            stopTimeout: $this->stopTimeout,
+            pool: $this->pool,
+            logger: $logger ?? new Logger($logFile),
+        );
     }
 
     public function addWorkers(WorkerProcess ...$workers): self
