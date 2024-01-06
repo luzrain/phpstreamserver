@@ -26,14 +26,13 @@ abstract class ServerTestCase extends TestCase
      * @param resource $fd
      * @param int $length Up to length number of bytes read
      * @param int $timeout Timeout in seconds
-     * @return string
      */
     protected function fread(mixed $fd, int $length = 102400, int $timeout = 1): string
     {
         $eventLoop = new StreamSelectDriver();
         $suspension = $eventLoop->getSuspension();
-        $eventLoop->onReadable($fd, fn () => $suspension->resume(\fread($fd, $length)));
-        $eventLoop->delay($timeout, fn () => $suspension->resume(false));
+        $eventLoop->onReadable($fd, fn() => $suspension->resume(\fread($fd, $length)));
+        $eventLoop->delay($timeout, fn() => $suspension->resume(false));
 
         if ($data = $suspension->suspend()) {
             return $data;

@@ -10,7 +10,7 @@ final class TlsHandshakeException extends \Exception
     {
         if ($message === '') {
             $message = 'SSL handshake error';
-        } else if (\str_ends_with($message, 'http request')) {
+        } elseif (\str_ends_with($message, 'http request')) {
             $message = 'The plain HTTP request was sent to HTTPS port';
         } else {
             $message = \ltrim(\str_replace('stream_socket_enable_crypto():', '', $message));

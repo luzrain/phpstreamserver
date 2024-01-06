@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner;
 
 use Luzrain\PhpRunner\Command\ConnectionsCommand;
-use Luzrain\PhpRunner\Command\StatusJsonCommand;
 use Luzrain\PhpRunner\Command\ProcessesCommand;
 use Luzrain\PhpRunner\Command\ReloadCommand;
 use Luzrain\PhpRunner\Command\StartCommand;
 use Luzrain\PhpRunner\Command\StatusCommand;
+use Luzrain\PhpRunner\Command\StatusJsonCommand;
 use Luzrain\PhpRunner\Command\StopCommand;
 use Luzrain\PhpRunner\Command\WorkersCommand;
 use Luzrain\PhpRunner\Console\App;

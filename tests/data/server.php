@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 include __DIR__ . '/../../vendor/autoload.php';
 
+use Luzrain\PhpRunner\Exception\HttpException;
 use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Protocols\Http;
 use Luzrain\PhpRunner\Server\Protocols\Text;
 use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
-use Luzrain\PhpRunner\Exception\HttpException;
 
 $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(

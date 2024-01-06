@@ -294,7 +294,7 @@ final class MasterProcess
 
     private function getPid(): int
     {
-        return \is_file($this->pidFile) ? (int)\file_get_contents($this->pidFile) : 0;
+        return \is_file($this->pidFile) ? (int) \file_get_contents($this->pidFile) : 0;
     }
 
     private function isRunning(): bool
@@ -335,7 +335,7 @@ final class MasterProcess
             unset($pids, $callbackIds, $data, $fallbackId);
         });
 
-        \array_walk($pids, fn ($pid) => \posix_kill($pid, SIGUSR1));
+        \array_walk($pids, fn($pid) => \posix_kill($pid, SIGUSR1));
     }
 
     /**
@@ -350,7 +350,7 @@ final class MasterProcess
             startedAt: $this->startedAt,
             isRunning: $this->isRunning(),
             startFile: $this->startFile,
-            workers: \array_map(fn (WorkerProcess $worker) => new WorkerStatus(
+            workers: \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
                 user: $worker->user ?? Functions::getCurrentUser(),
                 name: $worker->name,
                 count: $worker->count,
@@ -378,7 +378,7 @@ final class MasterProcess
                 startedAt: null,
                 isRunning: false,
                 startFile: $this->startFile,
-                workers: \array_map(fn (WorkerProcess $worker) => new WorkerStatus(
+                workers: \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
                     user: $worker->user ?? Functions::getCurrentUser(),
                     name: $worker->name,
                     count: $worker->count,

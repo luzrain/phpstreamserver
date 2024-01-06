@@ -70,7 +70,7 @@ final class Http implements ProtocolInterface
         $msg = 'HTTP/' . $version . ' ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase() . "\r\n";
         if ($this->shouldClose()) {
             $response = $response->withHeader('Connection', 'close');
-        } else if(!$response->hasHeader('Connection') && $this->psrRequest?->hasHeader('Connection') ?? false) {
+        } elseif(!$response->hasHeader('Connection') && $this->psrRequest?->hasHeader('Connection') ?? false) {
             $response = $response->withHeader('Connection', $this->psrRequest->getHeaderLine('Connection'));
         }
         if (!$response->hasHeader('Server')) {

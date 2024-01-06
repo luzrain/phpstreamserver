@@ -40,7 +40,7 @@ final class StdoutHandler
     {
         self::$isRegistered = false;
         \ob_end_clean();
-        \ob_start(static fn () => '', 1);
+        \ob_start(static fn() => '', 1);
     }
 
     /**
@@ -49,7 +49,7 @@ final class StdoutHandler
     private static function restreamOutputBuffer(mixed $stream): void
     {
         $hasColorSupport = Colorizer::hasColorSupport($stream);
-        \ob_start(static function (string $chunk, int $phase) use ($hasColorSupport, $stream) : string {
+        \ob_start(static function (string $chunk, int $phase) use ($hasColorSupport, $stream): string {
             $isWrite = ($phase & \PHP_OUTPUT_HANDLER_WRITE) === \PHP_OUTPUT_HANDLER_WRITE;
             if ($isWrite && $chunk !== '') {
                 $text = $hasColorSupport ? Colorizer::colorize($chunk) : Colorizer::stripTags($chunk);

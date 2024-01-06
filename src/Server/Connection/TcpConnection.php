@@ -100,7 +100,7 @@ final class TcpConnection implements ConnectionInterface
     private function doTlsHandshake(mixed $socket): void
     {
         $error = '';
-        \set_error_handler(static function (int $type, string $message) use(&$error): bool {
+        \set_error_handler(static function (int $type, string $message) use (&$error): bool {
             $error = $message;
             return true;
         });

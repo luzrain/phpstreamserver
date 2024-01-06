@@ -40,8 +40,6 @@ final class ErrorHandler
     }
 
     /**
-     * @param LoggerInterface $logger
-     * @return void
      */
     public static function register(LoggerInterface $logger): void
     {

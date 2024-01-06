@@ -29,7 +29,7 @@ final class Logger implements LoggerInterface
 
     public function log(mixed $level, string|\Stringable $message, array $context = []): void
     {
-        $message = $this->format((string)$level, (string)$message, $context);
+        $message = $this->format((string) $level, (string) $message, $context);
 
         echo $message . "\n";
 

@@ -21,7 +21,7 @@ final class App
 
         // Supress any output
         if (\in_array('-q', $arguments) || \in_array('--quiet', $arguments)) {
-            \ob_start(static fn () => '', 1);
+            \ob_start(static fn() => '', 1);
         }
 
         // Force show help
@@ -43,7 +43,6 @@ final class App
     }
 
     /**
-     * @param string $cmd
      * @return array{string, array}
      */
     private function parseCommand(string $cmd): array
@@ -71,7 +70,7 @@ final class App
             ['<color;fg=green>-d, --daemon</>', 'Run in daemon mode'],
         ]);
         echo "<color;fg=yellow>Commands:</>\n";
-        echo (new Table(indent: 1))->addRows(array_map(array: $this->commands, callback: function(Command $command) {
+        echo (new Table(indent: 1))->addRows(array_map(array: $this->commands, callback: function (Command $command) {
             return ["<color;fg=green>{$command->getCommand()}</>", $command->getHelp()];
         }));
     }
