@@ -38,4 +38,9 @@ final class HttpException extends \Exception
             ->withBody(Stream::create((string) $errorPage))
         ;
     }
+
+    public static function createNotFoundException(): self
+    {
+        return new self(404);
+    }
 }

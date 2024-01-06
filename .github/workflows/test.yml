@@ -29,3 +29,6 @@ jobs:
 
       - name: Composer install
         run: composer install
+
+      - name: Run tests
+        run: composer exec phpunit
