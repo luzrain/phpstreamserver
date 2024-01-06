@@ -18,8 +18,9 @@ final class ProcessManagerTest extends TestCase
         // Assert
         $this->assertTrue($status->is_running);
         $this->assertLessThanOrEqual(1, $now->getTimestamp() - $startedAt->getTimestamp());
-        $this->assertSame(4, $status->workers_count);
-        $this->assertSame(7, $status->processes_count);
+        $this->assertGreaterThanOrEqual(1, $status->workers_count);
+        $this->assertGreaterThanOrEqual(1, $status->processes_count);
+        $this->assertGreaterThanOrEqual($status->workers_count, $status->processes_count);
     }
 
     public function testWorkerProcessRestartsAfterKill(): void

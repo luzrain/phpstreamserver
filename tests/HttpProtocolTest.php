@@ -7,9 +7,8 @@ namespace Luzrain\PhpRunner\Test;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7\MultipartStream;
-use PHPUnit\Framework\TestCase;
 
-final class HttpServerTest extends TestCase
+final class HttpProtocolTest extends ServerTestCase
 {
     private static Client $client;
 

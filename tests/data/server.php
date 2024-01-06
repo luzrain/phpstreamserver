@@ -5,6 +5,7 @@ include __DIR__ . '/../../vendor/autoload.php';
 use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Protocols\Http;
+use Luzrain\PhpRunner\Server\Protocols\Text;
 use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
 use Luzrain\PhpRunner\Exception\HttpException;
@@ -12,15 +13,15 @@ use Luzrain\PhpRunner\Exception\HttpException;
 $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(
     new WorkerProcess(
-        name: 'Worker1',
+        name: 'Worker 1',
         count: 1,
     ),
     new WorkerProcess(
-        name: 'Worker2',
+        name: 'Worker 2',
         count: 2,
     ),
     new WorkerProcess(
-        name: 'Worker3-Server',
+        name: 'HTTP Server',
         count: 2,
         server: new Server(
             listen: 'tcp://0.0.0.0:9080',
@@ -51,8 +52,8 @@ $phpRunner->addWorkers(
         ),
     ),
     new WorkerProcess(
-        name: 'Worker4-TLS-Server',
-        count: 2,
+        name: 'HTTPS Server',
+        count: 1,
         server: new Server(
             listen: 'tcp://0.0.0.0:9081',
             tls: true,
@@ -64,6 +65,28 @@ $phpRunner->addWorkers(
                     headers: ['Content-Type' => 'text/plain'],
                     body: 'ok-answer-tls',
                 ));
+            },
+        ),
+    ),
+    new WorkerProcess(
+        name: 'TCP TEXT Server',
+        count: 1,
+        server: new Server(
+            listen: 'tcp://0.0.0.0:9082',
+            protocol: new Text(),
+            onMessage: function (ConnectionInterface $connection, string $data): void {
+                $connection->send('echo:' . $data);
+            },
+        ),
+    ),
+    new WorkerProcess(
+        name: 'UDP TEXT Server',
+        count: 1,
+        server: new Server(
+            listen: 'udp://0.0.0.0:9083',
+            protocol: new Text(),
+            onMessage: function (ConnectionInterface $connection, string $data): void {
+                $connection->send('echo:' . $data);
             },
         ),
     ),

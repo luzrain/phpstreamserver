@@ -6,6 +6,7 @@ namespace Luzrain\PhpRunner\Internal;
 
 use Luzrain\PhpRunner\Exception\HttpException;
 use Luzrain\PhpRunner\Exception\TlsHandshakeException;
+use Luzrain\PhpRunner\Exception\TooLargePayload;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
@@ -76,8 +77,7 @@ final class ErrorHandler
         };
 
         $level = match ($exception::class) {
-            TlsHandshakeException::class => LogLevel::WARNING,
-            HttpException::class => LogLevel::INFO,
+            TlsHandshakeException::class, TooLargePayload::class, HttpException::class => LogLevel::NOTICE,
             default => LogLevel::CRITICAL,
         };
 

@@ -26,7 +26,8 @@
         "phpunit/phpunit" : "^10.4",
         "friendsofphp/php-cs-fixer": "^3.38",
         "vimeo/psalm": "^5.15",
-        "guzzlehttp/guzzle": "^7.8"
+        "guzzlehttp/guzzle": "^7.8",
+        "symfony/var-dumper": "^6.4"
     },
     "autoload": {
         "psr-4": {
