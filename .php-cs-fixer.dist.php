@@ -1,10 +1,5 @@
 <?php
 
-$finder = PhpCsFixer\Finder::create()
-    ->in(__DIR__ . '/src')
-    ->in(__DIR__ . '/tests')
-;
-
 $rules = [
     // Rules that follow PSR-12 standard.
     '@PER-CS2.0' => true,
@@ -68,11 +63,20 @@ $rules = [
 
     // Empty body of class, interface, trait, enum or function must be abbreviated as {} and placed on the same line
     'single_line_empty_body' => false,
+
+    'native_function_invocation' => [
+        'include' => ['@all'],
+        'scope' => 'all',
+        'strict' => true,
+    ],
 ];
 
 return (new PhpCsFixer\Config())
     ->setCacheFile(__DIR__ . '/var/.php-cs-fixer.cache')
-    ->setFinder($finder)
+    ->setFinder(PhpCsFixer\Finder::create()
+        ->in(__DIR__ . '/src')
+        ->in(__DIR__ . '/tests')
+    )
     ->setRules($rules)
     ->setRiskyAllowed(true)
     ;

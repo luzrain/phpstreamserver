@@ -23,7 +23,7 @@ final class WorkerPool
 
     public function addWorker(WorkerProcess $worker): void
     {
-        $this->pool[spl_object_id($worker)] = $worker;
+        $this->pool[\spl_object_id($worker)] = $worker;
         $this->pidMap[$worker] = [];
     }
 
@@ -32,7 +32,7 @@ final class WorkerPool
      */
     public function addChild(WorkerProcess $worker, int $pid, mixed $socket): void
     {
-        if (!isset($this->pool[spl_object_id($worker)])) {
+        if (!isset($this->pool[\spl_object_id($worker)])) {
             throw new PhpRunnerException('Worker is not fount in pool');
         }
 
@@ -46,7 +46,7 @@ final class WorkerPool
         $pids = $this->pidMap[$worker];
         unset($pids[\array_search($pid, $pids)]);
         $this->pidMap[$worker] = \array_values($pids);
-        fclose($this->socketMap[$pid]);
+        \fclose($this->socketMap[$pid]);
         unset($this->socketMap[$pid]);
     }
 
@@ -58,7 +58,7 @@ final class WorkerPool
             }
         }
 
-        throw new PhpRunnerException(sprintf('No workers found associated with %d pid', $pid));
+        throw new PhpRunnerException(\sprintf('No workers found associated with %d pid', $pid));
     }
 
     /**

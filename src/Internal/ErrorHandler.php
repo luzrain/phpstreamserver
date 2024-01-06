@@ -53,7 +53,7 @@ final class ErrorHandler
      */
     public static function handleError(int $type, string $message, string $file, int $line): bool
     {
-        $logMessage = sprintf("%s: %s", self::ERRORS[$type][0], $message);
+        $logMessage = \sprintf("%s: %s", self::ERRORS[$type][0], $message);
         $errorAsException = new \ErrorException($logMessage, 0, $type, $file, $line);
         $level = self::ERRORS[$type][1];
 

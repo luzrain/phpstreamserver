@@ -45,7 +45,7 @@ final class Table implements \Stringable
         if ($row === self::SEPARATOR) {
             $this->data[$this->rowIndex] = self::SEPARATOR;
         } else {
-            foreach (array_values($row) as $col => $content) {
+            foreach (\array_values($row) as $col => $content) {
                 $this->data[$this->rowIndex][$col] = (string) $content;
             }
         }
@@ -59,7 +59,7 @@ final class Table implements \Stringable
         $this->calculateColumnWidth();
         $output = '';
         foreach ($this->data as $y => $row) {
-            $output .= str_repeat(' ', $this->indent);
+            $output .= \str_repeat(' ', $this->indent);
             if ($row === self::SEPARATOR) {
                 $output .= $this->getSeparator();
             } else {
@@ -81,10 +81,10 @@ final class Table implements \Stringable
 
     private function getSeparator(): string
     {
-        $output = str_repeat(' ', $this->indent);
-        $columnCount = count($this->data[0]);
+        $output = \str_repeat(' ', $this->indent);
+        $columnCount = \count($this->data[0]);
         for ($index = 0; $index < $columnCount; $index++) {
-            $output .= str_pad('-', $this->columnWidths[$index] + 2, '-');
+            $output .= \str_pad('-', $this->columnWidths[$index] + 2, '-');
         }
 
         return $output;
@@ -92,10 +92,10 @@ final class Table implements \Stringable
 
     private function getCellOutput(int $index, array $row): string
     {
-        $tagsLen = strlen($row[$index]) - strlen(strip_tags($row[$index]));
-        $output = str_pad($row[$index], $this->columnWidths[$index] + $tagsLen, ' ');
+        $tagsLen = \strlen($row[$index]) - \strlen(\strip_tags($row[$index]));
+        $output = \str_pad($row[$index], $this->columnWidths[$index] + $tagsLen, ' ');
 
-        return sprintf(' %s ', $output);
+        return \sprintf(' %s ', $output);
     }
 
     private function calculateColumnWidth(): void
@@ -105,10 +105,10 @@ final class Table implements \Stringable
                 continue;
             }
             foreach ($row as $x => $col) {
-                $col = strip_tags($col);
-                $this->columnWidths[$x] ??= mb_strlen($col);
-                if (mb_strlen($col) > $this->columnWidths[$x]) {
-                    $this->columnWidths[$x] = mb_strlen($col);
+                $col = \strip_tags($col);
+                $this->columnWidths[$x] ??= \mb_strlen($col);
+                if (\mb_strlen($col) > $this->columnWidths[$x]) {
+                    $this->columnWidths[$x] = \mb_strlen($col);
                 }
             }
         }

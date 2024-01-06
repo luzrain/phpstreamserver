@@ -60,7 +60,7 @@ final class Logger implements LoggerInterface
     {
         foreach ($context as $key => $val) {
             $context[$key] = match(true) {
-                is_array($val) => $this->normalizeContext($val),
+                \is_array($val) => $this->normalizeContext($val),
                 $val instanceof \Throwable => $this->formatException($val),
                 $val instanceof \DateTimeInterface => $val->format(\DateTimeInterface::RFC3339),
                 $val instanceof \JsonSerializable => \json_decode($val->jsonSerialize()),

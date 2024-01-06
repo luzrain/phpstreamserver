@@ -17,7 +17,7 @@ final class Functions
 
     public static function getStartFile(): string
     {
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 
         return \end($backtrace)['file'];
     }
@@ -84,7 +84,7 @@ final class Functions
         if ($userInfo = \posix_getpwnam($user)) {
             $uid = $userInfo['uid'];
         } else {
-            throw new UserChangeException(sprintf('User "%s" does not exist', $user));
+            throw new UserChangeException(\sprintf('User "%s" does not exist', $user));
         }
 
         // Get gid
@@ -93,7 +93,7 @@ final class Functions
         } elseif ($groupInfo = \posix_getgrnam($group)) {
             $gid = $groupInfo['gid'];
         } else {
-            throw new UserChangeException(sprintf('Group "%s" does not exist', $group));
+            throw new UserChangeException(\sprintf('Group "%s" does not exist', $group));
         }
 
         // Set uid and gid

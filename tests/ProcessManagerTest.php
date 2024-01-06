@@ -11,7 +11,7 @@ final class ProcessManagerTest extends TestCase
     public function testWorkerProcessesStarted(): void
     {
         // Arrange
-        $status = getServerStatus();
+        $status = \getServerStatus();
         $startedAt = new \DateTimeImmutable($status->started_at ?? 'now');
         $now = new \DateTimeImmutable('now');
 
@@ -26,12 +26,12 @@ final class ProcessManagerTest extends TestCase
     public function testWorkerProcessRestartsAfterKill(): void
     {
         // Arrange
-        $pids1 = \array_map(static fn($p) => $p->pid, getServerStatus()->processes);
-        $pidToKill = empty($pids1) ? null : $pids1[array_rand($pids1)];
+        $pids1 = \array_map(static fn($p) => $p->pid, \getServerStatus()->processes);
+        $pidToKill = empty($pids1) ? null : $pids1[\array_rand($pids1)];
 
         // Act
         $pidToKill !== null && \posix_kill($pidToKill, SIGTERM);
-        $pids2 = \array_map(static fn($p) => $p->pid, getServerStatus()->processes);
+        $pids2 = \array_map(static fn($p) => $p->pid, \getServerStatus()->processes);
 
         // Assert
         $this->assertGreaterThan(0, \count($pids1));
@@ -42,11 +42,11 @@ final class ProcessManagerTest extends TestCase
     public function testReloadCommandReloadsAllWorkers(): void
     {
         // Arrange
-        $pids1 = \array_map(static fn($p) => $p->pid, getServerStatus()->processes);
+        $pids1 = \array_map(static fn($p) => $p->pid, \getServerStatus()->processes);
 
         // Act
-        \exec(getServerStartCommandLine('reload'));
-        $pids2 = \array_map(static fn($p) => $p->pid, getServerStatus()->processes);
+        \exec(\getServerStartCommandLine('reload'));
+        $pids2 = \array_map(static fn($p) => $p->pid, \getServerStatus()->processes);
 
         // Assert
         $this->assertGreaterThan(0, \count($pids1));

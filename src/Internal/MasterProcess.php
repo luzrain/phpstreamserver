@@ -54,7 +54,7 @@ final class MasterProcess
         self::$registered = true;
         $this->startFile = Functions::getStartFile();
         $this->pidFile = $pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
-        $this->pipeFile = sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
+        $this->pipeFile = \sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
     }
 
     public function run(bool $daemonize = false): int
@@ -93,7 +93,7 @@ final class MasterProcess
     // Runs in master process
     private function initServer(): void
     {
-        \cli_set_process_title(sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
+        \cli_set_process_title(\sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
 
         $this->startedAt = new \DateTimeImmutable('now');
 
@@ -151,7 +151,7 @@ final class MasterProcess
     {
         $this->eventLoop->defer(function (): void {
             foreach ($this->pool->getWorkers() as $worker) {
-                while (iterator_count($this->pool->getAliveWorkerPids($worker)) < $worker->count) {
+                while (\iterator_count($this->pool->getAliveWorkerPids($worker)) < $worker->count) {
                     if ($this->spawnWorker($worker)) {
                         return;
                     }
@@ -166,13 +166,13 @@ final class MasterProcess
         $pid = \pcntl_fork();
         if ($pid > 0) {
             // Master process
-            fclose($pair[0]);
+            \fclose($pair[0]);
             unset($pair[0]);
             $this->pool->addChild($worker, $pid, $pair[1]);
             return false;
         } elseif ($pid === 0) {
             // Child process
-            fclose($pair[1]);
+            \fclose($pair[1]);
             unset($pair[1]);
             $this->suspension->resume([$worker, $pair[0]]);
             return true;
@@ -209,10 +209,10 @@ final class MasterProcess
         switch ($this->status) {
             case self::STATUS_RUNNING:
                 match ($exitCode) {
-                    $worker::RELOAD_EXIT_CODE => $this->logger->info(sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
-                    $worker::TTL_EXIT_CODE => $this->logger->info(sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->name, $pid)),
-                    $worker::MAX_MEMORY_EXIT_CODE => $this->logger->info(sprintf('Worker %s[pid:%d] reloaded (Memory consumption exceeded)', $worker->name, $pid)),
-                    default => $this->logger->warning(sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
+                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
+                    $worker::TTL_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->name, $pid)),
+                    $worker::MAX_MEMORY_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (Memory consumption exceeded)', $worker->name, $pid)),
+                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
                 };
                 // Restart worker
                 $this->spawnWorker($worker);
@@ -266,7 +266,7 @@ final class MasterProcess
             foreach ($this->pool->getAlivePids() as $pid) {
                 \posix_kill($pid, SIGKILL);
                 $worker = $this->pool->getWorkerByPid($pid);
-                $this->logger->notice(sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
+                $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
             }
             $this->suspension->resume();
         });

@@ -49,7 +49,7 @@ final class StartCommand implements Command
                 'Count',
                 'Listen',
             ])
-            ->addRows(array_map(function (WorkerStatus $w) {
+            ->addRows(\array_map(function (WorkerStatus $w) {
                 return [
                     $w->user,
                     $w->name,
