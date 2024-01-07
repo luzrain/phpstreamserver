@@ -43,7 +43,6 @@ class WorkerProcess
         private readonly \Closure|null $onReload = null,
         private readonly Server|null $server = null,
     ) {
-        $this->eventLoop = (new DriverFactory())->create();
     }
 
     /**
@@ -90,6 +89,9 @@ class WorkerProcess
         \cli_set_process_title(\sprintf('PHPRunner: worker process  %s', $this->name));
 
         $this->startedAt = new \DateTimeImmutable('now');
+
+        /** @psalm-suppress InaccessibleProperty */
+        $this->eventLoop = (new DriverFactory())->create();
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
 
         // onStart callback
