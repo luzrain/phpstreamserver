@@ -58,6 +58,7 @@ final class Colorizer
         \preg_match_all('/<color;(.+)>.+<\/(?:color)?>/U', $string, $matches, \PREG_SET_ORDER);
         foreach ($matches as $match) {
             \parse_str(\str_replace(';', '&', $match[1] ?? ''), $attr);
+            /** @var int $pos */
             $pos = \strpos($string, $match[0]);
             $len = \strlen($match[0]);
             $text = \strip_tags($match[0]);

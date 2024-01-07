@@ -6,6 +6,10 @@ namespace Luzrain\PhpRunner\Exception;
 
 final class SendTypeError extends \TypeError
 {
+    /**
+     * @param class-string $class
+     * @psalm-suppress PossiblyUndefinedArrayOffset
+     */
     public function __construct(string $class, string $acceptType, string $givenType)
     {
         $trace = $this->getTrace()[0];

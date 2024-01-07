@@ -39,7 +39,7 @@ final class StatusCommand implements Command
                 ['Event loop driver:', $status->eventLoop],
                 ['Start file:', $status->startFile],
                 ['Status:', $status->isRunning
-                    ? '<color;fg=green>active</> since ' . $status->startedAt->format(\DateTimeInterface::RFC7231)
+                    ? '<color;fg=green>active</> since ' . ($status->startedAt?->format(\DateTimeInterface::RFC7231) ?? '?')
                     : 'inactive',
                 ],
                 ['Workers count:', $status->workersCount],

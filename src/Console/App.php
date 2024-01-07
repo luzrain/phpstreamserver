@@ -48,6 +48,7 @@ final class App
     private function parseCommand(string $cmd): array
     {
         if ($cmd === '') {
+            /** @psalm-suppress PossiblyUndefinedArrayOffset */
             $argv = $_SERVER['argv'];
             unset($argv[0]);
             $cmd = \implode(' ', $argv);

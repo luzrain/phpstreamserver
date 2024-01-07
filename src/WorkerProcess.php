@@ -43,6 +43,7 @@ class WorkerProcess
         private readonly \Closure|null $onReload = null,
         private readonly Server|null $server = null,
     ) {
+        $this->eventLoop = (new DriverFactory())->create();
     }
 
     /**
@@ -50,6 +51,7 @@ class WorkerProcess
      */
     final public function setDependencies(LoggerInterface $logger, mixed $parentSocket): self
     {
+        /** @psalm-suppress InaccessibleProperty */
         $this->logger = $logger;
         $this->parentSocket = $parentSocket;
 
@@ -88,17 +90,14 @@ class WorkerProcess
         \cli_set_process_title(\sprintf('PHPRunner: worker process  %s', $this->name));
 
         $this->startedAt = new \DateTimeImmutable('now');
-
-        // Init new event loop for worker process
-        $this->eventLoop = (new DriverFactory())->create();
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
 
         // onStart callback
-        if($this->onStart !== null) {
-            $this->eventLoop->defer(function (): void {
+        $this->eventLoop->defer(function (): void {
+            if($this->onStart !== null) {
                 ($this->onStart)();
-            });
-        }
+            }
+        });
 
         // Watch ttl
         if ($this->ttl > 0) {
@@ -162,7 +161,7 @@ class WorkerProcess
     {
         Functions::streamWrite($this->parentSocket, \serialize(new WorkerProcessStatus(
             pid: \posix_getpid(),
-            user: $this->user,
+            user: $this->user ?? '',
             memory: \memory_get_usage(),
             name: $this->name,
             startedAt: $this->startedAt,

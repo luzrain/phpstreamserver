@@ -19,7 +19,7 @@ final class TcpConnection implements ConnectionInterface
     /**
      * @var resource
      */
-    private readonly mixed $socket;
+    private mixed $socket;
     private \Generator|null $sendBufferLevel1 = null;
     private string $sendBufferLevel2 = '';
     private string $sendBufferCallbackId = '';
@@ -158,7 +158,7 @@ final class TcpConnection implements ConnectionInterface
     {
         $len = \fwrite($socket, $this->sendBufferLevel2);
         if ($len === \strlen($this->sendBufferLevel2)) {
-            if ($this->sendBufferLevel1->valid()) {
+            if ($this->sendBufferLevel1?->valid()) {
                 $this->sendBufferLevel1->next();
                 $this->sendBufferLevel2 = $this->sendBufferLevel1->current() ?? '';
             } else {
@@ -243,6 +243,7 @@ final class TcpConnection implements ConnectionInterface
             return;
         }
 
+        /** @psalm-suppress InvalidPropertyAssignmentValue */
         \fclose($this->socket);
         $this->eventLoop->cancel($this->onReadableCallbackId);
         $this->eventLoop->cancel($this->sendBufferCallbackId);

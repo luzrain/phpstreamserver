@@ -67,7 +67,7 @@ final class UdpConnection implements ConnectionInterface
             throw $typeError;
         }
 
-        $this->bytesWritten += strlen($sendBuffer);
+        $this->bytesWritten += \strlen($sendBuffer);
 
         return \stream_socket_sendto($this->socket, $sendBuffer, 0, $this->getRemoteAddress()) !== false;
     }

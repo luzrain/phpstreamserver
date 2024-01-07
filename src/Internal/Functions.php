@@ -15,6 +15,9 @@ final class Functions
     {
     }
 
+    /**
+     * @psalm-suppress PossiblyUndefinedArrayOffset
+     */
     public static function getStartFile(): string
     {
         $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);

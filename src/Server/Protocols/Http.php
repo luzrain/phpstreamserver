@@ -70,7 +70,7 @@ final class Http implements ProtocolInterface
         $msg = 'HTTP/' . $version . ' ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase() . "\r\n";
         if ($this->shouldClose()) {
             $response = $response->withHeader('Connection', 'close');
-        } elseif(!$response->hasHeader('Connection') && $this->psrRequest?->hasHeader('Connection') ?? false) {
+        } elseif(!$response->hasHeader('Connection') && $this->psrRequest !== null && $this->psrRequest->hasHeader('Connection')) {
             $response = $response->withHeader('Connection', $this->psrRequest->getHeaderLine('Connection'));
         }
         if (!$response->hasHeader('Server')) {
@@ -83,7 +83,7 @@ final class Http implements ProtocolInterface
             $response = $response->withHeader('Content-Type', 'text/html');
         }
         if (!$response->hasHeader('Transfer-Encoding') && !$response->getHeaderLine('Content-Length')) {
-            $response = $response->withHeader('Content-Length', $response->getBody()->getSize() ?? 0);
+            $response = $response->withHeader('Content-Length', (string) ($response->getBody()->getSize() ?? 0));
         }
         foreach ($response->getHeaders() as $name => $values) {
             $msg .= "$name: " . \implode(', ', $values) . "\r\n";

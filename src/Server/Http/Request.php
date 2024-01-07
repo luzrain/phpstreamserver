@@ -40,7 +40,10 @@ final class Request
         }
 
         if (!$this->headersParsed) {
-            $crlfPos = \strpos($buffer, "\r\n\r\n");// ?: throw bad request;
+            $crlfPos = \strpos($buffer, "\r\n\r\n");
+            if($crlfPos === false) {
+                throw new HttpException(400, true);
+            }
             $header = \substr($buffer, 0, $crlfPos + 2);
             $this->parseHeader($header);
             $body = \substr($buffer, $crlfPos + 4);
@@ -79,6 +82,7 @@ final class Request
             throw new HttpException(400, true);
         }
 
+        /** @var list<string> $firstLineParts */
         $firstLineParts = \sscanf($firstLine, '%s %s HTTP/%s');
 
         if (!isset($firstLineParts[0], $firstLineParts[1], $firstLineParts[2])) {
@@ -96,8 +100,9 @@ final class Request
         $tok = \strtok($header, "\r\n");
         while ($tok !== false) {
             if (\str_contains($tok, ':')) {
-                [$key, $value] = \explode(':', $tok, 2);
-                $value = \trim($value);
+                $parts = \explode(':', $tok, 2);
+                $key = $parts[0];
+                $value = \trim($parts[1] ?? '');
                 $this->headers[$key] = isset($this->headers[$key]) ? "{$this->headers[$key]},$value" : $value;
             }
             $tok = \strtok("\r\n");

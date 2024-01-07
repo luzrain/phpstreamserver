@@ -90,7 +90,11 @@ final class MasterProcess
         return $exitCode;
     }
 
-    // Runs in master process
+    /**
+     * Runs in master process
+     *
+     * @psalm-suppress InternalMethod false-positive
+     */
     private function initServer(): void
     {
         \cli_set_process_title(\sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
@@ -121,7 +125,7 @@ final class MasterProcess
 
     private function saveMasterPid(): void
     {
-        if (false === \file_put_contents($this->pidFile, \posix_getpid())) {
+        if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
             throw new PhpRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
     }
@@ -162,6 +166,7 @@ final class MasterProcess
 
     private function spawnWorker(WorkerProcess $worker): bool
     {
+        /** @var list{0: resource, 1: resource} $pair */
         $pair = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = \pcntl_fork();
         if ($pid > 0) {
@@ -329,7 +334,7 @@ final class MasterProcess
             });
         }
 
-        $fallbackId = $this->eventLoop->delay(4, function () use (&$pids, &$callbackIds, &$data, &$fallbackId) {
+        $fallbackId = $this->eventLoop->delay(5, function () use (&$pids, &$callbackIds, &$data, &$fallbackId) {
             \array_walk($callbackIds, $this->eventLoop->cancel(...));
             $this->onAllWorkersStatusReady($data);
             unset($pids, $callbackIds, $data, $fallbackId);
@@ -343,6 +348,12 @@ final class MasterProcess
      */
     private function onAllWorkersStatusReady(array $processes): void
     {
+        /** @var list<WorkerStatus> $workers */
+        $workers =  \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
+            user: $worker->user ?? Functions::getCurrentUser(),
+            name: $worker->name,
+            count: $worker->count,
+        ), \iterator_to_array($this->pool->getWorkers()));
         $status = new MasterProcessStatus(
             pid: \posix_getpid(),
             user: Functions::getCurrentUser(),
@@ -350,14 +361,9 @@ final class MasterProcess
             startedAt: $this->startedAt,
             isRunning: $this->isRunning(),
             startFile: $this->startFile,
-            workers: \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
-                user: $worker->user ?? Functions::getCurrentUser(),
-                name: $worker->name,
-                count: $worker->count,
-            ), \iterator_to_array($this->pool->getWorkers())),
+            workers: $workers,
             processes: $processes,
         );
-
         $fd = \fopen($this->pipeFile, 'w');
         Functions::streamWrite($fd, \serialize($status));
     }
@@ -371,6 +377,12 @@ final class MasterProcess
             /** @var MasterProcessStatus $status */
             $status = \unserialize($data);
         } else {
+            /** @var list<WorkerStatus> $workers */
+            $workers = \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
+                user: $worker->user ?? Functions::getCurrentUser(),
+                name: $worker->name,
+                count: $worker->count,
+            ), \iterator_to_array($this->pool->getWorkers()));
             $status = new MasterProcessStatus(
                 pid: null,
                 user: Functions::getCurrentUser(),
@@ -378,11 +390,7 @@ final class MasterProcess
                 startedAt: null,
                 isRunning: false,
                 startFile: $this->startFile,
-                workers: \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
-                    user: $worker->user ?? Functions::getCurrentUser(),
-                    name: $worker->name,
-                    count: $worker->count,
-                ), \iterator_to_array($this->pool->getWorkers())),
+                workers: $workers,
             );
         }
 

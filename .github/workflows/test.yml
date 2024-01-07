@@ -33,5 +33,8 @@ jobs:
       - name: Codestyle checks
         run: vendor/bin/php-cs-fixer fix -v --dry-run
 
+      - name: Static analyze
+        run: vendor/bin/psalm
+
       - name: Run tests
         run: vendor/bin/phpunit

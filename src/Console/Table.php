@@ -9,8 +9,6 @@ namespace Luzrain\PhpRunner\Console;
  */
 final class Table implements \Stringable
 {
-    public const SEPARATOR = '%SEPARATOR%';
-
     private array $data = [];
     private bool $headerRow = false;
     private int $rowIndex = 0;
@@ -40,14 +38,10 @@ final class Table implements \Stringable
         return $this;
     }
 
-    public function addRow(array|string $row): self
+    public function addRow(array $row): self
     {
-        if ($row === self::SEPARATOR) {
-            $this->data[$this->rowIndex] = self::SEPARATOR;
-        } else {
-            foreach (\array_values($row) as $col => $content) {
-                $this->data[$this->rowIndex][$col] = (string) $content;
-            }
+        foreach (\array_values($row) as $col => $content) {
+            $this->data[$this->rowIndex][$col] = (string) $content;
         }
         $this->rowIndex++;
 
@@ -60,31 +54,16 @@ final class Table implements \Stringable
         $output = '';
         foreach ($this->data as $y => $row) {
             $output .= \str_repeat(' ', $this->indent);
-            if ($row === self::SEPARATOR) {
-                $output .= $this->getSeparator();
-            } else {
-                if ($y === 0 && $this->headerRow) {
-                    $output .= '<color;fg=green>';
-                }
-                foreach ($row as $x => $cell) {
-                    $output .= $this->getCellOutput($x, $row);
-                }
-                if ($y === 0 && $this->headerRow) {
-                    $output .= '</>';
-                }
+            if ($y === 0 && $this->headerRow) {
+                $output .= '<color;fg=green>';
+            }
+            foreach ($row as $x => $cell) {
+                $output .= $this->getCellOutput($x, $row);
+            }
+            if ($y === 0 && $this->headerRow) {
+                $output .= '</>';
             }
             $output .= "\n";
-        }
-
-        return $output;
-    }
-
-    private function getSeparator(): string
-    {
-        $output = \str_repeat(' ', $this->indent);
-        $columnCount = \count($this->data[0]);
-        for ($index = 0; $index < $columnCount; $index++) {
-            $output .= \str_pad('-', $this->columnWidths[$index] + 2, '-');
         }
 
         return $output;
@@ -101,9 +80,6 @@ final class Table implements \Stringable
     private function calculateColumnWidth(): void
     {
         foreach ($this->data as $row) {
-            if ($row === self::SEPARATOR) {
-                continue;
-            }
             foreach ($row as $x => $col) {
                 $col = \strip_tags($col);
                 $this->columnWidths[$x] ??= \mb_strlen($col);
