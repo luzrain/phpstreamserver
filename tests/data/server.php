@@ -8,6 +8,7 @@ use Luzrain\PhpRunner\Exception\HttpException;
 use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Protocols\Http;
+use Luzrain\PhpRunner\Server\Protocols\Raw;
 use Luzrain\PhpRunner\Server\Protocols\Text;
 use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
@@ -87,6 +88,28 @@ $phpRunner->addWorkers(
         server: new Server(
             listen: 'udp://0.0.0.0:9083',
             protocol: new Text(),
+            onMessage: function (ConnectionInterface $connection, string $data): void {
+                $connection->send('echo:' . $data);
+            },
+        ),
+    ),
+    new WorkerProcess(
+        name: 'TCP RAW Server',
+        count: 1,
+        server: new Server(
+            listen: 'tcp://0.0.0.0:9084',
+            protocol: new Raw(),
+            onMessage: function (ConnectionInterface $connection, string $data): void {
+                $connection->send('echo:' . $data);
+            },
+        ),
+    ),
+    new WorkerProcess(
+        name: 'UDP RAW Server',
+        count: 1,
+        server: new Server(
+            listen: 'udp://0.0.0.0:9085',
+            protocol: new Raw(),
             onMessage: function (ConnectionInterface $connection, string $data): void {
                 $connection->send('echo:' . $data);
             },

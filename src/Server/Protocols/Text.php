@@ -7,7 +7,6 @@ namespace Luzrain\PhpRunner\Server\Protocols;
 use Luzrain\PhpRunner\Exception\EncodeTypeError;
 use Luzrain\PhpRunner\Exception\TooLargePayload;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * @implements ProtocolInterface<string, string>
@@ -45,7 +44,7 @@ final class Text implements ProtocolInterface
     }
 
     /**
-     * @param ResponseInterface $response
+     * @param string $response
      * @return \Generator<string>
      * @throws EncodeTypeError
      */

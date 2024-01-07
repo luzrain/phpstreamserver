@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  linux_tests:
+  tests:
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,7 +30,7 @@ jobs:
       - name: Composer install
         run: composer install
 
-      - name: Codestyle
+      - name: Codestyle checks
         run: vendor/bin/php-cs-fixer fix -v --dry-run
 
       - name: Run tests
