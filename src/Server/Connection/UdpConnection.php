@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server\Connection;
 
+use Luzrain\PhpRunner\Exception\EncodeTypeError;
+use Luzrain\PhpRunner\Exception\SendTypeError;
+use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
+
 final class UdpConnection implements ConnectionInterface
 {
     private const MAX_UDP_PACKAGE_SIZE = 65535;
@@ -15,19 +19,38 @@ final class UdpConnection implements ConnectionInterface
     private string $localIp;
     private int $localPort;
 
+    // Statistics
+    private int $bytesRead = 0;
+    private int $bytesWritten = 0;
+    private int $requestsCount = 0;
+
     /**
      * @param resource $socket
      * @param null|\Closure(self, string):void $onMessage
+     * @param null|\Closure(self, int, string):void $onError
      */
     public function __construct(
         private readonly mixed $socket,
+        private readonly ProtocolInterface $protocol,
         private readonly \Closure|null $onMessage = null,
+        private readonly \Closure|null $onError = null,
     ) {
         $recvBuffer = \stream_socket_recvfrom($this->socket, self::MAX_UDP_PACKAGE_SIZE, 0, $remoteAddress);
-        $this->remoteAddress = $remoteAddress;
+        if ($recvBuffer === false) {
+            if ($this->onError) {
+                ($this->onError)($this, self::CONNECT_FAIL, 'connection failed');
+            }
+            return;
+        }
 
-        if ($recvBuffer !== false && $this->onMessage !== null) {
-            ($this->onMessage)($this, $recvBuffer);
+        $this->remoteAddress = $remoteAddress;
+        $this->bytesRead += \strlen($recvBuffer ?: '');
+
+        if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
+            $this->requestsCount++;
+            if ($this->onMessage !== null) {
+                ($this->onMessage)($this, $package);
+            }
         }
 
         // Increase total counter
@@ -36,7 +59,17 @@ final class UdpConnection implements ConnectionInterface
 
     public function send(mixed $response): bool
     {
-        return \stream_socket_sendto($this->socket, (string) $response, 0, $this->getRemoteAddress()) !== false;
+        try {
+            $sendBuffer = \implode('', \iterator_to_array($this->protocol->encode($this, $response)));
+        } catch (EncodeTypeError $e) {
+            $typeError = new SendTypeError(self::class, $e->acceptType, $e->givenType);
+            $this->protocol->onException($this, $typeError);
+            throw $typeError;
+        }
+
+        $this->bytesWritten += strlen($sendBuffer);
+
+        return \stream_socket_sendto($this->socket, $sendBuffer, 0, $this->getRemoteAddress()) !== false;
     }
 
     public function getRemoteAddress(): string

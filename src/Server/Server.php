@@ -9,6 +9,7 @@ use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Connection\TcpConnection;
 use Luzrain\PhpRunner\Server\Connection\UdpConnection;
 use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
+use Luzrain\PhpRunner\Server\Protocols\Raw;
 use Revolt\EventLoop\Driver;
 
 final class Server
@@ -32,14 +33,14 @@ final class Server
      */
     public function __construct(
         string $listen,
-        private ProtocolInterface $protocol,
-        private bool $tls = false,
+        private ProtocolInterface $protocol = new Raw(),
+        private readonly bool $tls = false,
         string $tlsCertificate = '',
         string $tlsCertificateKey = '',
-        private \Closure|null $onConnect = null,
-        private \Closure|null $onMessage = null,
-        private \Closure|null $onClose = null,
-        private \Closure|null $onError = null,
+        private readonly \Closure|null $onConnect = null,
+        private readonly \Closure|null $onMessage = null,
+        private readonly \Closure|null $onClose = null,
+        private readonly \Closure|null $onError = null,
     ) {
         [$this->transport, $this->host, $this->port] = $this->parseListenAddress($listen);
 
@@ -97,7 +98,9 @@ final class Server
     {
         new UdpConnection(
             socket: $socket,
+            protocol: clone $this->protocol,
             onMessage: $this->onMessage,
+            onError: $this->onError,
         );
     }
 

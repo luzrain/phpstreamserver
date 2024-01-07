@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server\Protocols;
 
+use Luzrain\PhpRunner\Exception\EncodeTypeError;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 
 /**
@@ -24,6 +25,7 @@ interface ProtocolInterface
      *
      * @param TResponse $response
      * @return \Generator<string>
+     * @throws EncodeTypeError throws when response data type is not supported
      */
     public function encode(ConnectionInterface $connection, mixed $response): \Generator;
 
