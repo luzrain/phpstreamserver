@@ -56,7 +56,6 @@ final class Http implements ProtocolInterface
     }
 
     /**
-     * @param ResponseInterface $response
      * @return \Generator<string>
      * @throws EncodeTypeError
      */

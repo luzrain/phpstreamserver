@@ -9,6 +9,9 @@ namespace Luzrain\PhpRunner\Internal;
  */
 trait JsonSerializible
 {
+    /**
+     * @psalm-suppress RawObjectIteration
+     */
     public function jsonSerialize(): mixed
     {
         $toSnakeCase = static fn(string $str): string => \strtolower(\preg_replace('/[A-Z]/', '_\\0', \lcfirst($str)));

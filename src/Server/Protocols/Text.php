@@ -44,7 +44,6 @@ final class Text implements ProtocolInterface
     }
 
     /**
-     * @param string $response
      * @return \Generator<string>
      * @throws EncodeTypeError
      */

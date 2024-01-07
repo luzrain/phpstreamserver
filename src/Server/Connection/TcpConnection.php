@@ -111,6 +111,9 @@ final class TcpConnection implements ConnectionInterface
         }
     }
 
+    /**
+     * @param resource $socket
+     */
     public function baseRead(string $id, mixed $socket): void
     {
         $recvBuffer = \fread($socket, self::READ_BUFFER_SIZE);
@@ -154,6 +157,10 @@ final class TcpConnection implements ConnectionInterface
         return true;
     }
 
+
+    /**
+     * @param resource $socket
+     */
     private function baseWrite(string $id, mixed $socket): void
     {
         $len = \fwrite($socket, $this->sendBufferLevel2);

@@ -64,6 +64,16 @@ $rules = [
     // Empty body of class, interface, trait, enum or function must be abbreviated as {} and placed on the same line
     'single_line_empty_body' => false,
 
+    // Class DateTimeImmutable should be used instead of DateTime.
+    'date_time_immutable' => true,
+
+    // Functions should be used with $strict param set to true.
+    'strict_param' => true,
+
+    // Method chaining MUST be properly indented.
+    'method_chaining_indentation' => true,
+
+    // Add leading \ before function invocation to speed up resolving.
     'native_function_invocation' => [
         'include' => ['@all'],
         'scope' => 'all',

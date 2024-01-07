@@ -40,7 +40,7 @@ final class MasterProcess
         private WorkerPool $pool,
         private readonly LoggerInterface $logger,
     ) {
-        if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'])) {
+        if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
             throw new \RuntimeException('Works in command line mode only');
         }
 
@@ -340,7 +340,7 @@ final class MasterProcess
             unset($pids, $callbackIds, $data, $fallbackId);
         });
 
-        \array_walk($pids, fn($pid) => \posix_kill($pid, SIGUSR1));
+        \array_walk($pids, fn(int $pid) => \posix_kill($pid, SIGUSR1));
     }
 
     /**

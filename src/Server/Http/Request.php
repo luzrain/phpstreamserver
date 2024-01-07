@@ -19,10 +19,13 @@ final class Request
     private string $method = '';
     private string $uri = '';
     private string $version = '';
+    /** @var array<string, string> */
     private array $headers = [];
+    /** @var array<string, string> */
     private array $cookie = [];
     private int $contentLength = 0;
-    private mixed $body = null;
+    /** @var resource */
+    private mixed $body;
 
     public function __construct(
         private readonly int $maxHeaderSize,
@@ -93,7 +96,7 @@ final class Request
         $this->uri = $firstLineParts[1];
         $this->version = $firstLineParts[2];
 
-        if (!\in_array($this->version, ['1.0', '1.1'])) {
+        if (!\in_array($this->version, ['1.0', '1.1'], true)) {
             throw new HttpException(505, true);
         }
 
@@ -107,6 +110,7 @@ final class Request
             }
             $tok = \strtok("\r\n");
         }
+        /** @psalm-suppress MixedPropertyTypeCoercion */
         \parse_str(\preg_replace('/;\s?/', '&', $this->headers['Cookie'] ?? ''), $this->cookie);
         $this->contentLength = (int) ($this->headers['Content-Length'] ?? '0');
         $this->headersParsed = true;

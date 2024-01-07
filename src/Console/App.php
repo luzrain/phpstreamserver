@@ -20,12 +20,12 @@ final class App
         [$option, $arguments] = $this->parseCommand($cmd);
 
         // Supress any output
-        if (\in_array('-q', $arguments) || \in_array('--quiet', $arguments)) {
+        if (\in_array('-q', $arguments, true) || \in_array('--quiet', $arguments, true)) {
             \ob_start(static fn() => '', 1);
         }
 
         // Force show help
-        if (\in_array('-h', $arguments) || \in_array('--help', $arguments)) {
+        if (\in_array('-h', $arguments, true) || \in_array('--help', $arguments, true)) {
             $this->showHelp();
             return 0;
         }

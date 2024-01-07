@@ -47,6 +47,7 @@ class WorkerProcess
 
     /**
      * @internal
+     * @param resource $parentSocket
      */
     final public function setDependencies(LoggerInterface $logger, mixed $parentSocket): self
     {

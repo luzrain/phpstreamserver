@@ -28,7 +28,7 @@ final class StartCommand implements Command
 
     public function run(array $arguments): int
     {
-        $isDaemon = \in_array('-d', $arguments) || \in_array('--daemon', $arguments);
+        $isDaemon = \in_array('-d', $arguments, true) || \in_array('--daemon', $arguments, true);
         $status = $this->masterProcess->getStatus();
 
         echo "❯ PHPRunner - PHP application server\n";

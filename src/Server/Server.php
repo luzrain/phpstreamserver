@@ -61,7 +61,7 @@ final class Server
         $host = $parts['host'] ?? '';
         $port = $parts['port'] ?? 0;
 
-        if (!\in_array($transport, ['tcp', 'udp'])) {
+        if (!\in_array($transport, ['tcp', 'udp'], true)) {
             throw new \InvalidArgumentException(\sprintf('Invalid transport. Should be either "tcp" or "udp", "%s" given.', $transport));
         }
         if (empty($host)) {

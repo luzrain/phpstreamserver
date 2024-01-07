@@ -12,12 +12,24 @@ use Luzrain\PhpRunner\WorkerProcess;
  */
 final class WorkerPool
 {
+    /**
+     * @var array<int, WorkerProcess>
+     */
     private array $pool = [];
+
+    /**
+     * @var \WeakMap<WorkerProcess, list<int>>
+     */
     private \WeakMap $pidMap;
+
+    /**
+     * @var array<int, resource>
+     */
     private array $socketMap = [];
 
     public function __construct()
     {
+        /** @psalm-suppress PropertyTypeCoercion */
         $this->pidMap = new \WeakMap();
     }
 
@@ -36,15 +48,19 @@ final class WorkerPool
             throw new PhpRunnerException('Worker is not fount in pool');
         }
 
+        /** @psalm-suppress InvalidArgument */
         $this->pidMap[$worker][] = $pid;
         $this->socketMap[$pid] = $socket;
     }
 
+    /**
+     * @psalm-suppress PossiblyNullArgument
+     */
     public function deleteChild(int $pid): void
     {
         $worker = $this->getWorkerByPid($pid);
-        $pids = $this->pidMap[$worker];
-        unset($pids[\array_search($pid, $pids)]);
+        $pids = $this->pidMap[$worker] ?? [];
+        unset($pids[\array_search($pid, $pids, true)]);
         $this->pidMap[$worker] = \array_values($pids);
         \fclose($this->socketMap[$pid]);
         unset($this->socketMap[$pid]);
@@ -53,7 +69,7 @@ final class WorkerPool
     public function getWorkerByPid(int $pid): WorkerProcess
     {
         foreach ($this->pidMap as $worker => $pids) {
-            if (\in_array($pid, $pids)) {
+            if (\in_array($pid, $pids, true)) {
                 return $worker;
             }
         }
