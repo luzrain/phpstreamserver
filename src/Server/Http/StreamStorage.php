@@ -6,18 +6,10 @@ namespace Luzrain\PhpRunner\Server\Http;
 
 final class StreamStorage
 {
-    /**
-     * @var array<string, string|array<string, string>>
-     */
     private array $headers = [];
-
     private int $bodyOffset;
-
-    /**
-     * @var list<self>
-     */
+    /** @var list<self> */
     private array $parts = [];
-
     private array $headerOptionsCache = [];
 
     /**
@@ -25,10 +17,6 @@ final class StreamStorage
      */
     public function __construct(private mixed $stream)
     {
-        if (!\is_resource($this->stream)) {
-            throw new \InvalidArgumentException('Input is not a stream');
-        }
-
         \rewind($this->stream);
         $endOfHeaders = false;
         $bufferSize = 32768;
@@ -70,8 +58,8 @@ final class StreamStorage
                         $partLength = $currentOffset - $partOffset - \strlen($line) - 4;
 
                         // Copy part in a new stream @todo: Rewrite to use ONE stream for memory optimization
-                        $partStream = fopen('php://temp', 'rw');
-                        stream_copy_to_stream($this->stream, $partStream, $partLength, $partOffset);
+                        $partStream = \fopen('php://temp', 'rw');
+                        \stream_copy_to_stream($this->stream, $partStream, $partLength, $partOffset);
                         $this->parts[] = new self($partStream);
 
                         // Reset current stream offset
@@ -95,6 +83,7 @@ final class StreamStorage
 
     public function isMultiPart(): bool
     {
+        /** @psalm-suppress PossiblyNullArgument */
         return \str_starts_with($this->getHeader('Content-Type', ''), 'multipart/');
     }
 
@@ -105,7 +94,7 @@ final class StreamStorage
 
     public function getBody(): string
     {
-        return stream_get_contents($this->stream, -1, $this->bodyOffset);
+        return \stream_get_contents($this->stream, -1, $this->bodyOffset);
     }
 
     public function getBodySize(): int
@@ -143,6 +132,10 @@ final class StreamStorage
         return $this->getHeaderOptions($key)[$option] ?? $default;
     }
 
+    /**
+     * @psalm-suppress NullableReturnStatement
+     * @psalm-suppress InvalidNullableReturnType
+     */
     public function getMimeType(): string
     {
         return $this->getHeader('Content-Type', 'application/octet-stream');
@@ -150,12 +143,12 @@ final class StreamStorage
 
     public function getName(): string|null
     {
-        return (null !== $val = $this->getHeaderOption('Content-Disposition', 'name')) ? trim($val, ' "') : $val;
+        return (null !== $val = $this->getHeaderOption('Content-Disposition', 'name')) ? \trim($val, ' "') : $val;
     }
 
     public function getFileName(): string|null
     {
-        return (null !== $val = $this->getHeaderOption('Content-Disposition', 'filename')) ? trim($val, ' "') : $val;
+        return (null !== $val = $this->getHeaderOption('Content-Disposition', 'filename')) ? \trim($val, ' "') : $val;
     }
 
     public function isFile(): bool
@@ -171,9 +164,6 @@ final class StreamStorage
         return $this->parts;
     }
 
-    /**
-     * @return array{0: string|null 1: array<string, string>}
-     */
     private function parseHeaderContent(string|null $content): array
     {
         if ($content !== null) {

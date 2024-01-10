@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Test;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7\MultipartStream;
 
 final class HttpPostRequestTest extends ServerTestCase
@@ -90,7 +88,7 @@ final class HttpPostRequestTest extends ServerTestCase
                 [
                     'name' => 'image',
                     'filename' => 'dot.png',
-                    'contents' => \base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
+                    'contents' => \base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', true),
                 ],
             ]),
         ]);

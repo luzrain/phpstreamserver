@@ -58,12 +58,12 @@ final class Request
                 throw new HttpException(505, true);
             }
 
-            if (\in_array($this->method, ['POST', 'PATCH']) && ($this->contentLength <= 0 && !$this->chunked)) {
+            if (\in_array($this->method, ['POST', 'PATCH'], true) && ($this->contentLength <= 0 && !$this->chunked)) {
                 throw new HttpException(400, true);
             }
         }
 
-        $hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH']);
+        $hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true);
         $bodySize = $this->storage->getBodySize();
         $headerSize = $this->storage->getHeaderSize();
 
@@ -129,7 +129,7 @@ final class Request
             ->withParsedBody($payload)
             ->withUploadedFiles($files)
             ->withBody(Stream::create($this->storage->getBodyStream()))
-            ;
+        ;
     }
 
     protected function parsePayload(StreamStorage $storage): array
@@ -138,9 +138,9 @@ final class Request
         $files = [];
         if ($storage->getHeaderValue('Content-Type') === 'application/x-www-form-urlencoded') {
             \parse_str($storage->getBody(), $payload);
-        } else if ($storage->getHeaderValue('Content-Type') === 'application/json') {
+        } elseif ($storage->getHeaderValue('Content-Type') === 'application/json') {
             $payload = (array) \json_decode($storage->getBody(), true);
-        } else if ($storage->isMultiPart()) {
+        } elseif ($storage->isMultiPart()) {
             $fileStructureStr = '';
             $fileStructureList = [];
             foreach ($storage->getParts() as $part) {
@@ -154,6 +154,7 @@ final class Request
                         $part->getMimeType(),
                     );
                 } else {
+                    /** @psalm-suppress PossiblyNullArrayOffset */
                     $payload[$part->getName()] = $part->getBody();
                 }
             }

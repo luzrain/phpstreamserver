@@ -32,7 +32,7 @@ $phpRunner->addWorkers(
             protocol: new Http(),
             onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data): void {
                 $files = $data->getUploadedFiles();
-                \array_walk_recursive($files, static function(UploadedFileInterface &$file) {
+                \array_walk_recursive($files, static function (UploadedFileInterface &$file) {
                     $file = [
                         'client_filename' => $file->getClientFilename(),
                         'client_media_type' => $file->getClientMediaType(),
