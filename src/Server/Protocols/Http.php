@@ -46,7 +46,12 @@ final class Http implements ProtocolInterface
         try {
             $this->request->parse($buffer);
             if ($this->request->isCompleted()) {
-                $this->psrRequest = $this->request->getPsrServerRequest($connection->getRemoteIp());
+                $this->psrRequest = $this->request->getPsrServerRequest(
+                    serverAddr: $connection->getLocalIp(),
+                    serverPort: (string) $connection->getLocalPort(),
+                    remoteAddr: $connection->getRemoteIp(),
+                    remotePort: (string) $connection->getRemotePort(),
+                );
                 return $this->psrRequest;
             }
         } catch (\InvalidArgumentException $e) {

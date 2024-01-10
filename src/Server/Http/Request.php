@@ -100,23 +100,22 @@ final class Request
         return $this->isCompleted;
     }
 
-    public function getPsrServerRequest(string $remoteIp): ServerRequestInterface
+    public function getPsrServerRequest(string $serverAddr, string $serverPort, string $remoteAddr, string $remotePort): ServerRequestInterface
     {
         if (!$this->isCompleted()) {
             throw new \LogicException('ServerRequest cannot be created until request is complete');
         }
 
-        //QUERY_STRING
-
         $psrRequest = new ServerRequest(
             method: $this->method,
             uri: $this->uri,
-            serverParams: $_SERVER + [
-                'REMOTE_ADDR' => $remoteIp
-            ],
+            serverParams: [...$_SERVER, ...[
+                'SERVER_ADDR' => $serverAddr,
+                'SERVER_PORT' => $serverPort,
+                'REMOTE_ADDR' => $remoteAddr,
+                'REMOTE_PORT' => $remotePort,
+            ]],
         );
-
-
 
         foreach ($this->storage->getHeaders() as $name => $value) {
             $psrRequest = $psrRequest->withHeader($name, \array_map(\trim(...), \explode(',', $value)));
