@@ -23,7 +23,8 @@ final class Request
     private string $version;
     private int $contentLength;
     private bool $chunked;
-    private StreamStorage $storage;
+    private bool $hasPayload;
+    private RequestStream $storage;
 
     public function __construct(
         private readonly int $maxHeaderSize,
@@ -45,10 +46,11 @@ final class Request
 
         // Parse headers
         if (!isset($this->storage)) {
-            $this->storage = new StreamStorage($this->request);
+            $this->storage = new RequestStream($this->request);
             [$this->method, $this->uri, $this->version] = $this->parseFirstLine(\strstr($buffer, "\r\n", true));
             $this->contentLength = (int) $this->storage->getHeader('content-length', '0');
             $this->chunked = $this->storage->getHeader('transfer-encoding', '') === 'chunked';
+            $this->hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true);
 
             if ($this->method === '' || $this->uri === '' || $this->version === '') {
                 throw new HttpException(400, true);
@@ -58,12 +60,11 @@ final class Request
                 throw new HttpException(505, true);
             }
 
-            if (\in_array($this->method, ['POST', 'PATCH'], true) && ($this->contentLength <= 0 && !$this->chunked)) {
+            if ($this->hasPayload && ($this->contentLength <= 0 && !$this->chunked)) {
                 throw new HttpException(400, true);
             }
         }
 
-        $hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true);
         $bodySize = $this->storage->getBodySize();
         $headerSize = $this->storage->getHeaderSize();
 
@@ -71,15 +72,15 @@ final class Request
             throw new HttpException(413, true);
         }
 
-        if ($hasPayload && $this->maxBodySize > 0 && $bodySize > $this->maxBodySize) {
+        if ($this->hasPayload && $this->maxBodySize > 0 && $bodySize > $this->maxBodySize) {
             throw new HttpException(413, true);
         }
 
-        if ($hasPayload && $this->contentLength > 0 && $bodySize === $this->contentLength) {
+        if ($this->hasPayload && $this->contentLength > 0 && $bodySize === $this->contentLength) {
             $this->isCompleted = true;
         }
 
-        if (!$hasPayload) {
+        if (!$this->hasPayload) {
             $this->isCompleted = true;
         }
     }
@@ -132,7 +133,7 @@ final class Request
         ;
     }
 
-    protected function parsePayload(StreamStorage $storage): array
+    protected function parsePayload(RequestStream $storage): array
     {
         $payload = [];
         $files = [];

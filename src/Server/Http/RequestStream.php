@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server\Http;
 
-final class StreamStorage
+final class RequestStream
 {
     private array $headers = [];
     private int $bodyOffset;
@@ -42,42 +42,45 @@ final class StreamStorage
 
         $this->bodyOffset = \ftell($stream);
 
-        if ($this->isMultiPart()) {
-            if (null === ($boundary = $this->getHeaderOption('Content-Type', 'boundary'))) {
-                throw new \InvalidArgumentException("Can't find boundary in content type");
-            }
+        if (!$this->isMultiPart()) {
+            return;
+        }
 
-            $separator = "--$boundary";
-            $partOffset = 0;
-            $endOfBody = false;
+        // Parse multipart
+        if (null === ($boundary = $this->getHeaderOption('Content-Type', 'boundary'))) {
+            throw new \InvalidArgumentException("Can't find boundary in content type");
+        }
 
-            while (false !== ($line = \stream_get_line($this->stream, $bufferSize, "\r\n"))) {
-                if ($line === $separator || $line === "$separator--") {
-                    if ($partOffset > 0) {
-                        $currentOffset = \ftell($this->stream);
-                        $partLength = $currentOffset - $partOffset - \strlen($line) - 4;
+        $separator = "--$boundary";
+        $partOffset = 0;
+        $endOfBody = false;
 
-                        // Copy part in a new stream @todo: Rewrite to use ONE stream for memory optimization
-                        $partStream = \fopen('php://temp', 'rw');
-                        \stream_copy_to_stream($this->stream, $partStream, $partLength, $partOffset);
-                        $this->parts[] = new self($partStream);
+        while (false !== ($line = \stream_get_line($this->stream, $bufferSize, "\r\n"))) {
+            if ($line === $separator || $line === "$separator--") {
+                if ($partOffset > 0) {
+                    $currentOffset = \ftell($this->stream);
+                    $partLength = $currentOffset - $partOffset - \strlen($line) - 4;
 
-                        // Reset current stream offset
-                        \fseek($this->stream, $currentOffset);
-                    }
+                    // Copy part in a new stream @todo: Rewrite to use ONE stream for memory optimization
+                    $partStream = \fopen('php://temp', 'rw');
+                    \stream_copy_to_stream($this->stream, $partStream, $partLength, $partOffset);
+                    $this->parts[] = new self($partStream);
 
-                    if ($line === "$separator--") {
-                        $endOfBody = true;
-                        break;
-                    }
-
-                    $partOffset = \ftell($this->stream);
+                    // Reset current stream offset
+                    \fseek($this->stream, $currentOffset);
                 }
-            }
 
-            if (\count($this->parts) === 0 || $endOfBody === false) {
-                throw new \LogicException("Can't find multi-part content");
+                if ($line === "$separator--") {
+                    $endOfBody = true;
+                    break;
+                }
+
+                $partOffset = \ftell($this->stream);
             }
+        }
+
+        if (\count($this->parts) === 0 || $endOfBody === false) {
+            throw new \LogicException("Can't find multi-part content");
         }
     }
 
@@ -132,6 +135,11 @@ final class StreamStorage
         return $this->getHeaderOptions($key)[$option] ?? $default;
     }
 
+    public function isFile(): bool
+    {
+        return $this->getHeaderOption('Content-Disposition', 'filename') !== null;
+    }
+
     /**
      * @psalm-suppress NullableReturnStatement
      * @psalm-suppress InvalidNullableReturnType
@@ -149,11 +157,6 @@ final class StreamStorage
     public function getFileName(): string|null
     {
         return (null !== $val = $this->getHeaderOption('Content-Disposition', 'filename')) ? \trim($val, ' "') : $val;
-    }
-
-    public function isFile(): bool
-    {
-        return $this->getFileName() !== null;
     }
 
     /**
