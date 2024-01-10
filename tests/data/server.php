@@ -12,6 +12,7 @@ use Luzrain\PhpRunner\Server\Protocols\Raw;
 use Luzrain\PhpRunner\Server\Protocols\Text;
 use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
+use Psr\Http\Message\UploadedFileInterface;
 
 $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(
@@ -30,6 +31,15 @@ $phpRunner->addWorkers(
             listen: 'tcp://0.0.0.0:9080',
             protocol: new Http(),
             onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data): void {
+                $files = $data->getUploadedFiles();
+                \array_walk_recursive($files, static function(UploadedFileInterface &$file) {
+                    $file = [
+                        'client_filename' => $file->getClientFilename(),
+                        'client_media_type' => $file->getClientMediaType(),
+                        'size' => $file->getSize(),
+                        'sha1' => \hash('sha1', $file->getStream()->getContents()),
+                    ];
+                });
                 $response = match ($data->getUri()->getPath()) {
                     '/ok' => new \Nyholm\Psr7\Response(
                         status: 200,
@@ -40,12 +50,13 @@ $phpRunner->addWorkers(
                         status: 200,
                         headers: ['Content-Type' => 'application/json'],
                         body: \json_encode([
+                            'server_params' => $data->getServerParams(),
                             'headers' => $data->getHeaders(),
                             'query' => $data->getQueryParams(),
                             'request' => $data->getParsedBody(),
-                            //'files' => $this->normalizeFiles($data->getUploadedFiles()),
+                            'files' => $files,
                             'cookies' => $data->getCookieParams(),
-                            'raw_request' => $data->getBody()->getContents(),
+                            'raw_request' => empty($files) ? $data->getBody()->getContents() : '',
                         ]),
                     ),
                     default => throw HttpException::createNotFoundException(),

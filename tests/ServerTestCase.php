@@ -4,11 +4,24 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Test;
 
+use GuzzleHttp\Client;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 
 abstract class ServerTestCase extends TestCase
 {
+    protected static Client $client;
+
+    public static function setUpBeforeClass(): void
+    {
+        self::$client = new Client(['http_errors' => false, 'verify' => false]);
+    }
+
+    protected function requestJsonDecode(string $method, string $uri, array $options = []): array
+    {
+        return (array) \json_decode((string) self::$client->request($method, $uri, $options)->getBody(), true);
+    }
+
     /**
      * @return resource
      */

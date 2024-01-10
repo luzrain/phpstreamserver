@@ -7,6 +7,7 @@ namespace Luzrain\PhpRunner\Server\Http;
 use Luzrain\PhpRunner\Exception\HttpException;
 use Nyholm\Psr7\ServerRequest;
 use Nyholm\Psr7\Stream;
+use Nyholm\Psr7\UploadedFile;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -14,23 +15,21 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class Request
 {
-    private bool $headersParsed = false;
     private bool $isCompleted = false;
-    private string $method = '';
-    private string $uri = '';
-    private string $version = '';
-    /** @var array<string, string> */
-    private array $headers = [];
-    /** @var array<string, string> */
-    private array $cookie = [];
-    private int $contentLength = 0;
     /** @var resource */
-    private mixed $body;
+    private mixed $request;
+    private string $method;
+    private string $uri;
+    private string $version;
+    private int $contentLength;
+    private bool $chunked;
+    private StreamStorage $storage;
 
     public function __construct(
         private readonly int $maxHeaderSize,
         private readonly int $maxBodySize,
     ) {
+        $this->request = \fopen('php://temp', 'rw');
     }
 
     /**
@@ -42,78 +41,58 @@ final class Request
             return;
         }
 
-        if (!$this->headersParsed) {
-            $crlfPos = \strpos($buffer, "\r\n\r\n");
-            if($crlfPos === false) {
+        \fputs($this->request, $buffer);
+
+        // Parse headers
+        if (!isset($this->storage)) {
+            $this->storage = new StreamStorage($this->request);
+            [$this->method, $this->uri, $this->version] = $this->parseFirstLine(\strstr($buffer, "\r\n", true));
+            $this->contentLength = (int) $this->storage->getHeader('content-length', '0');
+            $this->chunked = $this->storage->getHeader('transfer-encoding', '') === 'chunked';
+
+            if ($this->method === '' || $this->uri === '' || $this->version === '') {
                 throw new HttpException(400, true);
             }
-            $header = \substr($buffer, 0, $crlfPos + 2);
-            $this->parseHeader($header);
-            $body = \substr($buffer, $crlfPos + 4);
-        } else {
-            $body = $buffer;
+
+            if (!\in_array($this->version, ['1.0', '1.1'], true)) {
+                throw new HttpException(505, true);
+            }
+
+            if (\in_array($this->method, ['POST', 'PATCH']) && ($this->contentLength <= 0 && !$this->chunked)) {
+                throw new HttpException(400, true);
+            }
         }
 
-        $this->body ??= \fopen('php://temp', 'rw');
-        \fputs($this->body, $body);
-        $bodySize = \fstat($this->body)['size'];
+        $hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH']);
+        $bodySize = $this->storage->getBodySize();
+        $headerSize = $this->storage->getHeaderSize();
 
-        if ($this->maxBodySize > 0 && $bodySize > $this->maxBodySize) {
+        if ($headerSize >= $this->maxHeaderSize) {
             throw new HttpException(413, true);
         }
 
-        if ($this->contentLength > 0 && $bodySize > $this->contentLength) {
-            \ftruncate($this->body, $this->contentLength);
-            $bodySize = $this->contentLength;
+        if ($hasPayload && $this->maxBodySize > 0 && $bodySize > $this->maxBodySize) {
+            throw new HttpException(413, true);
         }
 
-        if ($this->contentLength === 0 || $bodySize === $this->contentLength) {
+        if ($hasPayload && $this->contentLength > 0 && $bodySize === $this->contentLength) {
             $this->isCompleted = true;
-            \fseek($this->body, 0);
+        }
+
+        if (!$hasPayload) {
+            $this->isCompleted = true;
         }
     }
 
-    private function parseHeader(string $header): void
+    /**
+     * @preturn array{0: string, 1: string, 2: string}
+     */
+    private function parseFirstLine(string $line): array
     {
-        if (\strlen($header) > $this->maxHeaderSize) {
-            throw new HttpException(413, true);
-        }
+        /** @var list<string> $parts */
+        $parts = \sscanf($line, '%s %s HTTP/%s');
 
-        $firstLine = \strstr($header, "\r\n", true);
-
-        if ($firstLine === false) {
-            throw new HttpException(400, true);
-        }
-
-        /** @var list<string> $firstLineParts */
-        $firstLineParts = \sscanf($firstLine, '%s %s HTTP/%s');
-
-        if (!isset($firstLineParts[0], $firstLineParts[1], $firstLineParts[2])) {
-            throw new HttpException(400, true);
-        }
-
-        $this->method = $firstLineParts[0];
-        $this->uri = $firstLineParts[1];
-        $this->version = $firstLineParts[2];
-
-        if (!\in_array($this->version, ['1.0', '1.1'], true)) {
-            throw new HttpException(505, true);
-        }
-
-        $tok = \strtok($header, "\r\n");
-        while ($tok !== false) {
-            if (\str_contains($tok, ':')) {
-                $parts = \explode(':', $tok, 2);
-                $key = $parts[0];
-                $value = \trim($parts[1] ?? '');
-                $this->headers[$key] = isset($this->headers[$key]) ? "{$this->headers[$key]},$value" : $value;
-            }
-            $tok = \strtok("\r\n");
-        }
-        /** @psalm-suppress MixedPropertyTypeCoercion */
-        \parse_str(\preg_replace('/;\s?/', '&', $this->headers['Cookie'] ?? ''), $this->cookie);
-        $this->contentLength = (int) ($this->headers['Content-Length'] ?? '0');
-        $this->headersParsed = true;
+        return [$parts[0] ?? '', $parts[1] ?? '', $parts[2] ?? ''];
     }
 
     public function isCompleted(): bool
@@ -121,170 +100,73 @@ final class Request
         return $this->isCompleted;
     }
 
-    public function getPsrServerRequest(): ServerRequestInterface
+    public function getPsrServerRequest(string $remoteIp): ServerRequestInterface
     {
         if (!$this->isCompleted()) {
             throw new \LogicException('ServerRequest cannot be created until request is complete');
         }
 
+        //QUERY_STRING
+
         $psrRequest = new ServerRequest(
             method: $this->method,
             uri: $this->uri,
             serverParams: $_SERVER + [
-                'REMOTE_ADDR' => '127.0.0.2',
+                'REMOTE_ADDR' => $remoteIp
             ],
         );
 
-        foreach ($this->headers as $name => $value) {
-            $psrRequest = $psrRequest->withHeader($name, $value);
+
+
+        foreach ($this->storage->getHeaders() as $name => $value) {
+            $psrRequest = $psrRequest->withHeader($name, \array_map(\trim(...), \explode(',', $value)));
         }
+
+        [$payload, $files] = $this->parsePayload($this->storage);
 
         return $psrRequest
             ->withProtocolVersion($this->version)
-            ->withCookieParams($this->cookie)
-            //->withParsedBody($workermanRequest->post())
-            //->withUploadedFiles($this->normalizeFiles($workermanRequest->file()))
-            ->withBody(Stream::create($this->body))
-        ;
+            ->withCookieParams($this->storage->getHeaderOptions('Cookie'))
+            ->withParsedBody($payload)
+            ->withUploadedFiles($files)
+            ->withBody(Stream::create($this->storage->getBodyStream()))
+            ;
     }
 
+    protected function parsePayload(StreamStorage $storage): array
+    {
+        $payload = [];
+        $files = [];
+        if ($storage->getHeaderValue('Content-Type') === 'application/x-www-form-urlencoded') {
+            \parse_str($storage->getBody(), $payload);
+        } else if ($storage->getHeaderValue('Content-Type') === 'application/json') {
+            $payload = (array) \json_decode($storage->getBody(), true);
+        } else if ($storage->isMultiPart()) {
+            $fileStructureStr = '';
+            $fileStructureList = [];
+            foreach ($storage->getParts() as $part) {
+                if ($part->isFile()) {
+                    $fileStructureStr .= $part->getName() . '&';
+                    $fileStructureList[] = new UploadedFile(
+                        $part->getBodyStream(),
+                        $part->getBodySize(),
+                        UPLOAD_ERR_OK,
+                        $part->getFileName(),
+                        $part->getMimeType(),
+                    );
+                } else {
+                    $payload[$part->getName()] = $part->getBody();
+                }
+            }
+            if (!empty($fileStructureList)) {
+                $i = 0;
+                \parse_str($fileStructureStr, $files);
+                \array_walk_recursive($files, static function (mixed &$item) use ($fileStructureList, &$i) {
+                    $item = $fileStructureList[$i++];
+                });
+            }
+        }
 
-
-
-
-    /**
-     * protected function parsePost(): void
-     * {
-     * static $cache = [];
-     * $this->data['post'] = $this->data['files'] = [];
-     * $contentType = $this->header('content-type', '');
-     * if (preg_match('/boundary="?(\S+)"?/', $contentType, $match)) {
-     * $httpPostBoundary = '--' . $match[1];
-     * $this->parseUploadFiles($httpPostBoundary);
-     * return;
-     * }
-     * $bodyBuffer = $this->rawBody();
-     * if ($bodyBuffer === '') {
-     * return;
-     * }
-     * if (preg_match('/\bjson\b/i', $contentType)) {
-     * $this->data['post'] = (array)json_decode($bodyBuffer, true);
-     * } else {
-     * parse_str($bodyBuffer, $this->data['post']);
-     * }
-     * }
-     *
-     * protected function parseUploadFiles(string $httpPostBoundary): void
-     * {
-     * $httpPostBoundary = trim($httpPostBoundary, '"');
-     * $buffer = $this->buffer;
-     * $postEncodeString = '';
-     * $filesEncodeString = '';
-     * $files = [];
-     * $bodyPosition = strpos($buffer, "\r\n\r\n") + 4;
-     * $offset = $bodyPosition + strlen($httpPostBoundary) + 2;
-     * $maxCount = static::$maxFileUploads;
-     * while ($maxCount-- > 0 && $offset) {
-     * $offset = $this->parseUploadFile($httpPostBoundary, $offset, $postEncodeString, $filesEncodeString, $files);
-     * }
-     * if ($postEncodeString) {
-     * parse_str($postEncodeString, $this->data['post']);
-     * }
-     *
-     * if ($filesEncodeString) {
-     * parse_str($filesEncodeString, $this->data['files']);
-     * array_walk_recursive($this->data['files'], function (&$value) use ($files) {
-     * $value = $files[$value];
-     * });
-     * }
-     * }
-     *
-     * protected function parseUploadFile(string $boundary, int $sectionStartOffset, string &$postEncodeString, string &$filesEncodeStr, array &$files): int
-     * {
-     * $file = [];
-     * $boundary = "\r\n$boundary";
-     * if (strlen($this->buffer) < $sectionStartOffset) {
-     * return 0;
-     * }
-     * $sectionEndOffset = strpos($this->buffer, $boundary, $sectionStartOffset);
-     * if (!$sectionEndOffset) {
-     * return 0;
-     * }
-     * $contentLinesEndOffset = strpos($this->buffer, "\r\n\r\n", $sectionStartOffset);
-     * if (!$contentLinesEndOffset || $contentLinesEndOffset + 4 > $sectionEndOffset) {
-     * return 0;
-     * }
-     * $contentLinesStr = substr($this->buffer, $sectionStartOffset, $contentLinesEndOffset - $sectionStartOffset);
-     * $contentLines = explode("\r\n", trim($contentLinesStr . "\r\n"));
-     * $boundaryValue = substr($this->buffer, $contentLinesEndOffset + 4, $sectionEndOffset - $contentLinesEndOffset - 4);
-     * $uploadKey = false;
-     * foreach ($contentLines as $contentLine) {
-     * if (!strpos($contentLine, ': ')) {
-     * return 0;
-     * }
-     * [$key, $value] = explode(': ', $contentLine);
-     * switch (strtolower($key)) {
-     *
-     * case "content-disposition":
-     * // Is file data.
-     * if (preg_match('/name="(.*?)"; filename="(.*?)"/i', $value, $match)) {
-     * $error = 0;
-     * $tmpFile = '';
-     * $fileName = $match[1];
-     * $size = strlen($boundaryValue);
-     * $tmpUploadDir = HTTP::uploadTmpDir();
-     * if (!$tmpUploadDir) {
-     * $error = UPLOAD_ERR_NO_TMP_DIR;
-     * } else if ($boundaryValue === '' && $fileName === '') {
-     * $error = UPLOAD_ERR_NO_FILE;
-     * } else {
-     * $tmpFile = tempnam($tmpUploadDir, 'workerman.upload.');
-     * if ($tmpFile === false || false === file_put_contents($tmpFile, $boundaryValue)) {
-     * $error = UPLOAD_ERR_CANT_WRITE;
-     * }
-     * }
-     * $uploadKey = $fileName;
-     * // Parse upload files.
-     * $file = [...$file, 'name' => $match[2], 'tmp_name' => $tmpFile, 'size' => $size, 'error' => $error, 'full_path' => $match[2]];
-     * $file['type'] ??= '';
-     * break;
-     * }
-     * // Is post field.
-     * // Parse $POST.
-     * if (preg_match('/name="(.*?)"$/', $value, $match)) {
-     * $k = $match[1];
-     * $postEncodeString .= urlencode($k) . "=" . urlencode($boundaryValue) . '&';
-     * }
-     * return $sectionEndOffset + strlen($boundary) + 2;
-     *
-     * case "content-type":
-     * $file['type'] = trim($value);
-     * break;
-     *
-     * case "webkitrelativepath":
-     * $file['full_path'] = \trim($value);
-     * break;
-     * }
-     * }
-     * if ($uploadKey === false) {
-     * return 0;
-     * }
-     * $filesEncodeStr .= urlencode($uploadKey) . '=' . count($files) . '&';
-     * $files[] = $file;
-     *
-     * return $sectionEndOffset + strlen($boundary) + 2;
-     * }
-     */
-
-    //    public function __destruct()
-    //    {
-    //        if (isset($this->data['files'])) {
-    //            clearstatcache();
-    //            array_walk_recursive($this->data['files'], function ($value, $key) {
-    //                if ($key === 'tmp_name' && is_file($value)) {
-    //                    unlink($value);
-    //                }
-    //            });
-    //        }
-    //    }
+        return [$payload, $files];
+    }
 }

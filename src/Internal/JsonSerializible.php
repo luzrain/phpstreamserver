@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Internal;
 
 /**
+ * @internal
  * @psalm-require-implements \JsonSerializable
  */
 trait JsonSerializible

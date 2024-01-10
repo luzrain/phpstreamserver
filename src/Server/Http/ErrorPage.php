@@ -8,7 +8,6 @@ use Luzrain\PhpRunner\PhpRunner;
 
 final readonly class ErrorPage implements \Stringable
 {
-    private string $exceptionClass;
     private string $version;
 
     public function __construct(
@@ -17,12 +16,11 @@ final readonly class ErrorPage implements \Stringable
         private \Throwable|null $exception = null,
     ) {
         $this->version = PhpRunner::VERSION_STRING;
-        $this->exceptionClass = $this->exception !== null ? $this->exception::class : '';
     }
 
     public function __toString()
     {
-        return $this->exception !== null ? $this->getTemplateWithException() : $this->getTemplateWithoutException();
+        return $this->exception !== null ? $this->getTemplateWithException($this->exception) : $this->getTemplateWithoutException();
     }
 
     private function getTemplateWithoutException(): string
@@ -47,9 +45,9 @@ final readonly class ErrorPage implements \Stringable
             HTML;
     }
 
-    private function getTemplateWithException(): string
+    private function getTemplateWithException(\Throwable $exception): string
     {
-        \assert($this->exception !== null);
+        $exceptionClass = $exception::class;
         return <<<HTML
             <!DOCTYPE html>
             <html lang="en">
@@ -65,10 +63,10 @@ final readonly class ErrorPage implements \Stringable
             <body>
             <h1>{$this->code} {$this->title}</h1>
             <div style="margin: 1rem 0;">
-                <div>{$this->exceptionClass}: {$this->exception->getMessage()}</div>
-                <div style="font-size:0.85em;">in <b>{$this->exception->getFile()}</b> on line <b>{$this->exception->getLine()}</b></div>
+                <div>{$exceptionClass}: {$exception->getMessage()}</div>
+                <div style="font-size:0.85em;">in <b>{$exception->getFile()}</b> on line <b>{$exception->getLine()}</b></div>
             </div>
-            <pre>Stack trace:\n{$this->exception->getTraceAsString()}</pre>
+            <pre>Stack trace:\n{$exception->getTraceAsString()}</pre>
             <hr>
             <div>{$this->version}</div>
             </body>

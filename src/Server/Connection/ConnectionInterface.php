@@ -6,7 +6,7 @@ namespace Luzrain\PhpRunner\Server\Connection;
 
 interface ConnectionInterface
 {
-    public const READ_BUFFER_SIZE = 102400;
+    public const READ_BUFFER_SIZE = 204800;
     public const WRITE_BUFFER_SIZE = 204800;
     public const CONNECT_FAIL = 1;
     public const SEND_FAIL = 2;

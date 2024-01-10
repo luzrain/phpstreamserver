@@ -18,15 +18,12 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class Http implements ProtocolInterface
 {
+    private const MAX_HEADER_SIZE = 32768;
+
     private Request|null $request = null;
     private ServerRequestInterface|null $psrRequest = null;
 
     public function __construct(
-        /**
-         * The maximum allowed size for reading client request header.
-         */
-        private readonly int $maxHeaderSize = 16384, //16KB
-
         /**
          * The maximum allowed size of the client http request body in bytes.
          * If the size in a request exceeds the value, the 413 (Request Entity Too Large) error is returned to the client.
@@ -42,14 +39,18 @@ final class Http implements ProtocolInterface
     public function decode(ConnectionInterface $connection, string $buffer): ServerRequestInterface|null
     {
         $this->request ??= new Request(
-            maxHeaderSize: $this->maxHeaderSize,
+            maxHeaderSize: self::MAX_HEADER_SIZE,
             maxBodySize: $this->maxBodySize,
         );
 
-        $this->request->parse($buffer);
-        if ($this->request->isCompleted()) {
-            $this->psrRequest = $this->request->getPsrServerRequest();
-            return $this->psrRequest;
+        try {
+            $this->request->parse($buffer);
+            if ($this->request->isCompleted()) {
+                $this->psrRequest = $this->request->getPsrServerRequest($connection->getRemoteIp());
+                return $this->psrRequest;
+            }
+        } catch (\InvalidArgumentException $e) {
+            throw new HttpException(400, true, $e);
         }
 
         return null;

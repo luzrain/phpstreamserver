@@ -116,25 +116,25 @@ final class TcpConnection implements ConnectionInterface
      */
     public function baseRead(string $id, mixed $socket): void
     {
-        $recvBuffer = \fread($socket, self::READ_BUFFER_SIZE);
-
-        // Check connection closed
-        if (\feof($socket) || $recvBuffer === false) {
-            $this->destroy();
-            return;
-        }
-
-        $this->bytesRead += \strlen($recvBuffer);
-
-        try {
-            if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
-                $this->requestsCount++;
-                if ($this->onMessage !== null) {
-                    ($this->onMessage)($this, $package);
-                }
+        while ('' !== $recvBuffer = \fread($socket, self::READ_BUFFER_SIZE)) {
+            // Check connection closed
+            if (\feof($socket) || $recvBuffer === false) {
+                $this->destroy();
+                return;
             }
-        } catch (\Throwable $e) {
-            $this->protocol->onException($this, $e);
+
+            $this->bytesRead += \strlen($recvBuffer);
+
+            try {
+                if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
+                    $this->requestsCount++;
+                    if ($this->onMessage !== null) {
+                        ($this->onMessage)($this, $package);
+                    }
+                }
+            } catch (\Throwable $e) {
+                $this->protocol->onException($this, $e);
+            }
         }
     }
 
