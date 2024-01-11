@@ -122,4 +122,11 @@ final class Server
             onError: $this->onError,
         );
     }
+
+    public function getReadableListenAddress(): string
+    {
+        $protocolName = \strtolower((new \ReflectionObject($this->protocol))->getShortName());
+
+        return \sprintf('%s://%s:%d (%s)', $this->transport, $this->host, $this->port, $protocolName);
+    }
 }

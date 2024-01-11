@@ -30,6 +30,8 @@ class WorkerProcess
 
     private int $exitCode = 0;
 
+    public readonly string $listen;
+
     public function __construct(
         public readonly string $name = 'none',
         public readonly int $count = 1,
@@ -43,6 +45,7 @@ class WorkerProcess
         private readonly \Closure|null $onReload = null,
         private readonly Server|null $server = null,
     ) {
+        $this->listen = $server?->getReadableListenAddress() ?? '-';
     }
 
     /**

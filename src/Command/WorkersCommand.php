@@ -43,7 +43,7 @@ final class WorkersCommand implements Command
                 $w->user,
                 $w->name,
                 $w->count,
-                '-',
+                $w->listen,
             ]));
 
         return 0;
