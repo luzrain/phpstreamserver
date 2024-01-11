@@ -138,7 +138,7 @@ final class Http implements ProtocolInterface
     private function shouldClose(): bool
     {
         if ($this->psrRequest !== null) {
-            return $this->psrRequest->getProtocolVersion() === '1.0' || $this->psrRequest->getHeaderLine('Connection') === 'close';
+            return $this->psrRequest->getHeaderLine('Connection') === 'close' || $this->psrRequest->getProtocolVersion() === '1.0';
         } else {
             return true;
         }

@@ -67,7 +67,7 @@ final class HttpProtocolTest extends ServerTestCase
         ]);
 
         // Assert
-        $this->assertSame('9hnwk8xuxzt8qdc4wcsrr26uqqsuz8', $response['headers']['test-header-1'][0] ?? null);
+        $this->assertSame('9hnwk8xuxzt8qdc4wcsrr26uqqsuz8', $response['headers']['test-header-1'][0]);
     }
 
     public function testGetParameters(): void
@@ -80,7 +80,7 @@ final class HttpProtocolTest extends ServerTestCase
         ]);
 
         // Assert
-        $this->assertSame('3kqz7kx610uewmcwyg44z', $response['query']['test-query-1'] ?? null);
+        $this->assertSame('3kqz7kx610uewmcwyg44z', $response['query']['test-query-1']);
     }
 
     public function testGetWithNoParameters(): void
@@ -103,7 +103,7 @@ final class HttpProtocolTest extends ServerTestCase
         ]);
 
         // Assert
-        $this->assertSame('94bt5trqjfqe6seo0', $response['cookies']['test-cookie-1'] ?? null);
-        $this->assertSame('test1 test2', $response['cookies']['test-cookie-2'] ?? null);
+        $this->assertSame('94bt5trqjfqe6seo0', $response['cookies']['test-cookie-1']);
+        $this->assertSame('test1 test2', $response['cookies']['test-cookie-2']);
     }
 }
