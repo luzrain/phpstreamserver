@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Test;
 
 use GuzzleHttp\Psr7\MultipartStream;
+use GuzzleHttp\Psr7\Stream;
 
 final class HttpPostRequestTest extends ServerTestCase
 {
@@ -56,6 +57,13 @@ final class HttpPostRequestTest extends ServerTestCase
 
     public function testMultipartRequest(): void
     {
+        // Arrange
+        $bigFileResource = \fopen('php://temp', 'rw');
+        for ($i = 0; $i < 1000; $i++) {
+            \fwrite($bigFileResource, \str_repeat('0', 100000));
+        }
+        \rewind($bigFileResource);
+
         // Act
         $response = $this->requestJsonDecode('POST', 'http://127.0.0.1:9080/request', [
             'headers' => [
@@ -90,6 +98,11 @@ final class HttpPostRequestTest extends ServerTestCase
                     'filename' => 'dot.png',
                     'contents' => \base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', true),
                 ],
+                [
+                    'name' => 'big_file',
+                    'filename' => 't.bin',
+                    'contents' => new Stream($bigFileResource),
+                ],
             ]),
         ]);
 
@@ -122,5 +135,11 @@ final class HttpPostRequestTest extends ServerTestCase
         $this->assertSame('image/png', $file['client_media_type'] ?? null);
         $this->assertSame(70, $file['size'] ?? null);
         $this->assertSame('4a5eb7171b58e08a6881721e3b43d5a44419a2be', $file['sha1'] ?? '');
+
+        $file = $response['files']['big_file'];
+        $this->assertSame('t.bin', $file['client_filename'] ?? null);
+        $this->assertSame('application/octet-stream', $file['client_media_type'] ?? null);
+        $this->assertSame(100000000, $file['size'] ?? null);
+        $this->assertSame('359c2fd12051ccb95e8828bfffdc8d07c9b97a13', $file['sha1'] ?? '');
     }
 }

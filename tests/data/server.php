@@ -14,6 +14,7 @@ use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
 use Psr\Http\Message\UploadedFileInterface;
 
+$tempFiles = [];
 $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(
     new WorkerProcess(
@@ -30,14 +31,22 @@ $phpRunner->addWorkers(
         server: new Server(
             listen: 'tcp://0.0.0.0:9080',
             protocol: new Http(),
-            onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data): void {
+            onClose: function () use (&$tempFiles) {
+                foreach ($tempFiles as $tempFile) {
+                    \is_file($tempFile) && \unlink($tempFile);
+                }
+            },
+            onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data) use (&$tempFiles): void {
                 $files = $data->getUploadedFiles();
-                \array_walk_recursive($files, static function (UploadedFileInterface &$file) {
+                \array_walk_recursive($files, static function (UploadedFileInterface &$file) use (&$tempFiles) {
+                    $tmpFile = \sys_get_temp_dir() . '/' . \uniqid('test');
+                    $tempFiles[] = $tmpFile;
+                    $file->moveTo($tmpFile);
                     $file = [
                         'client_filename' => $file->getClientFilename(),
                         'client_media_type' => $file->getClientMediaType(),
                         'size' => $file->getSize(),
-                        'sha1' => \hash('sha1', $file->getStream()->getContents()),
+                        'sha1' => \hash_file('sha1', $tmpFile),
                     ];
                 });
                 $response = match ($data->getUri()->getPath()) {

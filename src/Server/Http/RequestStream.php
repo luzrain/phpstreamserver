@@ -4,24 +4,30 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server\Http;
 
-final class RequestStream
+use Psr\Http\Message\StreamInterface;
+
+final class RequestStream implements StreamInterface
 {
+    private const BUFFER_SIZE = 32768;
+
+    private readonly int $globalOffset;
+    private readonly int $globalBodyOffset;
+    private int $bodyPointer;
+    private readonly int|null $size;
     private array $headers = [];
-    private int $bodyOffset;
-    /** @var list<self> */
-    private array $parts = [];
     private array $headerOptionsCache = [];
 
     /**
      * @param resource $stream
      */
-    public function __construct(private mixed $stream)
+    public function __construct(private mixed &$stream, int $offset = 0, int|null $size = null)
     {
-        \rewind($this->stream);
+        \fseek($this->stream, $offset);
+        $this->globalOffset = $offset;
+        $this->size = $size;
         $endOfHeaders = false;
-        $bufferSize = 32768;
 
-        while (false !== ($line = \stream_get_line($this->stream, $bufferSize, "\r\n"))) {
+        while (false !== ($line = \stream_get_line($this->stream, self::BUFFER_SIZE, "\r\n"))) {
             // Empty line cause by double new line, we reached the end of the headers section
             if ($line === '') {
                 $endOfHeaders = true;
@@ -31,8 +37,8 @@ final class RequestStream
             if (\count($parts) !== 2) {
                 continue;
             }
-            $key = \strtolower($parts[0]); // @todo: Remove strtolower?
-            $value = \trim($parts[1] ?? '');
+            $key = \strtolower($parts[0]);
+            $value = \trim($parts[1]);
             $this->headers[$key] = isset($this->headers[$key]) ? "{$this->headers[$key]}, $value" : $value;
         }
 
@@ -40,47 +46,10 @@ final class RequestStream
             throw new \InvalidArgumentException('Header is not valid');
         }
 
-        $this->bodyOffset = \ftell($stream);
-
-        if (!$this->isMultiPart()) {
-            return;
-        }
-
-        // Parse multipart
-        if (null === ($boundary = $this->getHeaderOption('Content-Type', 'boundary'))) {
-            throw new \InvalidArgumentException("Can't find boundary in content type");
-        }
-
-        $separator = "--$boundary";
-        $partOffset = 0;
-        $endOfBody = false;
-
-        while (false !== ($line = \stream_get_line($this->stream, $bufferSize, "\r\n"))) {
-            if ($line === $separator || $line === "$separator--") {
-                if ($partOffset > 0) {
-                    $currentOffset = \ftell($this->stream);
-                    $partLength = $currentOffset - $partOffset - \strlen($line) - 4;
-
-                    // Copy part in a new stream @todo: Rewrite to use ONE stream for memory optimization
-                    $partStream = \fopen('php://temp', 'rw');
-                    \stream_copy_to_stream($this->stream, $partStream, $partLength, $partOffset);
-                    $this->parts[] = new self($partStream);
-
-                    // Reset current stream offset
-                    \fseek($this->stream, $currentOffset);
-                }
-
-                if ($line === "$separator--") {
-                    $endOfBody = true;
-                    break;
-                }
-
-                $partOffset = \ftell($this->stream);
-            }
-        }
-
-        if (\count($this->parts) === 0 || $endOfBody === false) {
-            throw new \LogicException("Can't find multi-part content");
+        $this->globalBodyOffset = \ftell($stream);
+        $this->bodyPointer = 0;
+        if ($this->size === null) {
+            \fseek($this->stream, 0, SEEK_END);
         }
     }
 
@@ -90,24 +59,9 @@ final class RequestStream
         return \str_starts_with($this->getHeader('Content-Type', ''), 'multipart/');
     }
 
-    public function getBodyStream(): mixed
-    {
-        return $this->stream;
-    }
-
-    public function getBody(): string
-    {
-        return \stream_get_contents($this->stream, -1, $this->bodyOffset);
-    }
-
-    public function getBodySize(): int
-    {
-        return \fstat($this->stream)['size'] - $this->bodyOffset;
-    }
-
     public function getHeaderSize(): int
     {
-        return \max(0, $this->bodyOffset - 2);
+        return \max(0, $this->globalBodyOffset - $this->globalOffset - 4);
     }
 
     public function getHeaders(): array
@@ -160,11 +114,45 @@ final class RequestStream
     }
 
     /**
-     * @return list<self>
+     * @return \Generator<self>
      */
-    public function getParts(): array
+    public function getParts(): \Generator
     {
-        return $this->parts;
+        if (null === ($boundary = $this->getHeaderOption('Content-Type', 'boundary'))) {
+            throw new \InvalidArgumentException("Can't find boundary in content type");
+        }
+
+        \fseek($this->stream, $this->globalBodyOffset);
+        $separator = "--$boundary";
+        $partCount = 0;
+        $partOffset = 0;
+        $endOfBody = false;
+
+        while (false !== ($line = \stream_get_line($this->stream, self::BUFFER_SIZE, "\r\n"))) {
+            if ($line !== $separator && $line !== "$separator--") {
+                continue;
+            }
+
+            if ($partOffset > 0) {
+                $partCount++;
+                $currentOffset = \ftell($this->stream);
+                $partStartPosition = $partOffset;
+                $partLength = $currentOffset - $partStartPosition - \strlen($line) - 4;
+                yield new self($this->stream, $partStartPosition, $partLength);
+                \fseek($this->stream, $currentOffset);
+            }
+
+            if ($line === "$separator--") {
+                $endOfBody = true;
+                break;
+            }
+
+            $partOffset = \ftell($this->stream);
+        }
+
+        if ($partCount === 0 || $endOfBody === false) {
+            throw new \LogicException("Can't find multi-part content");
+        }
     }
 
     private function parseHeaderContent(string|null $content): array
@@ -178,5 +166,103 @@ final class RequestStream
         }
 
         return [$headerValue ?? null, $values ?? []];
+    }
+
+    public function __toString(): string
+    {
+        return $this->getContents();
+    }
+
+    public function close(): void
+    {
+        // nothing
+    }
+
+    public function detach(): null
+    {
+        return null;
+    }
+
+    public function getSize(): int
+    {
+        return ($this->size ?? \fstat($this->stream)['size']) - $this->getHeaderSize() - 4;
+    }
+
+    public function tell(): int
+    {
+        return $this->bodyPointer;
+    }
+
+    public function eof(): bool
+    {
+        return \feof($this->stream) || $this->tell() >= $this->getSize();
+    }
+
+    public function isSeekable(): bool
+    {
+        return true;
+    }
+
+    public function seek(int $offset, int $whence = SEEK_SET): void
+    {
+        if ($whence === SEEK_CUR) {
+            $offset += $this->bodyPointer;
+        } elseif ($whence === SEEK_END) {
+            $offset += $this->getSize();
+        }
+
+        $bodyPointer = $offset;
+        $globalOffset = $this->globalBodyOffset + $offset;
+        if ($this->size !== null && $offset > $this->getSize()) {
+            $globalOffset = $this->globalOffset + $this->size;
+            $bodyPointer = $this->getSize();
+        }
+        $this->bodyPointer = $bodyPointer;
+        \fseek($this->stream, $globalOffset);
+    }
+
+    public function rewind(): void
+    {
+        $this->seek(0);
+    }
+
+    public function isWritable(): bool
+    {
+        return false;
+    }
+
+    public function write(string $string): int
+    {
+        throw new \RuntimeException('Stream is non-writable');
+    }
+
+    public function isReadable(): bool
+    {
+        return true;
+    }
+
+    public function read(int $length): string
+    {
+        $remainingSize = $this->getSize() - $this->tell();
+        if ($this->size !== null && $length > $remainingSize) {
+            $length = $remainingSize;
+        }
+        $this->bodyPointer += $length;
+
+        return \fread($this->stream, $length);
+    }
+
+    public function getContents(): string
+    {
+        $length = $this->size === null ? -1 : $this->getSize();
+
+        return \stream_get_contents($this->stream, $length, $this->globalBodyOffset);
+    }
+
+    public function getMetadata(?string $key = null): mixed
+    {
+        $meta = \stream_get_meta_data($this->stream);
+
+        return $key === null ? $meta : $meta[$key] ?? null;
     }
 }

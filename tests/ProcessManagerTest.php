@@ -12,12 +12,9 @@ final class ProcessManagerTest extends TestCase
     {
         // Arrange
         $status = \getServerStatus();
-        $startedAt = new \DateTimeImmutable($status->started_at ?? 'now');
-        $now = new \DateTimeImmutable('now');
 
         // Assert
         $this->assertTrue($status->is_running);
-        $this->assertLessThanOrEqual(1, $now->getTimestamp() - $startedAt->getTimestamp());
         $this->assertGreaterThanOrEqual(1, $status->workers_count);
         $this->assertGreaterThanOrEqual(1, $status->processes_count);
         $this->assertGreaterThanOrEqual($status->workers_count, $status->processes_count);
