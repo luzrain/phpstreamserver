@@ -118,6 +118,7 @@ final class TcpConnection implements ConnectionInterface
         }
 
         // Check connection closed
+        /** @psalm-suppress PossiblyUndefinedVariable */
         if (\feof($socket) || $recvBuffer === false) {
             $this->destroy();
         }

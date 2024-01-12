@@ -42,7 +42,7 @@ final class ConnectionsCommand implements Command
 
         echo "❯ Connections\n";
 
-        if (count($connections) > 0) {
+        if (\count($connections) > 0) {
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'Pid',
@@ -57,7 +57,7 @@ final class ConnectionsCommand implements Command
                         'tcp',
                         $c->localIp . ':' . $c->localPort,
                         $c->remoteIp . ':' . $c->remotePort,
-                        \sprintf('(%s / %s)', Functions::humanFileSize($c->statistics->getRx()), Functions::humanFileSize($c->statistics->getTx()))
+                        \sprintf('(%s / %s)', Functions::humanFileSize($c->statistics->getRx()), Functions::humanFileSize($c->statistics->getTx())),
                     ];
                 }));
         } else {
