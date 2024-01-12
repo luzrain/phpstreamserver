@@ -73,7 +73,7 @@ final class TcpConnection implements ConnectionInterface
         \stream_set_blocking($this->socket, false);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->socket, $this->baseRead(...));
         $this->statistics = new ConnectionStatistics();
-        ConnectionsList::addConnection($this);
+        ActiveConnection::addConnection($this);
 
         if ($this->onConnect !== null) {
             ($this->onConnect)($this);

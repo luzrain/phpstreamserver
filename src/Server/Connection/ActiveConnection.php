@@ -6,7 +6,7 @@ namespace Luzrain\PhpRunner\Server\Connection;
 
 use Luzrain\PhpRunner\Internal\JsonSerializible;
 
-final class ConnectionsList implements \JsonSerializable
+final class ActiveConnection implements \JsonSerializable
 {
     use JsonSerializible;
 
