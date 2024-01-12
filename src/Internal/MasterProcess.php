@@ -316,28 +316,29 @@ final class MasterProcess
         $pids = \iterator_to_array($this->pool->getAlivePids());
         $callbackIds = [];
         $data = [];
-        $fallbackId = '';
+        $timeoutCallbackId = '';
 
         foreach ($pids as $pid) {
             $fd = $this->pool->getChildSocketByPid($pid);
-            $callbackIds[] = $this->eventLoop->onReadable($fd, function (string $id, mixed $fd) use (&$pids, &$callbackIds, &$data, &$fallbackId) {
+            $callbackIds[] = $this->eventLoop->onReadable($fd, function (string $id, mixed $fd) use (&$pids, &$callbackIds, &$data, &$timeoutCallbackId) {
                 $this->eventLoop->cancel($id);
                 $dataReceived = Functions::streamRead($fd);
                 if ($dataReceived !== '') {
                     $data[] = \unserialize($dataReceived);
                 }
                 if (\count($data) === \count($pids)) {
-                    $this->eventLoop->cancel($fallbackId);
+                    $this->eventLoop->cancel($timeoutCallbackId);
                     $this->onAllWorkersStatusReady($data);
-                    unset($pids, $callbackIds, $data, $fallbackId);
+                    unset($pids, $callbackIds, $data, $timeoutCallbackId);
                 }
             });
         }
 
-        $fallbackId = $this->eventLoop->delay(5, function () use (&$pids, &$callbackIds, &$data, &$fallbackId) {
+        // Timeout for release empty data after 10 seconds if data from processes still not available
+        $timeoutCallbackId = $this->eventLoop->delay(10, function () use (&$pids, &$callbackIds, &$data, &$timeoutCallbackId) {
             \array_walk($callbackIds, $this->eventLoop->cancel(...));
             $this->onAllWorkersStatusReady($data);
-            unset($pids, $callbackIds, $data, $fallbackId);
+            unset($pids, $callbackIds, $data, $timeoutCallbackId);
         });
 
         \array_walk($pids, fn(int $pid) => \posix_kill($pid, SIGUSR1));

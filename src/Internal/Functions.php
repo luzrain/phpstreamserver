@@ -36,12 +36,10 @@ final class Functions
     public static function streamRead($resource, bool $blocking = false): string
     {
         $isBlocked = \stream_get_meta_data($resource)['blocked'];
-        $buffer = '';
         \stream_set_blocking($resource, $blocking);
-        while (($s = \fread($resource, 1024) ?: '') !== '') {
-            $buffer .= $s;
-        }
+        $buffer = (string) \stream_get_contents($resource, -1);
         \stream_set_blocking($resource, $isBlocked);
+
         return $buffer;
     }
 
