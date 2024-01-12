@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Status;
 
 use Luzrain\PhpRunner\Internal\JsonSerializible;
+use Luzrain\PhpRunner\Server\Connection\ConnectionsList;
+use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
 
 /**
  * @internal
@@ -19,6 +21,9 @@ final readonly class WorkerProcessStatus implements \JsonSerializable
         public int $memory,
         public string $name,
         public \DateTimeImmutable $startedAt,
+        public ConnectionStatistics $connectionStatistics,
+        /** @var list<ConnectionsList> */
+        public array $connections,
     ) {
     }
 }

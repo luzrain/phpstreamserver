@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Luzrain\PhpRunner\Server\Connection;
+
+use Luzrain\PhpRunner\Internal\JsonSerializible;
+
+final class ConnectionsList implements \JsonSerializable
+{
+    use JsonSerializible;
+
+    private static \WeakMap $map;
+
+    /**
+     * @return list<self>
+     */
+    public static function getList(): array
+    {
+        return isset(self::$map) ? \iterator_to_array(self::$map, false) : [];
+    }
+
+    public static function addConnection(ConnectionInterface $connection): void
+    {
+        self::$map ??= new \WeakMap();
+        self::$map[$connection] = new self(
+            localIp: $connection->getLocalIp(),
+            localPort: (string) $connection->getLocalPort(),
+            remoteIp: $connection->getRemoteIp(),
+            remotePort: (string) $connection->getRemotePort(),
+            connectedAt: new \DateTimeImmutable(),
+        );
+    }
+
+    private function __construct(
+        public string $localIp,
+        public string $localPort,
+        public string $remoteIp,
+        public string $remotePort,
+        public \DateTimeImmutable $connectedAt,
+    ) {
+    }
+}

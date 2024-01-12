@@ -42,15 +42,26 @@ final class ProcessesCommand implements Command
                     'Worker',
                     'Connections',
                     'Requests',
+                    'Bytes (RX / TX)',
                 ])
-                ->addRows(\array_map(array: $status->processes, callback: fn(WorkerProcessStatus $w) => [
-                    $w->pid,
-                    $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
-                    Functions::humanFileSize($w->memory),
-                    $w->name,
-                    '<color;fg=gray>0</>',
-                    '<color;fg=gray>0</>',
-                ]));
+                ->addRows(\array_map(array: $status->processes, callback: function (WorkerProcessStatus $w) {
+                    $connections = \count($w->connections);
+                    $packages = $w->connectionStatistics->getPackages();
+                    $rx = $w->connectionStatistics->getRx();
+                    $tx = $w->connectionStatistics->getTx();
+
+                    return [
+                        $w->pid,
+                        $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
+                        Functions::humanFileSize($w->memory),
+                        $w->name,
+                        $connections === 0 ? '<color;fg=gray>0</>' : $connections,
+                        $packages === 0 ? '<color;fg=gray>0</>' : $packages,
+                        $rx === 0 && $tx === 0
+                            ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($rx), Functions::humanFileSize($tx))
+                            : \sprintf('(%s / %s)', Functions::humanFileSize($rx), Functions::humanFileSize($tx)),
+                    ];
+                }));
         } else {
             echo "  <color;fg=yellow>There are no running processes</>\n";
         }

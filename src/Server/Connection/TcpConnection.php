@@ -16,9 +16,7 @@ final class TcpConnection implements ConnectionInterface
     public const STATUS_CLOSING = 2;
     public const STATUS_CLOSED = 3;
 
-    /**
-     * @var resource
-     */
+    /** @var resource */
     private mixed $socket;
     private \Generator|null $sendBufferLevel1 = null;
     private string $sendBufferLevel2 = '';
@@ -33,15 +31,7 @@ final class TcpConnection implements ConnectionInterface
     private string $localIp;
     private int $localPort;
 
-    // Statistics
-    private int $bytesRead = 0;
-    private int $bytesWritten = 0;
-    private int $requestsCount = 0;
-
-    /**
-     * @var \WeakMap<self, array>
-     */
-    private static \WeakMap $connections;
+    private ConnectionStatistics $statistics;
 
     /**
      * @param resource $socket
@@ -82,15 +72,12 @@ final class TcpConnection implements ConnectionInterface
 
         \stream_set_blocking($this->socket, false);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->socket, $this->baseRead(...));
+        $this->statistics = new ConnectionStatistics();
+        ConnectionsList::addConnection($this);
 
         if ($this->onConnect !== null) {
             ($this->onConnect)($this);
         }
-
-        // Statistics
-        //self::$statistics['connection_count']++;
-        //self::$connections ??= new \WeakMap();
-        //self::$connections[$this] = [];
     }
 
     /**
@@ -117,10 +104,10 @@ final class TcpConnection implements ConnectionInterface
     public function baseRead(string $id, mixed $socket): void
     {
         while (!empty($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE))) {
-            $this->bytesRead += \strlen($recvBuffer);
+            $this->statistics->incRx(\strlen($recvBuffer));
             try {
                 if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
-                    $this->requestsCount++;
+                    $this->statistics->incPackages();
                     if ($this->onMessage !== null) {
                         ($this->onMessage)($this, $package);
                     }
@@ -155,7 +142,6 @@ final class TcpConnection implements ConnectionInterface
         return true;
     }
 
-
     /**
      * @param resource $socket
      */
@@ -175,12 +161,12 @@ final class TcpConnection implements ConnectionInterface
                     $this->destroy();
                 }
             }
-            $this->bytesWritten += $len;
+            $this->statistics->incTx($len);
         } elseif ($len > 0) {
             $this->sendBufferLevel2 = \substr($this->sendBufferLevel2, $len);
-            $this->bytesWritten += $len;
+            $this->statistics->incTx($len);
         } else {
-            //++self::$statistics['send_fail'];
+            $this->statistics->incFails();
             $this->eventLoop->cancel($id);
             $this->destroy();
             if ($this->onError) {

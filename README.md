@@ -14,8 +14,8 @@ PHPRunner is supports TLS encryption and the ability to implement custom protoco
 
 #### Requirements and limitations:  
  - Unix based OS (no windows support);
- - POSIX and PCNTL extensions;
- - UV extension is not required, but highly recommended for better performance, especially in production environments.
+ - php-posix and php-pcntl extensions;
+ - php-uv extension is not required, but highly recommended for better performance, especially in production environments.
 
 ## Getting started
 ### Install composer packages

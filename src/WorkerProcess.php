@@ -7,6 +7,8 @@ namespace Luzrain\PhpRunner;
 use Luzrain\PhpRunner\Exception\UserChangeException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PhpRunner\Server\Connection\ConnectionsList;
+use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
 use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Psr\Log\LoggerInterface;
@@ -171,6 +173,8 @@ class WorkerProcess
             memory: \memory_get_usage(),
             name: $this->name,
             startedAt: $this->startedAt,
+            connectionStatistics: ConnectionStatistics::getGlobal(),
+            connections: ConnectionsList::getList(),
         )));
     }
 }

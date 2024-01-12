@@ -21,6 +21,9 @@ final readonly class MasterProcessStatus implements \JsonSerializable
     public int $totalMemory;
     public int $workersCount;
     public int $processesCount;
+    public int $connectionsCount;
+    /** @var list<WorkerProcessStatus> */
+    public array $processes;
 
     /**
      * @param list<WorkerStatus> $workers
@@ -34,8 +37,12 @@ final readonly class MasterProcessStatus implements \JsonSerializable
         public bool $isRunning,
         public string $startFile,
         public array $workers,
-        public array $processes = [],
+        array $processes = [],
     ) {
+        // Sort processes by pid number
+        \usort($processes, static fn (WorkerProcessStatus $a, WorkerProcessStatus $b) => $a->pid <=> $b->pid);
+        $this->processes = $processes;
+
         $eventLoop = (new DriverFactory())->create();
         $eventLoopName = (new \ReflectionObject($eventLoop))->getShortName();
 
@@ -45,5 +52,6 @@ final readonly class MasterProcessStatus implements \JsonSerializable
         $this->totalMemory = \array_sum(\array_map(fn(WorkerProcessStatus $p) => $p->memory, $this->processes));
         $this->workersCount = \count($this->workers);
         $this->processesCount = \count($this->processes);
+        $this->connectionsCount = \array_sum(\array_map(fn (WorkerProcessStatus $p) => \count($p->connections), $processes));
     }
 }

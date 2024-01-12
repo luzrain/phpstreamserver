@@ -61,14 +61,18 @@ final class Functions
         }
         $bytes = \round($bytes / 1024, 0);
         if ($bytes < 1024) {
-            return "$bytes KB";
+            return "$bytes KiB";
         }
         $bytes = \round($bytes / 1024, 1);
         if ($bytes < 1024) {
-            return "$bytes MB";
+            return "$bytes MiB";
         }
         $bytes = \round($bytes / 1024, 1);
-        return "$bytes GB";
+        if ($bytes < 1024) {
+            return "$bytes GiB";
+        }
+        $bytes = \round($bytes / 1024, 1);
+        return "$bytes PiB";
     }
 
     /**
