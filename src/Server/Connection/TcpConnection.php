@@ -116,15 +116,8 @@ final class TcpConnection implements ConnectionInterface
      */
     public function baseRead(string $id, mixed $socket): void
     {
-        while ('' !== $recvBuffer = \fread($socket, self::READ_BUFFER_SIZE)) {
-            // Check connection closed
-            if (\feof($socket) || $recvBuffer === false) {
-                $this->destroy();
-                return;
-            }
-
+        while (!empty($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE))) {
             $this->bytesRead += \strlen($recvBuffer);
-
             try {
                 if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
                     $this->requestsCount++;
@@ -135,6 +128,11 @@ final class TcpConnection implements ConnectionInterface
             } catch (\Throwable $e) {
                 $this->protocol->onException($this, $e);
             }
+        }
+
+        // Check connection closed
+        if (\feof($socket) || $recvBuffer === false) {
+            $this->destroy();
         }
     }
 
@@ -250,18 +248,15 @@ final class TcpConnection implements ConnectionInterface
             return;
         }
 
-        /** @psalm-suppress InvalidPropertyAssignmentValue */
-        \fclose($this->socket);
         $this->eventLoop->cancel($this->onReadableCallbackId);
         $this->eventLoop->cancel($this->sendBufferCallbackId);
         $this->status = self::STATUS_CLOSED;
         $this->sendBufferLevel1 = null;
         $this->sendBufferLevel2 = '';
-    }
 
-    public function __destruct()
-    {
-        //self::$statistics['connection_count']--;
+        /** @psalm-suppress InvalidPropertyAssignmentValue */
+        \fclose($this->socket);
+
         if ($this->onClose !== null) {
             ($this->onClose)($this);
         }
