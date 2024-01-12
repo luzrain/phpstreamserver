@@ -132,7 +132,9 @@ final class Http implements ProtocolInterface
         $this->psrRequest = null;
         $connection->send($httpRequestException->getResponse());
 
-        throw $e;
+        if (!$e instanceof HttpException) {
+            throw $e;
+        }
     }
 
     private function shouldClose(): bool

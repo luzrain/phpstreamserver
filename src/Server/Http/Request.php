@@ -135,6 +135,11 @@ final class Request
     {
         $payload = [];
         $files = [];
+
+        if (!$this->hasPayload) {
+            return [$payload, $files];
+        }
+
         if ($requestStream->getHeaderValue('Content-Type') === 'application/x-www-form-urlencoded') {
             \parse_str($requestStream->getContents(), $payload);
         } elseif ($requestStream->getHeaderValue('Content-Type') === 'application/json') {
