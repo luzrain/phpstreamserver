@@ -29,7 +29,7 @@ $phpRunner->addWorkers(
         name: 'HTTP Server',
         count: 2,
         server: new Server(
-            listen: 'tcp://0.0.0.0:9080',
+            listen: 'tcp://127.0.0.1:9080',
             protocol: new Http(),
             onClose: function () use (&$tempFiles) {
                 foreach ($tempFiles as $tempFile) {
@@ -78,7 +78,7 @@ $phpRunner->addWorkers(
         name: 'HTTPS Server',
         count: 1,
         server: new Server(
-            listen: 'tcp://0.0.0.0:9081',
+            listen: 'tcp://127.0.0.1:9081',
             tls: true,
             tlsCertificate: __DIR__ . '/localhost.crt',
             protocol: new Http(),
@@ -95,7 +95,7 @@ $phpRunner->addWorkers(
         name: 'TCP TEXT Server',
         count: 1,
         server: new Server(
-            listen: 'tcp://0.0.0.0:9082',
+            listen: 'tcp://127.0.0.1:9082',
             protocol: new Text(),
             onMessage: function (ConnectionInterface $connection, string $data): void {
                 $connection->send('echo:' . $data);
@@ -106,7 +106,7 @@ $phpRunner->addWorkers(
         name: 'UDP TEXT Server',
         count: 1,
         server: new Server(
-            listen: 'udp://0.0.0.0:9083',
+            listen: 'udp://127.0.0.1:9083',
             protocol: new Text(),
             onMessage: function (ConnectionInterface $connection, string $data): void {
                 $connection->send('echo:' . $data);
@@ -117,7 +117,7 @@ $phpRunner->addWorkers(
         name: 'TCP RAW Server',
         count: 1,
         server: new Server(
-            listen: 'tcp://0.0.0.0:9084',
+            listen: 'tcp://127.0.0.1:9084',
             protocol: new Raw(),
             onMessage: function (ConnectionInterface $connection, string $data): void {
                 $connection->send('echo:' . $data);
@@ -128,7 +128,7 @@ $phpRunner->addWorkers(
         name: 'UDP RAW Server',
         count: 1,
         server: new Server(
-            listen: 'udp://0.0.0.0:9085',
+            listen: 'udp://127.0.0.1:9085',
             protocol: new Raw(),
             onMessage: function (ConnectionInterface $connection, string $data): void {
                 $connection->send('echo:' . $data);
