@@ -19,10 +19,7 @@ final class UdpConnection implements ConnectionInterface
     private string $localIp;
     private int $localPort;
 
-    // Statistics
-    private int $bytesRead = 0;
-    private int $bytesWritten = 0;
-    private int $requestsCount = 0;
+    private ConnectionStatistics $connectionStatistics;
 
     /**
      * @param resource $socket
@@ -44,14 +41,17 @@ final class UdpConnection implements ConnectionInterface
         }
 
         $this->remoteAddress = $remoteAddress;
-        $this->bytesRead += \strlen($recvBuffer ?: '');
+        $this->connectionStatistics = new ConnectionStatistics();
+        $this->connectionStatistics->incRx(\strlen($recvBuffer ?: ''));
 
         if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
-            $this->requestsCount++;
+            $this->connectionStatistics->incPackages();
             if ($this->onMessage !== null) {
                 ($this->onMessage)($this, $package);
             }
         }
+
+
 
         // Increase total counter
         //ConnectionInterface::$statistics['total_request']++;
@@ -67,7 +67,7 @@ final class UdpConnection implements ConnectionInterface
             throw $typeError;
         }
 
-        $this->bytesWritten += \strlen($sendBuffer);
+        $this->connectionStatistics->incTx(\strlen($sendBuffer));
 
         return \stream_socket_sendto($this->socket, $sendBuffer, 0, $this->getRemoteAddress()) !== false;
     }
@@ -115,5 +115,10 @@ final class UdpConnection implements ConnectionInterface
     public function close(): void
     {
         // no action
+    }
+
+    public function getStatistics(): ConnectionStatistics
+    {
+        return $this->connectionStatistics;
     }
 }
