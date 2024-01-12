@@ -54,7 +54,7 @@ final class StartCommand implements Command
                     $w->user,
                     $w->name,
                     $w->count,
-                    '-',
+                    $w->listen,
                 ];
             }, $status->workers))
         ;
