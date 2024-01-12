@@ -19,4 +19,5 @@ interface ConnectionInterface
     public function getLocalIp(): string;
     public function getLocalPort(): int;
     public function close(): void;
+    public function getStatistics(): ConnectionStatistics;
 }

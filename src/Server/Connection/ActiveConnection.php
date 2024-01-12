@@ -29,6 +29,7 @@ final class ActiveConnection implements \JsonSerializable
             remoteIp: $connection->getRemoteIp(),
             remotePort: (string) $connection->getRemotePort(),
             connectedAt: new \DateTimeImmutable(),
+            statistics: $connection->getStatistics(),
         );
     }
 
@@ -38,6 +39,7 @@ final class ActiveConnection implements \JsonSerializable
         public string $remoteIp,
         public string $remotePort,
         public \DateTimeImmutable $connectedAt,
+        public ConnectionStatistics $statistics,
     ) {
     }
 }

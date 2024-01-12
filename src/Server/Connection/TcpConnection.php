@@ -31,7 +31,7 @@ final class TcpConnection implements ConnectionInterface
     private string $localIp;
     private int $localPort;
 
-    private ConnectionStatistics $statistics;
+    private ConnectionStatistics $connectionStatistics;
 
     /**
      * @param resource $socket
@@ -72,7 +72,7 @@ final class TcpConnection implements ConnectionInterface
 
         \stream_set_blocking($this->socket, false);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->socket, $this->baseRead(...));
-        $this->statistics = new ConnectionStatistics();
+        $this->connectionStatistics = new ConnectionStatistics();
         ActiveConnection::addConnection($this);
 
         if ($this->onConnect !== null) {
@@ -104,10 +104,10 @@ final class TcpConnection implements ConnectionInterface
     public function baseRead(string $id, mixed $socket): void
     {
         while (!empty($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE))) {
-            $this->statistics->incRx(\strlen($recvBuffer));
+            $this->connectionStatistics->incRx(\strlen($recvBuffer));
             try {
                 if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
-                    $this->statistics->incPackages();
+                    $this->connectionStatistics->incPackages();
                     if ($this->onMessage !== null) {
                         ($this->onMessage)($this, $package);
                     }
@@ -161,12 +161,12 @@ final class TcpConnection implements ConnectionInterface
                     $this->destroy();
                 }
             }
-            $this->statistics->incTx($len);
+            $this->connectionStatistics->incTx($len);
         } elseif ($len > 0) {
             $this->sendBufferLevel2 = \substr($this->sendBufferLevel2, $len);
-            $this->statistics->incTx($len);
+            $this->connectionStatistics->incTx($len);
         } else {
-            $this->statistics->incFails();
+            $this->connectionStatistics->incFails();
             $this->eventLoop->cancel($id);
             $this->destroy();
             if ($this->onError) {
@@ -246,5 +246,10 @@ final class TcpConnection implements ConnectionInterface
         if ($this->onClose !== null) {
             ($this->onClose)($this);
         }
+    }
+
+    public function getStatistics(): ConnectionStatistics
+    {
+        return $this->connectionStatistics;
     }
 }
