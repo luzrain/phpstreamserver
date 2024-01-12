@@ -81,7 +81,10 @@ final class Server
         $flags = $this->transport === 'udp' ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
         $listenAddress = "{$this->transport}://{$this->host}:{$this->port}";
         $socketContext = \stream_context_create($this->socketContextData);
-        $mainSocket = \stream_socket_server($listenAddress, $errno, $errmsg, $flags, $socketContext);
+        if (false === $mainSocket = \stream_socket_server($listenAddress, $errno, $errmsg, $flags, $socketContext)) {
+            return;
+        }
+
         \stream_set_blocking($mainSocket, false);
         $this->eventLoop = $eventLoop;
         $this->transport === 'tcp'
