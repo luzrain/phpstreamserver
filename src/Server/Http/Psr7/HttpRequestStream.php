@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Http;
+namespace Luzrain\PhpRunner\Server\Http\Psr7;
 
 use Psr\Http\Message\StreamInterface;
 
-final class RequestStream implements StreamInterface
+final class HttpRequestStream implements StreamInterface
 {
     private const BUFFER_SIZE = 32768;
 
@@ -94,23 +94,9 @@ final class RequestStream implements StreamInterface
         return $this->getHeaderOption('Content-Disposition', 'filename') !== null;
     }
 
-    /**
-     * @psalm-suppress NullableReturnStatement
-     * @psalm-suppress InvalidNullableReturnType
-     */
-    public function getMimeType(): string
-    {
-        return $this->getHeader('Content-Type', 'application/octet-stream');
-    }
-
     public function getName(): string|null
     {
         return (null !== $val = $this->getHeaderOption('Content-Disposition', 'name')) ? \trim($val, ' "') : $val;
-    }
-
-    public function getFileName(): string|null
-    {
-        return (null !== $val = $this->getHeaderOption('Content-Disposition', 'filename')) ? \trim($val, ' "') : $val;
     }
 
     /**
@@ -259,7 +245,7 @@ final class RequestStream implements StreamInterface
         return \stream_get_contents($this->stream, $length, $this->globalBodyOffset);
     }
 
-    public function getMetadata(?string $key = null): mixed
+    public function getMetadata(string|null $key = null): mixed
     {
         $meta = \stream_get_meta_data($this->stream);
 

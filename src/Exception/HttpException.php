@@ -6,7 +6,8 @@ namespace Luzrain\PhpRunner\Exception;
 
 use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\Server\Http\ErrorPage;
-use Nyholm\Psr7\Stream;
+use Luzrain\PhpRunner\Server\Http\Psr7\Response;
+use Luzrain\PhpRunner\Server\Http\Psr7\StringStream;
 use Psr\Http\Message\ResponseInterface;
 
 final class HttpException extends \Exception
@@ -15,7 +16,7 @@ final class HttpException extends \Exception
 
     public function __construct(private int $httpCode = 500, private bool $closeConnection = false, private \Throwable|null $previous = null)
     {
-        $this->response = new \Nyholm\Psr7\Response(status: $this->httpCode);
+        $this->response = new Response(code: $this->httpCode);
 
         parent::__construct($this->response->getReasonPhrase(), $this->httpCode, $this->previous);
     }
@@ -35,7 +36,7 @@ final class HttpException extends \Exception
         return $this
             ->response
             ->withHeader('Content-Type', 'text/html')
-            ->withBody(Stream::create((string) $errorPage))
+            ->withBody(new StringStream($errorPage))
         ;
     }
 

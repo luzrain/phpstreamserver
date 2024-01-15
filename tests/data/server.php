@@ -7,14 +7,18 @@ include __DIR__ . '/../../vendor/autoload.php';
 use Luzrain\PhpRunner\Exception\HttpException;
 use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
+use Luzrain\PhpRunner\Server\Http\Psr7\Response;
 use Luzrain\PhpRunner\Server\Protocols\Http;
 use Luzrain\PhpRunner\Server\Protocols\Raw;
 use Luzrain\PhpRunner\Server\Protocols\Text;
 use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
 $tempFiles = [];
+$streamResponse = \fopen('php://temp', 'rw');
+\fwrite($streamResponse, 'ok-answer from stream');
 $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(
     new WorkerProcess(
@@ -29,14 +33,14 @@ $phpRunner->addWorkers(
         name: 'HTTP Server',
         count: 2,
         server: new Server(
-            listen: 'tcp://127.0.0.1:9080',
+            listen: 'tcp://0.0.0.0:9080',
             protocol: new Http(),
             onClose: function () use (&$tempFiles) {
                 foreach ($tempFiles as $tempFile) {
                     \is_file($tempFile) && \unlink($tempFile);
                 }
             },
-            onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data) use (&$tempFiles): void {
+            onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data) use (&$tempFiles, $streamResponse): void {
                 $files = $data->getUploadedFiles();
                 \array_walk_recursive($files, static function (UploadedFileInterface &$file) use (&$tempFiles) {
                     $tmpFile = \sys_get_temp_dir() . '/' . \uniqid('test');
@@ -50,14 +54,15 @@ $phpRunner->addWorkers(
                     ];
                 });
                 $response = match ($data->getUri()->getPath()) {
-                    '/ok' => new \Nyholm\Psr7\Response(
-                        status: 200,
-                        headers: ['Content-Type' => 'text/plain'],
+                    '/ok1' => new Response(
                         body: 'ok-answer',
+                        headers: ['Content-Type' => 'text/plain'],
                     ),
-                    '/request' => new \Nyholm\Psr7\Response(
-                        status: 200,
-                        headers: ['Content-Type' => 'application/json'],
+                    '/ok2' => new Response(
+                        body: $streamResponse,
+                        headers: ['Content-Type' => 'text/plain'],
+                    ),
+                    '/request' => new Response(
                         body: \json_encode([
                             'server_params' => $data->getServerParams(),
                             'headers' => $data->getHeaders(),
@@ -67,6 +72,7 @@ $phpRunner->addWorkers(
                             'cookies' => $data->getCookieParams(),
                             'raw_request' => empty($files) ? $data->getBody()->getContents() : '',
                         ]),
+                        headers: ['Content-Type' => 'application/json'],
                     ),
                     default => throw HttpException::createNotFoundException(),
                 };
@@ -82,11 +88,10 @@ $phpRunner->addWorkers(
             tls: true,
             tlsCertificate: __DIR__ . '/localhost.crt',
             protocol: new Http(),
-            onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data): void {
-                $connection->send(new \Nyholm\Psr7\Response(
-                    status: 200,
-                    headers: ['Content-Type' => 'text/plain'],
+            onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
+                $connection->send(new Response(
                     body: 'ok-answer-tls',
+                    headers: ['Content-Type' => 'text/plain'],
                 ));
             },
         ),

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Server\Http;
 
 use Luzrain\PhpRunner\Exception\HttpException;
-use Nyholm\Psr7\ServerRequest;
-use Nyholm\Psr7\UploadedFile;
+use Luzrain\PhpRunner\Server\Http\Psr7\HttpRequestStream;
+use Luzrain\PhpRunner\Server\Http\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -16,7 +16,7 @@ final class Request
 {
     /** @var resource */
     private mixed $resource;
-    private RequestStream $requestStream;
+    private HttpRequestStream $requestStream;
     private bool $isInitiated = false;
     private bool $isCompleted = false;
     private bool $isChunked;
@@ -85,7 +85,7 @@ final class Request
         $firstLineParts = \sscanf($firstLine, '%s %s HTTP/%s');
 
         $this->isInitiated = true;
-        $this->requestStream = new RequestStream($this->resource);
+        $this->requestStream = new HttpRequestStream($this->resource);
         $this->contentLength = (int) $this->requestStream->getHeader('content-length', '0');
         $this->isChunked = $this->requestStream->getHeader('transfer-encoding', '') === 'chunked';
         $this->method = $firstLineParts[0] ?? '';
@@ -105,9 +105,11 @@ final class Request
             throw new \LogicException('ServerRequest cannot be created until request is complete');
         }
 
-        $psrRequest = new ServerRequest(
+        return new ServerRequest(
+            requestStream: $this->requestStream,
             method: $this->method,
             uri: $this->uri,
+            protocol: $this->version,
             serverParams: [...$_SERVER, ...[
                 'SERVER_ADDR' => $serverAddr,
                 'SERVER_PORT' => $serverPort,
@@ -115,75 +117,5 @@ final class Request
                 'REMOTE_PORT' => $remotePort,
             ]],
         );
-
-        foreach ($this->requestStream->getHeaders() as $name => $value) {
-            $psrRequest = $psrRequest->withHeader($name, \array_map(\trim(...), \explode(',', $value)));
-        }
-
-        [$payload, $files] = $this->parsePayload($this->requestStream);
-
-        return $psrRequest
-            ->withProtocolVersion($this->version)
-            ->withCookieParams($this->requestStream->getHeaderOptions('Cookie'))
-            ->withParsedBody($payload)
-            ->withUploadedFiles($files)
-            ->withBody($this->requestStream)
-        ;
-    }
-
-    private function parsePayload(RequestStream $requestStream): array
-    {
-        $payload = [];
-        $files = [];
-
-        if (!$this->hasPayload) {
-            return [$payload, $files];
-        }
-
-        if ($requestStream->getHeaderValue('Content-Type') === 'application/x-www-form-urlencoded') {
-            \parse_str($requestStream->getContents(), $payload);
-        } elseif ($requestStream->getHeaderValue('Content-Type') === 'application/json') {
-            $payload = (array) \json_decode($requestStream->getContents(), true);
-        } elseif ($requestStream->isMultiPart()) {
-            [$payload, $files] = $this->parseMultiPart($requestStream->getParts());
-        }
-
-        return [$payload, $files];
-    }
-
-    /**
-     * @param \Generator<RequestStream> $parts
-     */
-    private function parseMultiPart(\Generator $parts): array
-    {
-        $payload = [];
-        $files = [];
-        $fileStructureStr = '';
-        $fileStructureList = [];
-        foreach ($parts as $part) {
-            /** @var RequestStream $part */
-            if ($part->isFile()) {
-                $fileStructureStr .= $part->getName() . '&';
-                $fileStructureList[] = new UploadedFile(
-                    $part,
-                    $part->getSize(),
-                    UPLOAD_ERR_OK,
-                    $part->getFileName(),
-                    $part->getMimeType(),
-                );
-            } else {
-                /** @psalm-suppress PossiblyNullArrayOffset */
-                $payload[$part->getName()] = $part->getContents();
-            }
-        }
-        if (!empty($fileStructureList)) {
-            $i = 0;
-            \parse_str($fileStructureStr, $files);
-            \array_walk_recursive($files, static function (mixed &$item) use ($fileStructureList, &$i) {
-                $item = $fileStructureList[$i++];
-            });
-        }
-
-        return [$payload, $files];
     }
 }

@@ -8,14 +8,24 @@ use GuzzleHttp\Cookie\CookieJar;
 
 final class HttpProtocolTest extends ServerTestCase
 {
-    public function testRequestOk(): void
+    public function testRequestOkFromString(): void
     {
         // Act
-        $response = self::$client->request('GET', 'http://127.0.0.1:9080/ok');
+        $response = self::$client->request('GET', 'http://127.0.0.1:9080/ok1');
 
         // Assert
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('ok-answer', (string) $response->getBody());
+    }
+
+    public function testRequestOkFromStream(): void
+    {
+        // Act
+        $response = self::$client->request('GET', 'http://127.0.0.1:9080/ok2');
+
+        // Assert
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('ok-answer from stream', (string) $response->getBody());
     }
 
     public function testRequestNotFound(): void

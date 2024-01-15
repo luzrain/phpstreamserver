@@ -15,19 +15,18 @@
     ],
     "require": {
         "php": ">=8.2",
-        "ext-posix": "*",
         "ext-pcntl": "*",
+        "ext-posix": "*",
         "psr/http-message": "^2.0",
         "psr/log": "^3.0",
-        "revolt/event-loop": "^1.0",
-        "nyholm/psr7": "^1.8"
+        "revolt/event-loop": "^1.0"
     },
     "require-dev": {
-        "phpunit/phpunit" : "^10.4",
         "friendsofphp/php-cs-fixer": "^3.46",
-        "vimeo/psalm": "5.16.*",
         "guzzlehttp/guzzle": "^7.8",
-        "symfony/var-dumper": "^6.4"
+        "phpunit/phpunit": "^10.4",
+        "symfony/var-dumper": "^6.4",
+        "vimeo/psalm": "5.16.*"
     },
     "autoload": {
         "psr-4": {
@@ -48,5 +47,8 @@
             "vendor/bin/psalm",
             "vendor/bin/phpunit"
         ]
+    },
+    "config": {
+        "sort-packages": true
     }
 }
