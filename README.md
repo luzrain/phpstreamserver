@@ -1,21 +1,29 @@
-# PHPRunner - PHP Application Server
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/luzrain/phprunner/assets/25800964/b6d62fc9-d08b-4ac7-be0b-2da6653d4c6b">
+    <img alt="PhpRunner logo" align="center" src="https://github.com/luzrain/phprunner/assets/25800964/9107aca7-13e0-40a9-b107-7dde99f171d1">
+  </picture>
+</p>
+
+# PhpRunner - PHP Application Server
 ![PHP >=8.2](https://img.shields.io/badge/PHP-^8.2-777bb3.svg?style=flat)
 [![Tests Status](https://img.shields.io/github/actions/workflow/status/luzrain/phprunner/tests.yaml?branch=master)](../../actions/workflows/tests.yaml)
 
-PHPRunner is a high performance process manager, TCP, and UDP server written in PHP.  
-With a built-in PSR-7 compatible HTTP server implementation you can easily integrate any PSR-7 compatible framework with it in no time.  
+PhpRunner is a high performance event-loop based process manager, TCP, and UDP server written in PHP.  
+With a built-in PSR-7 HTTP server you can easily integrate any PSR-7 compatible framework with it in no time.  
 The built-in HTTP server is memory efficient no matter how large your HTTP requests and responses you operate are.  
-PHPRunner is supports TLS encryption and the ability to implement custom protocols.  
+PhpRunner is supports TLS encryption and the ability to implement custom protocols.  
+For implementing custom resource listeners and timers, an event loop is available in the workers. 
 
 #### Key features:
 - Supervisor;
-- PSR-7 compatible HTTP server implementation;
-- Memory efficiency.
+- Workers lifecycle management (ttl, max_memory, max_requests (TODO), on_exception (TODO));
+- PSR-7 HTTP server;
 
 #### Requirements and limitations:  
  - Unix based OS (no windows support);
  - php-posix and php-pcntl extensions;
- - php-uv extension is not required, but highly recommended for better performance, especially in production environments.
+ - php-uv extension is not required, but highly recommended for better performance.
 
 ## Getting started
 ### Install composer packages
@@ -23,33 +31,31 @@ PHPRunner is supports TLS encryption and the ability to implement custom protoco
 $ composer require luzrain/phprunner @TODO
 ```
 
-### Configure and run server
+### Configure server
 Here is example of simple http server.  
 See more examples in ...
 ```php
+// server.php
 
 use Luzrain\PhpRunner\Exception\HttpException;
 use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
+use Luzrain\PhpRunner\Server\Http\Psr7\Response;
 use Luzrain\PhpRunner\Server\Protocols\Http;
 use Luzrain\PhpRunner\Server\Server;
-use Luzrain\PhpRunner\WorkerProcess;
+use Psr\Http\Message\ServerRequestInterface;
 
 $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(
     new WorkerProcess(
         name: 'HTTP Server',
-        count: 2,
         server: new Server(
             listen: 'tcp://0.0.0.0:80',
             protocol: new Http(),
-            onMessage: function (ConnectionInterface $connection, \Nyholm\Psr7\ServerRequest $data): void {
+            onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
                 $response = match ($data->getUri()->getPath()) {
-                    '/ping' => new \Nyholm\Psr7\Response(
-                        status: 200,
-                        headers: ['Content-Type' => 'text/plain'],
-                        body: 'pong',
-                    ),
+                    '/' => new Response(body: 'Hello world'),
+                    '/ping' => new Response(body: 'pong'),
                     default => throw HttpException::createNotFoundException(),
                 };
                 $connection->send($response);
@@ -58,4 +64,9 @@ $phpRunner->addWorkers(
     ),
 );
 exit($phpRunner->run());
+```
+
+### Run
+```bash
+$ php server.php start
 ```

@@ -77,13 +77,13 @@ final class Response implements ResponseInterface
     private string $reasonPhrase;
 
     /**
-     * @param string|resource|StreamInterface $body Response body
      * @param int $code $code Status code
+     * @param string|resource|StreamInterface $body Response body
      * @param array $headers Response headers
      * @param string $version Protocol version
      * @param string $reasonPhrase Reason phrase (when empty a default will be used based on the status code)
      */
-    public function __construct(mixed $body = '', int $code = 200, array $headers = [], string $version = '1.1', string $reasonPhrase = '')
+    public function __construct(int $code = 200, mixed $body = '', array $headers = [], string $version = '1.1', string $reasonPhrase = '')
     {
         $this->stream = match (true) {
             \is_string($body) => new StringStream($body),
