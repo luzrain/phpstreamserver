@@ -16,11 +16,12 @@ final class ResourceStream implements StreamInterface
 
     /**
      * @param resource $resource
+     * @psalm-suppress DocblockTypeContradiction
      */
     public function __construct(mixed $resource)
     {
         if (!\is_resource($resource) || \get_resource_type($resource) !== 'stream') {
-            throw new \InvalidArgumentException(sprintf('%s::__construct(): Argument #1 ($resource) must be of type resource, %s given', self::class, \get_debug_type($resource)));
+            throw new \InvalidArgumentException(\sprintf('%s::__construct(): Argument #1 ($resource) must be of type resource, %s given', self::class, \get_debug_type($resource)));
         }
 
         $this->resource = $resource;

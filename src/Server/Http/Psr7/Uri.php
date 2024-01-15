@@ -126,7 +126,7 @@ final class Uri implements UriInterface
         }
 
         // If the path is rootless and an authority is present, the path MUST be prefixed by "/".
-        if (!str_starts_with($this->path, '/')) {
+        if (!\str_starts_with($this->path, '/')) {
             return $this->host === '' ? $this->path : '/' . $this->path;
         }
 
@@ -323,11 +323,12 @@ final class Uri implements UriInterface
      * Percent encodes all reserved characters in the provided string according to the provided pattern.
      * Characters that are already encoded as a percentage will not be re-encoded.
      *
+     * @psalm-param non-empty-string $pattern
      * @link https://tools.ietf.org/html/rfc3986
      */
     private function encode(string $string, string $pattern): string
     {
-        return (string) \preg_replace_callback($pattern, static fn (array $matches) => \rawurlencode($matches[0]), $string);
+        return (string) \preg_replace_callback($pattern, static fn(array $matches) => \rawurlencode($matches[0]), $string);
     }
 
     private function isNotStandardPort(): bool

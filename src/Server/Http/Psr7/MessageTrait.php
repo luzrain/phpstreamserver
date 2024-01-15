@@ -43,6 +43,9 @@ trait MessageTrait
         return $new;
     }
 
+    /**
+     * @return array<array<array-key, string>>
+     */
     public function getHeaders(): array
     {
         return $this->headers;
@@ -53,6 +56,9 @@ trait MessageTrait
         return isset($this->headerNames[\strtolower($name)]);
     }
 
+    /**
+     * @return array<array-key, string>
+     */
     public function getHeader(string $name): array
     {
         return $this->hasHeader($name) ? $this->headers[$this->headerNames[\strtolower($name)]] : [];
@@ -65,7 +71,7 @@ trait MessageTrait
 
     /**
      * @param string|array<string> $value
-     * @return MessageInterface
+     * @psalm-return static
      */
     public function withHeader(string $name, $value): MessageInterface
     {
@@ -167,6 +173,7 @@ trait MessageTrait
      * @param string|array<string> $value
      * @return list<string>
      * @throws \InvalidArgumentException
+     * @psalm-suppress DocblockTypeContradiction
      */
     private function normalizeHeaderValue(string|array $value): array
     {
@@ -178,11 +185,10 @@ trait MessageTrait
 
         $normalizedValues = [];
         foreach ($value as $v) {
-            if ((!\is_string($v) && !\is_numeric($v)) || !preg_match('/^[ \t\x21-\x7E\x80-\xFF]*$/D', (string) $v)) {
+            if (!\is_string($v) || !\preg_match('/^[ \t\x21-\x7E\x80-\xFF]*$/D', $v)) {
                 throw new \InvalidArgumentException('Header values must be RFC 7230 compatible strings');
             }
-
-            $normalizedValues[] = \trim((string) $v, " \t");
+            $normalizedValues[] = \trim($v, " \t");
         }
 
         return $normalizedValues;

@@ -54,9 +54,7 @@ final class UploadedFile implements UploadedFileInterface
 
     public function getClientFilename(): string|null
     {
-        $filename = $this->requestStream->getHeaderOption('Content-Disposition', 'filename');
-
-        return $filename === null ? null : \trim($filename, '"');
+        return (null !== $filename = $this->requestStream->getHeaderOption('Content-Disposition', 'filename')) ? \trim($filename, '"') : null;
     }
 
     public function getClientMediaType(): string|null

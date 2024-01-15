@@ -96,7 +96,7 @@ final class HttpRequestStream implements StreamInterface
 
     public function getName(): string|null
     {
-        return (null !== $val = $this->getHeaderOption('Content-Disposition', 'name')) ? \trim($val, ' "') : $val;
+        return (null !== $name = $this->getHeaderOption('Content-Disposition', 'name')) ? \trim($name, '"') : null;
     }
 
     /**

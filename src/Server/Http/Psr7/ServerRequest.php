@@ -22,7 +22,7 @@ final class ServerRequest implements ServerRequestInterface
     private array $uploadedFiles = [];
     private string $method;
     private string|null $requestTarget;
-    private UriInterface|null $uri;
+    private UriInterface $uri;
 
     public function __construct(HttpRequestStream $requestStream, string $method, string $uri, string $protocol, array $serverParams)
     {
@@ -100,13 +100,14 @@ final class ServerRequest implements ServerRequestInterface
     }
 
     /**
-     * @param array|object|null $data
+     * @psalm-suppress DocblockTypeContradiction
+     * @psalm-param array|object|null $data
      * @return static
      */
-    public function withParsedBody($data): ServerRequestInterface
+    public function withParsedBody(mixed $data): ServerRequestInterface
     {
-        if (!\is_array($data) && !\is_object($data) && null !== $data) {
-            throw new \InvalidArgumentException('First parameter to withParsedBody MUST be object, array or null');
+        if (!\is_array($data) && !\is_object($data) && $data !== null) {
+            throw new \InvalidArgumentException(\sprintf('%s::withParsedBody(): Argument #1 ($data) must be of type array|object|null, %s given', self::class, \get_debug_type($data)));
         }
 
         $new = clone $this;
@@ -120,6 +121,9 @@ final class ServerRequest implements ServerRequestInterface
         return $this->attributes;
     }
 
+    /**
+     * @psalm-suppress MethodSignatureMismatch
+     */
     public function getAttribute(string $name, mixed $default = null): mixed
     {
         return $this->attributes[$name] ?? $default;
@@ -128,7 +132,7 @@ final class ServerRequest implements ServerRequestInterface
     /**
      * @return static
      */
-    public function withAttribute(string $name, $value): ServerRequestInterface
+    public function withAttribute(string $name, mixed $value): ServerRequestInterface
     {
         $new = clone $this;
         $new->attributes[$name] = $value;
@@ -242,7 +246,6 @@ final class ServerRequest implements ServerRequestInterface
 
         $this->headerNames['host'] ??= 'Host';
         $this->headers = [$this->headerNames['host'] => [$host]] + $this->headers;
-        dump($this->headers);
     }
 
     private function updatePayloadFromRequestStream(HttpRequestStream $requestStream): void
@@ -259,7 +262,7 @@ final class ServerRequest implements ServerRequestInterface
     }
 
     /**
-     * @psalm-param iterable<HttpRequestStream> $parts
+     * @param \Generator<HttpRequestStream> $parts
      */
     private function parseMultiPart(\Generator $parts): array
     {
@@ -268,11 +271,16 @@ final class ServerRequest implements ServerRequestInterface
         $fileStructureStr = '';
         $fileStructureList = [];
         foreach ($parts as $part) {
+            /** @var HttpRequestStream $part */
+            $name = $part->getName();
+            if ($name === null) {
+                continue;
+            }
             if ($part->isFile()) {
-                $fileStructureStr .= $part->getName() . '&';
+                $fileStructureStr .= "$name&";
                 $fileStructureList[] = new UploadedFile($part);
             } else {
-                $payload[$part->getName()] = $part->getContents();
+                $payload[$name] = $part->getContents();
             }
         }
         if (!empty($fileStructureList)) {

@@ -57,7 +57,7 @@ final class StringStream implements StreamInterface
     {
         if ($whence === SEEK_CUR) {
             $offset += $this->tell();
-        } else if ($whence === SEEK_END) {
+        } elseif ($whence === SEEK_END) {
             $offset += $this->getSize();
         }
         if ($offset > $this->getSize()) {

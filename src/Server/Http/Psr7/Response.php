@@ -9,6 +9,8 @@ use Psr\Http\Message\StreamInterface;
 
 final class Response implements ResponseInterface
 {
+    use MessageTrait;
+
     private const PHRASES = [
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -71,14 +73,12 @@ final class Response implements ResponseInterface
         511 => 'Network Authentication Required',
     ];
 
-    use MessageTrait;
-
     private int $statusCode;
     private string $reasonPhrase;
 
     /**
      * @param string|resource|StreamInterface $body Response body
-     * @param int<100, 599> $code $code Status code
+     * @param int $code $code Status code
      * @param array $headers Response headers
      * @param string $version Protocol version
      * @param string $reasonPhrase Reason phrase (when empty a default will be used based on the status code)
@@ -89,7 +89,7 @@ final class Response implements ResponseInterface
             \is_string($body) => new StringStream($body),
             \is_resource($body) => new ResourceStream($body),
             $body instanceof StreamInterface => $body,
-            default => throw new \InvalidArgumentException(sprintf('%s::__construct(): Argument #1 ($body) must be of type string|resource|StreamInterface, %s given', self::class, \get_debug_type($body))),
+            default => throw new \InvalidArgumentException(\sprintf('%s::__construct(): Argument #1 ($body) must be of type string|resource|StreamInterface, %s given', self::class, \get_debug_type($body))),
         };
 
         if ($code < 100 || $code > 599) {
@@ -112,9 +112,6 @@ final class Response implements ResponseInterface
         return $this->reasonPhrase;
     }
 
-    /**
-     * @param int<100, 599> $code
-     */
     public function withStatus(int $code, string $reasonPhrase = ''): self
     {
         if ($code < 100 || $code > 599) {
