@@ -34,6 +34,11 @@ class WorkerProcess
 
     public readonly string $listen;
 
+    /**
+     * @param null|\Closure(self):void $onStart
+     * @param null|\Closure(self):void $onStop
+     * @param null|\Closure(self):void $onReload
+     */
     public function __construct(
         public readonly string $name = 'none',
         public readonly int $count = 1,
@@ -103,7 +108,7 @@ class WorkerProcess
         // onStart callback
         $this->eventLoop->defer(function (): void {
             if($this->onStart !== null) {
-                ($this->onStart)();
+                ($this->onStart)($this);
             }
         });
 
@@ -142,7 +147,7 @@ class WorkerProcess
         $this->exitCode = $code;
         try {
             if($this->onStop !== null) {
-                ($this->onStop)();
+                ($this->onStop)($this);
             }
         } finally {
             $this->eventLoop->stop();
@@ -158,7 +163,7 @@ class WorkerProcess
         $this->exitCode = self::RELOAD_EXIT_CODE;
         try {
             if($this->onReload !== null) {
-                ($this->onReload)();
+                ($this->onReload)($this);
             }
         } finally {
             $this->eventLoop->stop();
