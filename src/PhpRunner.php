@@ -22,6 +22,8 @@ final class PhpRunner
 {
     public const VERSION = '0.0.1';
     public const VERSION_STRING = 'phprunner/' . self::VERSION;
+    public const NAME = 'PhpRunner';
+    public const TITLE = 'PhpRunner - PHP application server';
 
     private WorkerPool $pool;
     private MasterProcess $masterProcess;

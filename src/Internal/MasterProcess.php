@@ -6,6 +6,7 @@ namespace Luzrain\PhpRunner\Internal;
 
 use Luzrain\PhpRunner\Console\StdoutHandler;
 use Luzrain\PhpRunner\Exception\PhpRunnerException;
+use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerStatus;
@@ -78,7 +79,7 @@ final class MasterProcess
         $this->initSignalHandler();
         $this->spawnWorkers();
         $this->status = self::STATUS_RUNNING;
-        $this->logger->info('PHPRunner has started');
+        $this->logger->info(PhpRunner::NAME . ' has started');
         $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
             ? $this->initWorker($worker, $parentSocket)->run()
             : $this->exitCode;
@@ -97,7 +98,7 @@ final class MasterProcess
      */
     private function initServer(): void
     {
-        \cli_set_process_title(\sprintf('PHPRunner: master process  start_file=%s', $this->startFile));
+        \cli_set_process_title(\sprintf('%s: master process  start_file=%s', PhpRunner::NAME, $this->startFile));
 
         $this->startedAt = new \DateTimeImmutable('now');
 
@@ -225,7 +226,7 @@ final class MasterProcess
             case self::STATUS_SHUTDOWN:
                 if ($this->pool->getProcessesCount() === 0) {
                     // All processes are stopped now
-                    $this->logger->info('PHPRunner stopped');
+                    $this->logger->info(PhpRunner::NAME . ' stopped');
                     $this->suspension->resume();
                 }
                 break;
@@ -246,11 +247,11 @@ final class MasterProcess
     public function stop(int $code = 0): void
     {
         if (!$this->isRunning()) {
-            $this->logger->error('PHPRunner is not running');
+            $this->logger->error(PhpRunner::NAME . ' is not running');
             return;
         }
 
-        $this->logger->info('PHPRunner stopping ...');
+        $this->logger->info(PhpRunner::NAME . ' stopping ...');
 
         if (($masterPid = $this->getPid()) !== \posix_getpid()) {
             // If it called from outside working process
@@ -280,11 +281,11 @@ final class MasterProcess
     public function reload(): void
     {
         if (!$this->isRunning()) {
-            $this->logger->error('PHPRunner is not running');
+            $this->logger->error(PhpRunner::NAME . ' is not running');
             return;
         }
 
-        $this->logger->info('PHPRunner reloading ...');
+        $this->logger->info(PhpRunner::NAME . ' reloading ...');
 
         if (($masterPid = $this->getPid()) !== \posix_getpid()) {
             // If it called from outside working process

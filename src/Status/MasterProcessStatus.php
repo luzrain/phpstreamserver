@@ -16,7 +16,7 @@ final readonly class MasterProcessStatus implements \JsonSerializable
     use JsonSerializible;
 
     public string $phpVersion;
-    public string $phpRunnerVersion;
+    public string $version;
     public string $eventLoop;
     public int $totalMemory;
     public int $workersCount;
@@ -47,7 +47,7 @@ final readonly class MasterProcessStatus implements \JsonSerializable
         $eventLoopName = (new \ReflectionObject($eventLoop))->getShortName();
 
         $this->phpVersion = PHP_VERSION;
-        $this->phpRunnerVersion = PhpRunner::VERSION;
+        $this->version = PhpRunner::VERSION;
         $this->eventLoop = $eventLoopName;
         $this->totalMemory = \array_sum(\array_map(fn(WorkerProcessStatus $p) => $p->memory, $this->processes));
         $this->workersCount = \count($this->workers);

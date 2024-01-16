@@ -97,7 +97,7 @@ class WorkerProcess
 
     private function initWorker(): void
     {
-        \cli_set_process_title(\sprintf('PHPRunner: worker process  %s', $this->name));
+        \cli_set_process_title(\sprintf('%s: worker process  %s', PhpRunner::NAME, $this->name));
 
         $this->startedAt = new \DateTimeImmutable('now');
 
