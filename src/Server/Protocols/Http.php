@@ -128,9 +128,9 @@ final class Http implements ProtocolInterface
             $httpRequestException = new HttpException(500, $this->shouldClose(), $e);
         }
 
+        $connection->send($httpRequestException->getResponse());
         $this->request = null;
         $this->psrRequest = null;
-        $connection->send($httpRequestException->getResponse());
 
         if (!$e instanceof HttpException) {
             throw $e;
