@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Server;
 
 use Luzrain\PhpRunner\Exception\TlsHandshakeException;
+use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Connection\TcpConnection;
 use Luzrain\PhpRunner\Server\Connection\UdpConnection;
@@ -19,6 +20,9 @@ final class Server
     private int $port;
     private array $socketContextData = [];
     private Driver $eventLoop;
+    /** @var array<ReloadStrategyInterface> */
+    private array $reloadStrategies = [];
+    private \Closure $reloadCallback;
 
     /**
      * Default backlog. Backlog is the maximum length of the queue of pending connections.
@@ -27,13 +31,13 @@ final class Server
 
     /**
      * @param null|\Closure(ConnectionInterface): void $onConnect
-     * @param null|\Closure(ConnectionInterface, string): void $onMessage
+     * @param null|\Closure(ConnectionInterface, mixed): void $onMessage
      * @param null|\Closure(ConnectionInterface):void $onClose
      * @param null|\Closure(ConnectionInterface, int, string):void $onError
      */
     public function __construct(
         string $listen,
-        private ProtocolInterface $protocol = new Raw(),
+        private readonly ProtocolInterface $protocol = new Raw(),
         private readonly bool $tls = false,
         string $tlsCertificate = '',
         string $tlsCertificateKey = '',
@@ -65,7 +69,7 @@ final class Server
             throw new \InvalidArgumentException(\sprintf('Invalid transport. Should be either "tcp" or "udp", "%s" given.', $transport));
         }
         if (empty($host)) {
-            throw new \InvalidArgumentException('Invalid address. Should not be empty');
+            throw new \InvalidArgumentException('Invalid address. Should not be empty.');
         }
         if ($port <= 0) {
             throw new \InvalidArgumentException('Invalid port. Should be greater than 0.');
@@ -74,7 +78,13 @@ final class Server
         return [$transport, $host, $port];
     }
 
-    public function start(Driver $eventLoop): void
+    /**
+     * @param Driver $eventLoop
+     * @param array<ReloadStrategyInterface> $reloadStrategies
+     * @param \Closure $reloadCallback
+     * @return void
+     */
+    public function start(Driver $eventLoop, array &$reloadStrategies, \Closure $reloadCallback): void
     {
         $errno = 0;
         $errmsg = '';
@@ -91,6 +101,9 @@ final class Server
             ? $this->eventLoop->onReadable($mainSocket, $this->acceptTcpConnection(...))
             : $this->eventLoop->onReadable($mainSocket, $this->acceptUdpConnection(...))
         ;
+
+        $this->reloadStrategies = &$reloadStrategies;
+        $this->reloadCallback = $reloadCallback;
     }
 
     /**
@@ -102,7 +115,7 @@ final class Server
         new UdpConnection(
             socket: $socket,
             protocol: clone $this->protocol,
-            onMessage: $this->onMessage,
+            onMessage: $this->onMessage(...),
             onError: $this->onError,
         );
     }
@@ -120,10 +133,24 @@ final class Server
             protocol: clone $this->protocol,
             tls: $this->tls,
             onConnect: $this->onConnect,
-            onMessage: $this->onMessage,
+            onMessage: $this->onMessage(...),
             onClose: $this->onClose,
             onError: $this->onError,
         );
+    }
+
+    private function onMessage(ConnectionInterface $connection, mixed $package): void
+    {
+        if ($this->onMessage !== null) {
+            ($this->onMessage)($connection, $package);
+        }
+        foreach ($this->reloadStrategies as $reloadStrategy) {
+            if ($reloadStrategy->onRequest() && $reloadStrategy->shouldReload($package)) {
+                $this->eventLoop->defer(function () {
+                    ($this->reloadCallback)();
+                });
+            }
+        }
     }
 
     public function getReadableListenAddress(): string

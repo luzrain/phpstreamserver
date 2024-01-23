@@ -36,7 +36,7 @@ final class TcpConnection implements ConnectionInterface
     /**
      * @param resource $socket
      * @param null|\Closure(self):void $onConnect
-     * @param null|\Closure(self, string):void $onMessage
+     * @param null|\Closure(self, mixed):void $onMessage
      * @param null|\Closure(self):void $onClose
      * @param null|\Closure(self, int, string):void $onError
      */

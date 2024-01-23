@@ -7,6 +7,8 @@ namespace Luzrain\PhpRunner\Internal;
 use Luzrain\PhpRunner\Console\StdoutHandler;
 use Luzrain\PhpRunner\Exception\PhpRunnerException;
 use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\ReloadStrategy\MaxMemoryReloadStrategy;
+use Luzrain\PhpRunner\ReloadStrategy\TTLReloadStrategy;
 use Luzrain\PhpRunner\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Luzrain\PhpRunner\Status\WorkerStatus;
@@ -84,9 +86,7 @@ final class MasterProcess
             ? $this->initWorker($worker, $parentSocket)->run()
             : $this->exitCode;
 
-        if (!isset($worker)) {
-            $this->onMasterShutdown();
-        }
+        isset($worker) ? exit($exitCode) : $this->onMasterShutdown();
 
         return $exitCode;
     }
@@ -215,9 +215,9 @@ final class MasterProcess
         switch ($this->status) {
             case self::STATUS_RUNNING:
                 match ($exitCode) {
+                    TTLReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->name, $pid)),
+                    MaxMemoryReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (Memory limit exceeded)', $worker->name, $pid)),
                     $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
-                    $worker::TTL_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->name, $pid)),
-                    $worker::MAX_MEMORY_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (Memory consumption exceeded)', $worker->name, $pid)),
                     default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
                 };
                 // Restart worker

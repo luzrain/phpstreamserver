@@ -23,7 +23,7 @@ final class UdpConnection implements ConnectionInterface
 
     /**
      * @param resource $socket
-     * @param null|\Closure(self, string):void $onMessage
+     * @param null|\Closure(self, mixed):void $onMessage
      * @param null|\Closure(self, int, string):void $onError
      */
     public function __construct(

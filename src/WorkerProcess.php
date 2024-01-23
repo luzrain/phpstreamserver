@@ -7,6 +7,8 @@ namespace Luzrain\PhpRunner;
 use Luzrain\PhpRunner\Exception\UserChangeException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PhpRunner\ReloadStrategy\TTLReloadStrategy;
 use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
 use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
 use Luzrain\PhpRunner\Server\Server;
@@ -18,12 +20,12 @@ use Revolt\EventLoop\DriverFactory;
 class WorkerProcess
 {
     final public const RELOAD_EXIT_CODE = 100;
-    final public const TTL_EXIT_CODE = 101;
-    final public const MAX_MEMORY_EXIT_CODE = 102;
 
-    protected readonly LoggerInterface $logger;
-    protected readonly Driver $eventLoop;
+    public readonly LoggerInterface $logger;
+    public readonly Driver $eventLoop;
     private \DateTimeImmutable $startedAt;
+    /** @var list<ReloadStrategyInterface> */
+    private array $reloadStrategies = [];
 
     /**
      * @var resource parent socket for interprocess communication
@@ -43,16 +45,41 @@ class WorkerProcess
         public readonly string $name = 'none',
         public readonly int $count = 1,
         public readonly bool $reloadable = true,
-        public readonly int $ttl = 0,
-        public readonly int $maxMemory = 0,
         public string|null $user = null,
         public string|null $group = null,
         private readonly \Closure|null $onStart = null,
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
-        private readonly Server|null $server = null,
     ) {
-        $this->listen = $server?->getReadableListenAddress() ?? '-';
+        //$this->listen = $server?->getReadableListenAddress() ?? '-';
+        $this->listen = '???';
+    }
+
+    final public function startServer(Server $server): self
+    {
+        $server->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
+
+        return $this;
+    }
+
+    final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): self
+    {
+        \array_push($this->reloadStrategies, ...$reloadStrategies);
+
+        foreach ($reloadStrategies as $reloadStrategy) {
+            if ($reloadStrategy instanceof TTLReloadStrategy) {
+                $this->eventLoop->delay($reloadStrategy->ttl, function () use($reloadStrategy): void {
+                    $this->reload($reloadStrategy::EXIT_CODE);
+                });
+            }
+            if ($reloadStrategy->onTimer()) {
+                $this->eventLoop->repeat(ReloadStrategyInterface::TIMER_INTERVAL, function () use ($reloadStrategy): void {
+                    $reloadStrategy->shouldReload() && $this->reload($reloadStrategy::EXIT_CODE);
+                });
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -76,7 +103,6 @@ class WorkerProcess
         $this->setUserAndGroup();
         $this->initWorker();
         $this->initSignalHandler();
-        $this->server?->start($this->eventLoop);
         $this->eventLoop->run();
 
         return $this->exitCode;
@@ -103,7 +129,17 @@ class WorkerProcess
 
         /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
-        $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
+
+        $this->eventLoop->setErrorHandler(function (\Throwable $e) {
+            ErrorHandler::handleException($e);
+            foreach ($this->reloadStrategies as $reloadStrategy) {
+                if ($reloadStrategy->onException() && $reloadStrategy->shouldReload($e)) {
+                    $this->eventLoop->defer(function () use ($reloadStrategy): void {
+                        $this->reload($reloadStrategy::EXIT_CODE);
+                    });
+                }
+            }
+        });
 
         // onStart callback
         $this->eventLoop->defer(function (): void {
@@ -111,22 +147,6 @@ class WorkerProcess
                 ($this->onStart)($this);
             }
         });
-
-        // Watch ttl
-        if ($this->ttl > 0) {
-            $this->eventLoop->delay($this->ttl, function (): void {
-                $this->stop(self::TTL_EXIT_CODE);
-            });
-        }
-
-        // Watch max memory
-        if ($this->maxMemory > 0) {
-            $this->eventLoop->repeat(15, function (): void {
-                if (\max(\memory_get_peak_usage(), \memory_get_usage()) > $this->maxMemory) {
-                    $this->stop(self::MAX_MEMORY_EXIT_CODE);
-                }
-            });
-        }
     }
 
     private function initSignalHandler(): void
@@ -154,13 +174,13 @@ class WorkerProcess
         }
     }
 
-    private function reload(): void
+    private function reload(int $code = self::RELOAD_EXIT_CODE): void
     {
         if (!$this->reloadable) {
             return;
         }
 
-        $this->exitCode = self::RELOAD_EXIT_CODE;
+        $this->exitCode = $code;
         try {
             if($this->onReload !== null) {
                 ($this->onReload)($this);
