@@ -19,6 +19,7 @@ use Revolt\EventLoop\DriverFactory;
 
 class WorkerProcess
 {
+    final public const STOP_EXIT_CODE = 0;
     final public const RELOAD_EXIT_CODE = 100;
 
     public readonly LoggerInterface $logger;
@@ -84,22 +85,12 @@ class WorkerProcess
 
     /**
      * @internal
-     * @param resource $parentSocket
      */
-    final public function setDependencies(LoggerInterface $logger, mixed $parentSocket): self
+    final public function run(LoggerInterface $logger, mixed $parentSocket): int
     {
         /** @psalm-suppress InaccessibleProperty */
         $this->logger = $logger;
         $this->parentSocket = $parentSocket;
-
-        return $this;
-    }
-
-    /**
-     * @internal
-     */
-    final public function run(): int
-    {
         $this->setUserAndGroup();
         $this->initWorker();
         $this->initSignalHandler();
@@ -143,9 +134,7 @@ class WorkerProcess
 
         // onStart callback
         $this->eventLoop->defer(function (): void {
-            if($this->onStart !== null) {
-                ($this->onStart)($this);
-            }
+            $this->onStart !== null && ($this->onStart)($this);
         });
     }
 
@@ -162,13 +151,11 @@ class WorkerProcess
         }
     }
 
-    private function stop(int $code = 0): void
+    private function stop(int $code = self::STOP_EXIT_CODE): void
     {
         $this->exitCode = $code;
         try {
-            if($this->onStop !== null) {
-                ($this->onStop)($this);
-            }
+            $this->onStop !== null && ($this->onStop)($this);
         } finally {
             $this->eventLoop->stop();
         }
@@ -176,17 +163,13 @@ class WorkerProcess
 
     private function reload(int $code = self::RELOAD_EXIT_CODE): void
     {
-        if (!$this->reloadable) {
-            return;
-        }
-
-        $this->exitCode = $code;
-        try {
-            if($this->onReload !== null) {
-                ($this->onReload)($this);
+        if ($this->reloadable) {
+            $this->exitCode = $code;
+            try {
+                $this->onReload !== null && ($this->onReload)($this);
+            } finally {
+                $this->eventLoop->stop();
             }
-        } finally {
-            $this->eventLoop->stop();
         }
     }
 

@@ -83,7 +83,7 @@ final class MasterProcess
         $this->status = self::STATUS_RUNNING;
         $this->logger->info(PhpRunner::NAME . ' has started');
         $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
-            ? $this->initWorker($worker, $parentSocket)->run()
+            ? $this->runWorker($worker, $parentSocket)
             : $this->exitCode;
 
         isset($worker) ? exit($exitCode) : $this->onMasterShutdown();
@@ -202,12 +202,12 @@ final class MasterProcess
      * Runs in forked process
      * @param resource $parentSocket
      */
-    private function initWorker(WorkerProcess $worker, mixed $parentSocket): WorkerProcess
+    private function runWorker(WorkerProcess $worker, mixed $parentSocket): int
     {
         $this->eventLoop->stop();
         unset($this->suspension, $this->eventLoop, $this->pool);
 
-        return $worker->setDependencies($this->logger, $parentSocket);
+        return $worker->run($this->logger, $parentSocket);
     }
 
     private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void
