@@ -2,19 +2,16 @@ name: Tests
 
 on:
   push:
-    branches: [ master ]
   pull_request:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} - PHP ${{ matrix.php }}
     strategy:
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
-        php-versions: ['8.2', '8.3']
-
-    name: PHP ${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+        php: ['8.2', '8.3']
 
     steps:
       - name: Checkout code
@@ -23,18 +20,21 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
+          php-version: ${{ matrix.php }}
           extensions: posix, pcntl
           tools: composer:v2
+
+      - name: Composer validate
+        run: composer validate --strict
 
       - name: Composer install
         run: composer install
 
-      - name: Codestyle checks
+      - name: Codestyle check
         run: vendor/bin/php-cs-fixer fix -v --dry-run
 
       - name: Static analyze
         run: vendor/bin/psalm
 
-      - name: Run tests
+      - name: Tests
         run: vendor/bin/phpunit
