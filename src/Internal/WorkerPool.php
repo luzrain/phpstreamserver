@@ -40,7 +40,7 @@ final class WorkerPool
     }
 
     /**
-     * @param resource $socket
+     * @param resource $socket child socket for interprocess communication
      */
     public function addChild(WorkerProcess $worker, int $pid, mixed $socket): void
     {
@@ -78,29 +78,25 @@ final class WorkerPool
     }
 
     /**
-     * @return \Generator<WorkerProcess>
+     * @return \Iterator<WorkerProcess>
      */
-    public function getWorkers(): \Generator
+    public function getWorkers(): \Iterator
     {
-        foreach ($this->pool as $key => $worker) {
-            yield $worker;
-        }
+        return new \ArrayIterator($this->pool);
     }
 
     /**
-     * @return \Generator<int>
+     * @return \Iterator<int>
      */
-    public function getAliveWorkerPids(WorkerProcess $worker): \Generator
+    public function getAliveWorkerPids(WorkerProcess $worker): \Iterator
     {
-        foreach ($this->pidMap[$worker] as $pids) {
-            yield $pids;
-        }
+        return new \ArrayIterator($this->pidMap[$worker]);
     }
 
     /**
-     * @return \Generator<int>
+     * @return \Iterator<int>
      */
-    public function getAlivePids(): \Generator
+    public function getAlivePids(): \Iterator
     {
         foreach ($this->pidMap as $pids) {
             foreach ($pids as $pid) {

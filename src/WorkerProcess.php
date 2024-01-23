@@ -144,7 +144,7 @@ class WorkerProcess
             $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
                 match ($signo) {
                     SIGTERM => $this->stop(),
-                    SIGUSR1 => $this->pipeStatus(),
+                    SIGUSR1 => $this->uploadStatus(),
                     SIGUSR2 => $this->reload(),
                 };
             });
@@ -173,7 +173,7 @@ class WorkerProcess
         }
     }
 
-    private function pipeStatus(): void
+    private function uploadStatus(): void
     {
         Functions::streamWrite($this->parentSocket, \serialize(new WorkerProcessStatus(
             pid: \posix_getpid(),

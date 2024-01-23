@@ -109,6 +109,11 @@ final class MasterProcess
         $this->suspension = $this->eventLoop->getSuspension();
     }
 
+    /**
+     * Fork process
+     *
+     * @return bool return true in master process and false in child
+     */
     private function daemonize(): bool
     {
         $pid = \pcntl_fork();
@@ -145,7 +150,7 @@ final class MasterProcess
                 match ($signo) {
                     SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT => $this->stop(),
                     SIGCHLD => $this->watchWorkers(),
-                    SIGUSR1 => $this->pipeStatus(),
+                    SIGUSR1 => $this->requestProcessesStatus(),
                     SIGUSR2 => $this->reload(),
                 };
             });
@@ -312,7 +317,10 @@ final class MasterProcess
         return !empty($this->getPid()) && \posix_kill($this->getPid(), 0);
     }
 
-    private function pipeStatus(): void
+    /**
+     * Send signal to all child processes and read status data from them
+     */
+    private function requestProcessesStatus(): void
     {
         $pids = \iterator_to_array($this->pool->getAlivePids());
         $callbackIds = [];
@@ -342,10 +350,13 @@ final class MasterProcess
             unset($pids, $callbackIds, $data, $timeoutCallbackId);
         });
 
+        // Send signal to all child processes
         \array_walk($pids, fn(int $pid) => \posix_kill($pid, SIGUSR1));
     }
 
     /**
+     * When all the status data from the child processes is ready, arrange it and send to the pipe file
+     *
      * @param list<WorkerProcessStatus> $processes
      */
     private function onAllWorkersStatusReady(array $processes): void
