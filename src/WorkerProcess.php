@@ -25,7 +25,7 @@ class WorkerProcess
     public readonly LoggerInterface $logger;
     public readonly Driver $eventLoop;
     private \DateTimeImmutable $startedAt;
-    /** @var list<ReloadStrategyInterface> */
+    /** @var array<ReloadStrategyInterface> */
     private array $reloadStrategies = [];
 
     /**
@@ -69,7 +69,7 @@ class WorkerProcess
 
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TTLReloadStrategy) {
-                $this->eventLoop->delay($reloadStrategy->ttl, function () use($reloadStrategy): void {
+                $this->eventLoop->delay($reloadStrategy->ttl, function () use ($reloadStrategy): void {
                     $this->reload($reloadStrategy::EXIT_CODE);
                 });
             }

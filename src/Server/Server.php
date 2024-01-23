@@ -79,10 +79,7 @@ final class Server
     }
 
     /**
-     * @param Driver $eventLoop
      * @param array<ReloadStrategyInterface> $reloadStrategies
-     * @param \Closure $reloadCallback
-     * @return void
      */
     public function start(Driver $eventLoop, array &$reloadStrategies, \Closure $reloadCallback): void
     {
