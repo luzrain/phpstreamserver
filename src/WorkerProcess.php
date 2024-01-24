@@ -48,11 +48,11 @@ class WorkerProcess
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
     ) {
+        $this->listenAddressesMap = new \WeakMap();
     }
 
     final public function startServer(Server $server): void
     {
-        $this->listenAddressesMap ??= new \WeakMap();
         $this->listenAddressesMap[$server] = $server->getReadableListenAddress();
         $server->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
     }
@@ -177,7 +177,7 @@ class WorkerProcess
             memory: \memory_get_usage(),
             name: $this->name,
             startedAt: $this->startedAt,
-            listen: implode(', ', iterator_to_array($this->listenAddressesMap ?? [], false)),
+            listen: \implode(', ', \iterator_to_array($this->listenAddressesMap, false)),
             connectionStatistics: ConnectionStatistics::getGlobal(),
             connections: ActiveConnection::getList(),
         )));
