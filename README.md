@@ -13,11 +13,10 @@ PhpRunner is a high performance event-loop based process manager, TCP, and UDP s
 With a built-in PSR-7 HTTP server you can easily integrate any PSR-7 compatible framework with it in no time.  
 The built-in HTTP server is memory efficient no matter how large your HTTP requests and responses you operate are.  
 PhpRunner is supports TLS encryption and the ability to implement custom protocols.  
-For implementing custom resource listeners and timers, an event loop is available in the workers. 
 
 #### Key features:
 - Supervisor;
-- Workers lifecycle management (ttl, max_memory, max_requests (TODO), on_exception (TODO));
+- Workers lifecycle management (reload by TTL, MaxMemory, MaxRequests, OnException and more);
 - PSR-7 HTTP server;
 
 #### Requirements and limitations:  
@@ -28,12 +27,11 @@ For implementing custom resource listeners and timers, an event loop is availabl
 ## Getting started
 ### Install composer packages
 ```bash
-$ composer require luzrain/phprunner @TODO
+$ composer require luzrain/phprunner
 ```
 
 ### Configure server
-Here is example of simple http server.  
-See more examples in ...
+Here is example of simple http server.
 ```php
 // server.php
 
@@ -49,18 +47,20 @@ $phpRunner = new PhpRunner();
 $phpRunner->addWorkers(
     new WorkerProcess(
         name: 'HTTP Server',
-        server: new Server(
-            listen: 'tcp://0.0.0.0:80',
-            protocol: new Http(),
-            onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
-                $response = match ($data->getUri()->getPath()) {
-                    '/' => new Response(body: 'Hello world'),
-                    '/ping' => new Response(body: 'pong'),
-                    default => throw HttpException::createNotFoundException(),
-                };
-                $connection->send($response);
-            },
-        ),
+        onStart: function (WorkerProcess $worker) {
+            $worker->startServer(new Server(
+                listen: 'tcp://0.0.0.0:80',
+                protocol: new Http(),
+                onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
+                    $response = match ($data->getUri()->getPath()) {
+                        '/' => new Response(body: 'Hello world'),
+                        '/ping' => new Response(body: 'pong'),
+                        default => throw HttpException::createNotFoundException(),
+                    };
+                    $connection->send($response);
+                },
+            ));
+        },
     ),
 );
 exit($phpRunner->run());
