@@ -20,6 +20,7 @@ final class Server
     private int $port;
     private array $socketContextData = [];
     private Driver $eventLoop;
+    private string $onReadableCallbackIdentifier;
     /** @var array<ReloadStrategyInterface> */
     private array $reloadStrategies = [];
     private \Closure $reloadCallback;
@@ -91,16 +92,20 @@ final class Server
         if (false === $mainSocket = \stream_socket_server($listenAddress, $errno, $errmsg, $flags, $socketContext)) {
             return;
         }
-
         \stream_set_blocking($mainSocket, false);
         $this->eventLoop = $eventLoop;
-        $this->transport === 'tcp'
+        $this->onReadableCallbackIdentifier = $this->transport === 'tcp'
             ? $this->eventLoop->onReadable($mainSocket, $this->acceptTcpConnection(...))
-            : $this->eventLoop->onReadable($mainSocket, $this->acceptUdpConnection(...))
-        ;
-
+            : $this->eventLoop->onReadable($mainSocket, $this->acceptUdpConnection(...));
         $this->reloadStrategies = &$reloadStrategies;
         $this->reloadCallback = $reloadCallback;
+    }
+
+    public function stop(): void
+    {
+        if (isset($this->eventLoop)) {
+            $this->eventLoop->cancel($this->onReadableCallbackIdentifier);
+        }
     }
 
     /**
@@ -152,8 +157,6 @@ final class Server
 
     public function getReadableListenAddress(): string
     {
-        $protocolName = \strtolower((new \ReflectionObject($this->protocol))->getShortName());
-
-        return \sprintf('%s://%s:%d (%s)', $this->transport, $this->host, $this->port, $protocolName);
+        return \sprintf('%s://%s:%d', $this->transport, $this->host, $this->port);
     }
 }

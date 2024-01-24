@@ -366,7 +366,6 @@ final class MasterProcess
             user: $worker->user ?? Functions::getCurrentUser(),
             name: $worker->name,
             count: $worker->count,
-            listen: $worker->listen,
         ), \iterator_to_array($this->pool->getWorkers()));
         $status = new MasterProcessStatus(
             pid: \posix_getpid(),
@@ -396,7 +395,6 @@ final class MasterProcess
                 user: $worker->user ?? Functions::getCurrentUser(),
                 name: $worker->name,
                 count: $worker->count,
-                listen: $worker->listen,
             ), \iterator_to_array($this->pool->getWorkers()));
             $status = new MasterProcessStatus(
                 pid: null,

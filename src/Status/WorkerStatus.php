@@ -17,7 +17,6 @@ final readonly class WorkerStatus implements \JsonSerializable
         public string $user,
         public string $name,
         public int $count,
-        public string $listen,
     ) {
     }
 }

@@ -48,14 +48,12 @@ final class StartCommand implements Command
                 'User',
                 'Worker',
                 'Count',
-                'Listen',
             ])
             ->addRows(\array_map(function (WorkerStatus $w) {
                 return [
                     $w->user,
                     $w->name,
                     $w->count,
-                    $w->listen,
                 ];
             }, $status->workers))
         ;

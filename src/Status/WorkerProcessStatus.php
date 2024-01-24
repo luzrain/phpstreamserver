@@ -21,6 +21,7 @@ final readonly class WorkerProcessStatus implements \JsonSerializable
         public int $memory,
         public string $name,
         public \DateTimeImmutable $startedAt,
+        public string $listen,
         public ConnectionStatistics $connectionStatistics,
         /** @var list<ActiveConnection> */
         public array $connections,

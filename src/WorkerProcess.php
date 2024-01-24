@@ -27,15 +27,11 @@ class WorkerProcess
     private \DateTimeImmutable $startedAt;
     /** @var array<ReloadStrategyInterface> */
     private array $reloadStrategies = [];
-
-    /**
-     * @var resource parent socket for interprocess communication
-     */
+    /** @var resource parent socket for interprocess communication */
     private mixed $parentSocket;
-
     private int $exitCode = 0;
 
-    public readonly string $listen;
+    private \WeakMap $listenAddressesMap;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -52,21 +48,23 @@ class WorkerProcess
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
     ) {
-        //$this->listen = $server?->getReadableListenAddress() ?? '-';
-        $this->listen = '???';
     }
 
-    final public function startServer(Server $server): self
+    final public function startServer(Server $server): void
     {
+        $this->listenAddressesMap ??= new \WeakMap();
+        $this->listenAddressesMap[$server] = $server->getReadableListenAddress();
         $server->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
-
-        return $this;
     }
 
-    final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): self
+    final public function stopServer(Server $server): void
+    {
+        $server->stop();
+    }
+
+    final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
     {
         \array_push($this->reloadStrategies, ...$reloadStrategies);
-
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TTLReloadStrategy) {
                 $this->eventLoop->delay($reloadStrategy->ttl, function () use ($reloadStrategy): void {
@@ -79,8 +77,6 @@ class WorkerProcess
                 });
             }
         }
-
-        return $this;
     }
 
     /**
@@ -181,6 +177,7 @@ class WorkerProcess
             memory: \memory_get_usage(),
             name: $this->name,
             startedAt: $this->startedAt,
+            listen: implode(', ', iterator_to_array($this->listenAddressesMap ?? [], false)),
             connectionStatistics: ConnectionStatistics::getGlobal(),
             connections: ActiveConnection::getList(),
         )));

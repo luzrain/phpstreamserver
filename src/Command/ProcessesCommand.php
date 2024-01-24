@@ -40,6 +40,7 @@ final class ProcessesCommand implements Command
                     'User',
                     'Memory',
                     'Worker',
+                    'Listen',
                     'Connections',
                     'Requests',
                     'Bytes (RX / TX)',
@@ -55,6 +56,7 @@ final class ProcessesCommand implements Command
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
                         Functions::humanFileSize($w->memory),
                         $w->name,
+                        $w->listen,
                         $connections === 0 ? '<color;fg=gray>0</>' : $connections,
                         $packages === 0 ? '<color;fg=gray>0</>' : $packages,
                         $rx === 0 && $tx === 0
