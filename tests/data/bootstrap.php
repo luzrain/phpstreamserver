@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-include __DIR__ . '/../vendor/autoload.php';
+include __DIR__ . '/../../vendor/autoload.php';
 
 \startServer();
 \register_shutdown_function(stopServer(...));
@@ -23,7 +23,7 @@ function stopServer(): void
 
 function getServerStartCommandLine(string $command): string
 {
-    return \sprintf('exec %s %s/data/server.php %s', PHP_BINARY, __DIR__, $command);
+    return \sprintf('exec %s %s/server.php %s', PHP_BINARY, __DIR__, $command);
 }
 
 function getServerStatus(): \stdClass
