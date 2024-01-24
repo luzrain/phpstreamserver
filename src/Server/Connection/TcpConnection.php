@@ -62,6 +62,7 @@ final class TcpConnection implements ConnectionInterface
 
         // TLS handshake
         if ($this->tls) {
+            \stream_set_blocking($this->socket, true);
             try {
                 $this->doTlsHandshake($this->socket);
             } catch (TlsHandshakeException $e) {
