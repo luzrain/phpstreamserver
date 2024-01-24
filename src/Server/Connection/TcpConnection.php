@@ -20,8 +20,8 @@ final class TcpConnection implements ConnectionInterface
     private mixed $socket;
     private \Generator|null $sendBufferLevel1 = null;
     private string $sendBufferLevel2 = '';
-    private string $sendBufferCallbackId = '';
     private string $onReadableCallbackId = '';
+    private string $onWritableCallbackId = '';
     private int $status = self::STATUS_ESTABLISHED;
 
     private string $remoteAddress;
@@ -133,7 +133,7 @@ final class TcpConnection implements ConnectionInterface
         try {
             $this->sendBufferLevel1 = $this->protocol->encode($this, $response);
             $this->sendBufferLevel2 = $this->sendBufferLevel1->current();
-            $this->eventLoop->onWritable($this->socket, $this->baseWrite(...));
+            $this->onWritableCallbackId = $this->eventLoop->onWritable($this->socket, $this->baseWrite(...));
         } catch (EncodeTypeError $e) {
             $typeError = new SendTypeError(self::class, $e->acceptType, $e->givenType);
             $this->protocol->onException($this, $typeError);
@@ -236,7 +236,7 @@ final class TcpConnection implements ConnectionInterface
         }
 
         $this->eventLoop->cancel($this->onReadableCallbackId);
-        $this->eventLoop->cancel($this->sendBufferCallbackId);
+        $this->eventLoop->cancel($this->onWritableCallbackId);
         $this->status = self::STATUS_CLOSED;
         $this->sendBufferLevel1 = null;
         $this->sendBufferLevel2 = '';
