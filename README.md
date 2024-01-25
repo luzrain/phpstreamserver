@@ -6,8 +6,9 @@
 </p>
 
 # PhpRunner - PHP Application Server
-![PHP >=8.2](https://img.shields.io/badge/PHP-^8.2-777bb3.svg?style=flat)
-[![Tests Status](https://img.shields.io/github/actions/workflow/status/luzrain/phprunner/tests.yaml?branch=master)](../../actions/workflows/tests.yaml)
+![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg?style=flat)
+[![Version](https://img.shields.io/github/v/tag/luzrain/phprunner?label=Version&filter=v*.*.*&sort=semver&color=374151)](../../releases)
+[![Tests Status](https://img.shields.io/github/actions/workflow/status/luzrain/phprunner/tests.yaml?label=Tests&branch=master)](../../actions/workflows/tests.yaml)
 
 PhpRunner is a high performance event-loop based process manager, TCP, and UDP server written in PHP.  
 With a built-in PSR-7 HTTP server you can easily integrate any PSR-7 compatible framework with it in no time.  
