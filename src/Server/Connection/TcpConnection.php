@@ -134,7 +134,12 @@ final class TcpConnection implements ConnectionInterface
         try {
             $this->sendBufferLevel1 = $this->protocol->encode($this, $response);
             $this->sendBufferLevel2 = $this->sendBufferLevel1->current();
-            $this->onWritableCallbackId = $this->eventLoop->onWritable($this->socket, $this->baseWrite(...));
+            // First try to write directly, if buffer was not flushed completely, then schedule write in event loop
+            if (!$this->doWrite()) {
+                $this->onWritableCallbackId = $this->eventLoop->onWritable($this->socket, function (string $id) {
+                    $this->doWrite() && $this->eventLoop->cancel($id);
+                });
+            }
         } catch (EncodeTypeError $e) {
             $typeError = new SendTypeError(self::class, $e->acceptType, $e->givenType);
             $this->protocol->onException($this, $typeError);
@@ -145,36 +150,43 @@ final class TcpConnection implements ConnectionInterface
     }
 
     /**
-     * @param resource $socket
+     * @return bool if buffer write finish or not
      */
-    private function baseWrite(string $id, mixed $socket): void
+    private function doWrite(): bool
     {
-        $len = \fwrite($socket, $this->sendBufferLevel2);
+        $len = \fwrite($this->socket, $this->sendBufferLevel2);
+
         if ($len === \strlen($this->sendBufferLevel2)) {
+            $this->connectionStatistics->incTx($len);
             if ($this->sendBufferLevel1?->valid()) {
                 $this->sendBufferLevel1->next();
                 $this->sendBufferLevel2 = $this->sendBufferLevel1->current() ?? '';
-            } else {
-                $this->eventLoop->cancel($id);
-                $this->sendBufferLevel1 = null;
-                $this->sendBufferLevel2 = '';
-
-                if ($this->status === self::STATUS_CLOSING) {
-                    $this->destroy();
-                }
+                return false;
             }
-            $this->connectionStatistics->incTx($len);
-        } elseif ($len > 0) {
+
+            $this->sendBufferLevel1 = null;
+            $this->sendBufferLevel2 = '';
+            if ($this->status === self::STATUS_CLOSING) {
+                $this->destroy();
+            }
+
+            return true;
+        }
+
+        if ($len > 0) {
             $this->sendBufferLevel2 = \substr($this->sendBufferLevel2, $len);
             $this->connectionStatistics->incTx($len);
-        } else {
-            $this->connectionStatistics->incFails();
-            $this->eventLoop->cancel($id);
-            $this->destroy();
-            if ($this->onError) {
-                ($this->onError)($this, self::SEND_FAIL, 'connection closed');
-            }
+
+            return false;
         }
+
+        $this->connectionStatistics->incFails();
+        $this->destroy();
+        if ($this->onError) {
+            ($this->onError)($this, self::SEND_FAIL, 'connection closed');
+        }
+
+        return true;
     }
 
     public function getRemoteAddress(): string
