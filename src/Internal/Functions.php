@@ -30,6 +30,11 @@ final class Functions
         return (\posix_getpwuid(\posix_getuid()) ?: [])['name'] ?? 'unknown';
     }
 
+    public static function getCurrentGroup(): string
+    {
+        return (\posix_getgrgid(\posix_getegid()) ?: [])['name'] ?? 'unknown';
+    }
+
     /**
      * @param resource $resource
      */

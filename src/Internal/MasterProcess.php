@@ -161,7 +161,7 @@ final class MasterProcess
     {
         $this->eventLoop->defer(function (): void {
             foreach ($this->pool->getWorkers() as $worker) {
-                while (\iterator_count($this->pool->getAliveWorkerPids($worker)) < $worker->count) {
+                while (\iterator_count($this->pool->getAliveWorkerPids($worker)) < $worker->getCount()) {
                     if ($this->spawnWorker($worker)) {
                         return;
                     }
@@ -220,10 +220,10 @@ final class MasterProcess
         switch ($this->status) {
             case self::STATUS_RUNNING:
                 match ($exitCode) {
-                    TTLReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->name, $pid)),
-                    MaxMemoryReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (Memory limit exceeded)', $worker->name, $pid)),
-                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
-                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
+                    TTLReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->getName(), $pid)),
+                    MaxMemoryReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (Memory limit exceeded)', $worker->getName(), $pid)),
+                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->getName(), $pid)),
+                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
                 };
                 // Restart worker
                 $this->spawnWorker($worker);
@@ -277,7 +277,7 @@ final class MasterProcess
             foreach ($this->pool->getAlivePids() as $pid) {
                 \posix_kill($pid, SIGKILL);
                 $worker = $this->pool->getWorkerByPid($pid);
-                $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
+                $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->getName(), $pid, $this->stopTimeout));
             }
             $this->suspension->resume();
         });
@@ -363,9 +363,9 @@ final class MasterProcess
     {
         /** @var list<WorkerStatus> $workers */
         $workers =  \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
-            user: $worker->user ?? Functions::getCurrentUser(),
-            name: $worker->name,
-            count: $worker->count,
+            user: $worker->getUser(),
+            name: $worker->getName(),
+            count: $worker->getCount(),
         ), \iterator_to_array($this->pool->getWorkers()));
         $status = new MasterProcessStatus(
             pid: \posix_getpid(),
@@ -392,9 +392,9 @@ final class MasterProcess
         } else {
             /** @var list<WorkerStatus> $workers */
             $workers = \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
-                user: $worker->user ?? Functions::getCurrentUser(),
-                name: $worker->name,
-                count: $worker->count,
+                user: $worker->getUser(),
+                name: $worker->getName(),
+                count: $worker->getCount(),
             ), \iterator_to_array($this->pool->getWorkers()));
             $status = new MasterProcessStatus(
                 pid: null,
