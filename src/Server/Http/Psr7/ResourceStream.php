@@ -141,7 +141,23 @@ final class ResourceStream implements StreamInterface
 
     public function write(string $string): int
     {
-        throw new \RuntimeException('Stream is non-writable');
+        if (!isset($this->resource)) {
+            throw new \RuntimeException('Stream is detached');
+        }
+
+        if (!$this->isWritable()) {
+            throw new \RuntimeException('Stream is non-writable');
+        }
+
+        \set_error_handler(static function (int $type, string $message) {
+            throw new \RuntimeException('Unable to write to stream: ' . $message);
+        });
+
+        try {
+            return \fwrite($this->resource, $string) ?: 0;
+        } finally {
+            \restore_error_handler();
+        }
     }
 
     public function isReadable(): bool

@@ -164,9 +164,16 @@ final class HttpRequestStream implements StreamInterface
         // nothing
     }
 
-    public function detach(): null
+    /**
+     * @return resource
+     */
+    public function detach(): mixed
     {
-        return null;
+        $length = $this->size === null ? null : $this->getSize();
+        $bodyStream = \fopen('php://memory', 'rw');
+        \stream_copy_to_stream($this->stream, $bodyStream, $length, $this->globalBodyOffset);
+
+        return $bodyStream;
     }
 
     public function getSize(): int
@@ -240,7 +247,11 @@ final class HttpRequestStream implements StreamInterface
 
     public function getContents(): string
     {
-        $length = $this->size === null ? -1 : $this->getSize();
+        if ($this->isMultiPart()) {
+            return '';
+        }
+
+        $length = $this->size === null ? null : $this->getSize();
 
         return \stream_get_contents($this->stream, $length, $this->globalBodyOffset);
     }

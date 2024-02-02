@@ -78,16 +78,17 @@ final class Response implements ResponseInterface
 
     /**
      * @param int $code $code Status code
-     * @param string|resource|StreamInterface $body Response body
+     * @param string|resource|StreamInterface|null $body Response body
      * @param array $headers Response headers
      * @param string $version Protocol version
      * @param string $reasonPhrase Reason phrase (when empty a default will be used based on the status code)
      */
-    public function __construct(int $code = 200, mixed $body = '', array $headers = [], string $version = '1.1', string $reasonPhrase = '')
+    public function __construct(int $code = 200, mixed $body = null, array $headers = [], string $version = '1.1', string $reasonPhrase = '')
     {
         $this->stream = match (true) {
             \is_string($body) => new StringStream($body),
             \is_resource($body) => new ResourceStream($body),
+            \is_null($body) => null,
             $body instanceof StreamInterface => $body,
             default => throw new \InvalidArgumentException(\sprintf('%s::__construct(): Argument #1 ($body) must be of type string|resource|StreamInterface, %s given', self::class, \get_debug_type($body))),
         };
