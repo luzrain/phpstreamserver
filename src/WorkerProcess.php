@@ -119,6 +119,23 @@ class WorkerProcess
     }
 
     /**
+     * @param \Closure(\Throwable):void $errorHandler
+     */
+    final public function setErrorHandler(\Closure $errorHandler): void
+    {
+        $this->eventLoop->setErrorHandler(function (\Throwable $e) use ($errorHandler) {
+            $errorHandler($e);
+            foreach ($this->reloadStrategies as $reloadStrategy) {
+                if ($reloadStrategy->onException() && $reloadStrategy->shouldReload($e)) {
+                    $this->eventLoop->defer(function () use ($reloadStrategy): void {
+                        $this->reload($reloadStrategy::EXIT_CODE);
+                    });
+                }
+            }
+        });
+    }
+
+    /**
      * @internal
      */
     final public function run(LoggerInterface $logger, mixed $parentSocket): int
@@ -152,16 +169,7 @@ class WorkerProcess
         /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
 
-        $this->eventLoop->setErrorHandler(function (\Throwable $e) {
-            ErrorHandler::handleException($e);
-            foreach ($this->reloadStrategies as $reloadStrategy) {
-                if ($reloadStrategy->onException() && $reloadStrategy->shouldReload($e)) {
-                    $this->eventLoop->defer(function () use ($reloadStrategy): void {
-                        $this->reload($reloadStrategy::EXIT_CODE);
-                    });
-                }
-            }
-        });
+        $this->setErrorHandler(ErrorHandler::handleException(...));
 
         // onStart callback
         $this->eventLoop->defer(function (): void {
