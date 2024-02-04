@@ -50,11 +50,6 @@ final class UdpConnection implements ConnectionInterface
                 ($this->onMessage)($this, $package);
             }
         }
-
-
-
-        // Increase total counter
-        //ConnectionInterface::$statistics['total_request']++;
     }
 
     public function send(mixed $response): bool

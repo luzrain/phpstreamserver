@@ -158,8 +158,8 @@ final class TcpConnection implements ConnectionInterface
 
         if ($len === \strlen($this->sendBufferLevel2)) {
             $this->connectionStatistics->incTx($len);
+            $this->sendBufferLevel1?->next();
             if ($this->sendBufferLevel1?->valid()) {
-                $this->sendBufferLevel1->next();
                 $this->sendBufferLevel2 = $this->sendBufferLevel1->current() ?? '';
                 return false;
             }
@@ -167,7 +167,7 @@ final class TcpConnection implements ConnectionInterface
             $this->sendBufferLevel1 = null;
             $this->sendBufferLevel2 = '';
             if ($this->status === self::STATUS_CLOSING) {
-                $this->destroy();
+                $this->eventLoop->queue($this->destroy(...));
             }
 
             return true;
@@ -248,9 +248,9 @@ final class TcpConnection implements ConnectionInterface
             return;
         }
 
+        $this->status = self::STATUS_CLOSED;
         $this->eventLoop->cancel($this->onReadableCallbackId);
         $this->eventLoop->cancel($this->onWritableCallbackId);
-        $this->status = self::STATUS_CLOSED;
         $this->sendBufferLevel1 = null;
         $this->sendBufferLevel2 = '';
 
