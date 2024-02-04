@@ -273,7 +273,7 @@ final class MasterProcess
         foreach ($this->pool->getAlivePids() as $pid) {
             \posix_kill($pid, SIGTERM);
         }
-        $this->eventLoop->delay($this->stopTimeout, function () {
+        $this->eventLoop->delay($this->stopTimeout, function (): void {
             foreach ($this->pool->getAlivePids() as $pid) {
                 \posix_kill($pid, SIGKILL);
                 $worker = $this->pool->getWorkerByPid($pid);

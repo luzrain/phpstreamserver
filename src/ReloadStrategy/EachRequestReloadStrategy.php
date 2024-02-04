@@ -7,25 +7,10 @@ namespace Luzrain\PhpRunner\ReloadStrategy;
 /**
  * Reload worker after each request.
  */
-final class EachRequestReloadStrategy implements ReloadStrategyInterface
+class EachRequestReloadStrategy implements ReloadStrategyInterface
 {
-    public function onTimer(): bool
+    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
     {
-        return false;
-    }
-
-    public function onRequest(): bool
-    {
-        return true;
-    }
-
-    public function onException(): bool
-    {
-        return false;
-    }
-
-    public function shouldReload(mixed $event = null): bool
-    {
-        return true;
+        return $eventCode === self::EVENT_CODE_REQUEST;
     }
 }

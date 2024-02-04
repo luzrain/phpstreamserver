@@ -7,33 +7,32 @@ namespace Luzrain\PhpRunner\ReloadStrategy;
 interface ReloadStrategyInterface
 {
     /**
-     * @var int timer interval in seconds
-     */
-    final public const TIMER_INTERVAL = 30;
-
-    /**
-     * @var int process exit code
+     * Process exit code.
+     *
+     * @var int
      */
     public const EXIT_CODE = 100;
 
     /**
-     * Should the shouldReload() method be called every N seconds?
+     * @var int Periodic timer tick
      */
-    public function onTimer(): bool;
+    final public const EVENT_CODE_TIMER = 1;
 
     /**
-     * Should the shouldReload() method be called after every request?
+     * @var int Request recieved
      */
-    public function onRequest(): bool;
+    final public const EVENT_CODE_REQUEST = 2;
 
     /**
-     * Should the shouldReload() method be called after an exception is thrown?
+     * @var int Exception occurs
      */
-    public function onException(): bool;
+    final public const EVENT_CODE_EXCEPTION = 3;
 
     /**
-     * If the method returns true, the worker is immediately reloaded.
-     * @param mixed $event Could be a request object or an exception object, depending on the context.
+     * If the method returns true, the worker should be reloaded immediately.
+     *
+     * @param int $eventCode one of the event codes from the EVENT_CODE_ constants above.
+     * @param mixed $eventObject could be a request object, exception object, or null, depending on the eventCode.
      */
-    public function shouldReload(mixed $event = null): bool;
+    public function shouldReload(int $eventCode, mixed $eventObject = null): bool;
 }

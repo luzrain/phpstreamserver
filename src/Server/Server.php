@@ -147,8 +147,8 @@ final class Server
             ($this->onMessage)($connection, $package);
         }
         foreach ($this->reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy->onRequest() && $reloadStrategy->shouldReload($package)) {
-                $this->eventLoop->defer(function () {
+            if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_REQUEST, $package)) {
+                $this->eventLoop->defer(function (): void {
                     ($this->reloadCallback)();
                 });
             }

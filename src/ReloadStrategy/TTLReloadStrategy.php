@@ -7,34 +7,24 @@ namespace Luzrain\PhpRunner\ReloadStrategy;
 /**
  * Reload worker after $ttl working time
  */
-final class TTLReloadStrategy implements ReloadStrategyInterface
+class TTLReloadStrategy implements TimerReloadStrategyInterface
 {
     public const EXIT_CODE = 101;
 
     /**
      * @param int $ttl TTL in seconds
      */
-    public function __construct(public readonly int $ttl)
+    public function __construct(private readonly int $ttl)
     {
     }
 
-    public function onTimer(): bool
+    public function getInterval(): int
     {
-        return false;
+        return $this->ttl;
     }
 
-    public function onRequest(): bool
+    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
     {
-        return false;
-    }
-
-    public function onException(): bool
-    {
-        return false;
-    }
-
-    public function shouldReload(mixed $event = null): bool
-    {
-        return false;
+        return $eventCode === self::EVENT_CODE_TIMER;
     }
 }

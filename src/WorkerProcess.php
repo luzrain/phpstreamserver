@@ -8,7 +8,7 @@ use Luzrain\PhpRunner\Exception\UserChangeException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PhpRunner\ReloadStrategy\TTLReloadStrategy;
+use Luzrain\PhpRunner\ReloadStrategy\TimerReloadStrategyInterface;
 use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
 use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
 use Luzrain\PhpRunner\Server\Server;
@@ -65,14 +65,9 @@ class WorkerProcess
     {
         \array_push($this->reloadStrategies, ...$reloadStrategies);
         foreach ($reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy instanceof TTLReloadStrategy) {
-                $this->eventLoop->delay($reloadStrategy->ttl, function () use ($reloadStrategy): void {
-                    $this->reload($reloadStrategy::EXIT_CODE);
-                });
-            }
-            if ($reloadStrategy->onTimer()) {
-                $this->eventLoop->repeat(ReloadStrategyInterface::TIMER_INTERVAL, function () use ($reloadStrategy): void {
-                    $reloadStrategy->shouldReload() && $this->reload($reloadStrategy::EXIT_CODE);
+            if ($reloadStrategy instanceof TimerReloadStrategyInterface) {
+                $this->eventLoop->repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
+                    $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload($reloadStrategy::EXIT_CODE);
                 });
             }
         }
@@ -126,10 +121,11 @@ class WorkerProcess
         $this->eventLoop->setErrorHandler(function (\Throwable $e) use ($errorHandler) {
             $errorHandler($e);
             foreach ($this->reloadStrategies as $reloadStrategy) {
-                if ($reloadStrategy->onException() && $reloadStrategy->shouldReload($e)) {
+                if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_EXCEPTION, $e)) {
                     $this->eventLoop->defer(function () use ($reloadStrategy): void {
                         $this->reload($reloadStrategy::EXIT_CODE);
                     });
+                    break;
                 }
             }
         });
@@ -190,7 +186,7 @@ class WorkerProcess
         }
     }
 
-    private function stop(int $code = self::STOP_EXIT_CODE): void
+    final public function stop(int $code = self::STOP_EXIT_CODE): void
     {
         $this->exitCode = $code;
         try {
@@ -200,7 +196,7 @@ class WorkerProcess
         }
     }
 
-    private function reload(int $code = self::RELOAD_EXIT_CODE): void
+    final public function reload(int $code = self::RELOAD_EXIT_CODE): void
     {
         if ($this->isReloadable()) {
             $this->exitCode = $code;

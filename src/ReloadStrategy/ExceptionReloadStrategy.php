@@ -9,7 +9,7 @@ use Luzrain\PhpRunner\Exception\HttpException;
 /**
  * Reload worker each time after exception occurs
  */
-final class ExceptionReloadStrategy implements ReloadStrategyInterface
+class ExceptionReloadStrategy implements ReloadStrategyInterface
 {
     /** @var array<class-string<\Throwable>> */
     private array $allowedExceptions = [
@@ -24,25 +24,14 @@ final class ExceptionReloadStrategy implements ReloadStrategyInterface
         \array_push($this->allowedExceptions, ...$allowedExceptions);
     }
 
-    public function onTimer(): bool
+    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
     {
-        return false;
-    }
+        if ($eventCode !== self::EVENT_CODE_EXCEPTION) {
+            return false;
+        }
 
-    public function onRequest(): bool
-    {
-        return false;
-    }
-
-    public function onException(): bool
-    {
-        return true;
-    }
-
-    public function shouldReload(mixed $event = null): bool
-    {
         foreach ($this->allowedExceptions as $allowedExceptionClass) {
-            if ($event instanceof $allowedExceptionClass) {
+            if ($eventObject instanceof $allowedExceptionClass) {
                 return false;
             }
         }
