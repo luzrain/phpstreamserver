@@ -56,8 +56,14 @@ final class MasterProcess
 
         self::$registered = true;
         $this->startFile = Functions::getStartFile();
-        $this->pidFile = $pidFile ?? \sprintf('%s/phprunner.%s.pid', \sys_get_temp_dir(), \hash('xxh32', $this->startFile));
+
+        $runDirectory = \posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir();
+        $this->pidFile = $pidFile ?? \sprintf('%s/phprunner.%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->pipeFile = \sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
+
+        if (!\is_dir($pidFileDir = \dirname($this->pidFile))) {
+            \mkdir(directory: $pidFileDir, recursive: true);
+        }
     }
 
     public function run(bool $daemonize = false): int
