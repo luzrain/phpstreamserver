@@ -105,12 +105,12 @@ class WorkerProcess
 
     final public function getUser(): string
     {
-        return $this->user ??= Functions::getCurrentUser();
+        return $this->user ?? Functions::getCurrentUser();
     }
 
     final public function getGroup(): string
     {
-        return $this->group ??= Functions::getCurrentGroup();
+        return $this->group ?? Functions::getCurrentGroup();
     }
 
     /**

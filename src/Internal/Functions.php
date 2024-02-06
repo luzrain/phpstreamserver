@@ -27,12 +27,12 @@ final class Functions
 
     public static function getCurrentUser(): string
     {
-        return (\posix_getpwuid(\posix_getuid()) ?: [])['name'] ?? 'unknown';
+        return (\posix_getpwuid(\posix_geteuid()) ?: [])['name'] ?? (string) \posix_geteuid();
     }
 
     public static function getCurrentGroup(): string
     {
-        return (\posix_getgrgid(\posix_getegid()) ?: [])['name'] ?? 'unknown';
+        return (\posix_getgrgid(\posix_getegid()) ?: [])['name'] ?? (string) \posix_getegid();
     }
 
     /**
@@ -83,12 +83,15 @@ final class Functions
      */
     public static function setUserAndGroup(string|null $user = null, string|null $group = null): void
     {
-        $currentUser = self::getCurrentUser();
-        $user ??= $currentUser;
+        if ($user === null && $group === null) {
+            return;
+        }
 
-        if (\posix_getuid() !== 0 && $user !== $currentUser) {
+        if (\posix_getuid() !== 0) {
             throw new UserChangeException('You must have the root privileges to change the user and group');
         }
+
+        $user ??= self::getCurrentUser();
 
         // Get uid
         if ($userInfo = \posix_getpwnam($user)) {
