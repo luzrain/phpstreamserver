@@ -28,6 +28,7 @@ final class MasterProcess
     private const STATUS_STARTING = 1;
     private const STATUS_RUNNING = 2;
     private const STATUS_SHUTDOWN = 3;
+    private const GC_PERIOD = 300;
 
     private static bool $registered = false;
     private readonly string $startFile;
@@ -139,6 +140,12 @@ final class MasterProcess
         foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1, SIGUSR2] as $signo) {
             $this->eventLoop->onSignal($signo, $onSignal);
         }
+
+        // Force run garbage collection periodically
+        $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
+            \gc_collect_cycles();
+            \gc_mem_caches();
+        });
     }
 
     /**
@@ -216,6 +223,7 @@ final class MasterProcess
         \fclose($this->interProcessSocketPair[0]);
         unset($this->suspension, $this->eventLoop, $this->pool, $this->processStatusPool, $this->interProcessSocketPair[0]);
         \gc_collect_cycles();
+        \gc_mem_caches();
 
         return $worker->run($this->logger, $this->interProcessSocketPair[1]);
     }

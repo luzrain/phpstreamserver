@@ -23,6 +23,7 @@ class WorkerProcess
 {
     final public const STOP_EXIT_CODE = 0;
     final public const RELOAD_EXIT_CODE = 100;
+    private const GC_PERIOD = 180;
 
     private LoggerInterface $logger;
     private Driver $eventLoop;
@@ -185,6 +186,12 @@ class WorkerProcess
             $this->eventLoop->onSignal($signo, $onSignal);
         }
 
+        // Force run garbage collection periodically
+        $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
+            \gc_collect_cycles();
+            \gc_mem_caches();
+        });
+
         $this->sendMessageToMaster(new ProcessInfo(\posix_getpid(), $this->getName(), $this->getUser(), $this->startedAt, false));
     }
 
@@ -226,6 +233,7 @@ class WorkerProcess
         $this->onStop = null;
         $this->onReload = null;
         \gc_collect_cycles();
+        \gc_mem_caches();
     }
 
     private function updateStatus(): void
