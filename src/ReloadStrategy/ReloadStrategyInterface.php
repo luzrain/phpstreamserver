@@ -7,13 +7,6 @@ namespace Luzrain\PhpRunner\ReloadStrategy;
 interface ReloadStrategyInterface
 {
     /**
-     * Process exit code.
-     *
-     * @var int
-     */
-    public const EXIT_CODE = 100;
-
-    /**
      * @var int Periodic timer tick
      */
     final public const EVENT_CODE_TIMER = 1;

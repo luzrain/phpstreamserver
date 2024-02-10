@@ -12,8 +12,6 @@ use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
 use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
 use Luzrain\PhpRunner\PhpRunner;
-use Luzrain\PhpRunner\ReloadStrategy\MaxMemoryReloadStrategy;
-use Luzrain\PhpRunner\ReloadStrategy\TTLReloadStrategy;
 use Luzrain\PhpRunner\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
@@ -246,8 +244,7 @@ final class MasterProcess
         switch ($this->status) {
             case self::STATUS_RUNNING:
                 match ($exitCode) {
-                    TTLReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (TTL exceeded)', $worker->getName(), $pid)),
-                    MaxMemoryReloadStrategy::EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded (Memory limit exceeded)', $worker->getName(), $pid)),
+                    0 => $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
                     $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->getName(), $pid)),
                     default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
                 };

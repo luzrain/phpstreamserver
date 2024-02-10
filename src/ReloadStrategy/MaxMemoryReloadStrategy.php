@@ -9,7 +9,6 @@ namespace Luzrain\PhpRunner\ReloadStrategy;
  */
 class MaxMemoryReloadStrategy implements TimerReloadStrategyInterface
 {
-    public const EXIT_CODE = 102;
     private const TIMER_INTERVAL = 30;
 
     public function __construct(private readonly int $maxMemory)

@@ -9,8 +9,6 @@ namespace Luzrain\PhpRunner\ReloadStrategy;
  */
 class TTLReloadStrategy implements TimerReloadStrategyInterface
 {
-    public const EXIT_CODE = 101;
-
     /**
      * @param int $ttl TTL in seconds
      */

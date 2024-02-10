@@ -84,7 +84,7 @@ class WorkerProcess
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TimerReloadStrategyInterface) {
                 $this->eventLoop->repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
-                    $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload($reloadStrategy::EXIT_CODE);
+                    $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload();
                 });
             }
         }
@@ -140,7 +140,7 @@ class WorkerProcess
             foreach ($this->reloadStrategies as $reloadStrategy) {
                 if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_EXCEPTION, $e)) {
                     $this->eventLoop->defer(function () use ($reloadStrategy): void {
-                        $this->reload($reloadStrategy::EXIT_CODE);
+                        $this->reload();
                     });
                     break;
                 }
@@ -205,10 +205,10 @@ class WorkerProcess
         }
     }
 
-    final public function reload(int $code = self::RELOAD_EXIT_CODE): void
+    final public function reload(): void
     {
         if ($this->isReloadable()) {
-            $this->exitCode = $code;
+            $this->exitCode = self::RELOAD_EXIT_CODE;
             try {
                 $this->onReload !== null && ($this->onReload)($this);
             } finally {
