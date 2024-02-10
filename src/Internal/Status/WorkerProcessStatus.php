@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Status;
+namespace Luzrain\PhpRunner\Internal\Status;
 
 use Luzrain\PhpRunner\Internal\JsonSerializible;
 use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
@@ -21,10 +21,10 @@ final readonly class WorkerProcessStatus implements \JsonSerializable
         public int $memory,
         public string $name,
         public \DateTimeImmutable $startedAt,
-        public string $listen,
-        public ConnectionStatistics $connectionStatistics,
-        /** @var list<ActiveConnection> */
-        public array $connections,
+        public string|null $listen,
+        public ConnectionStatistics|null $connectionStatistics,
+        /** @var null|list<ActiveConnection> */
+        public array|null $connections,
     ) {
     }
 }

@@ -8,7 +8,7 @@ use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\Internal\MasterProcess;
-use Luzrain\PhpRunner\Status\WorkerProcessStatus;
+use Luzrain\PhpRunner\Internal\Status\WorkerProcessStatus;
 
 final class ProcessesCommand implements Command
 {
@@ -46,17 +46,17 @@ final class ProcessesCommand implements Command
                     'Bytes (RX / TX)',
                 ])
                 ->addRows(\array_map(array: $status->processes, callback: function (WorkerProcessStatus $w) {
-                    $connections = \count($w->connections);
-                    $packages = $w->connectionStatistics->getPackages();
-                    $rx = $w->connectionStatistics->getRx();
-                    $tx = $w->connectionStatistics->getTx();
+                    $connections = \count($w->connections ?? []);
+                    $packages = $w->connectionStatistics?->getPackages() ?? 0;
+                    $rx = $w->connectionStatistics?->getRx() ?? 0;
+                    $tx = $w->connectionStatistics?->getTx() ?? 0;
 
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
-                        Functions::humanFileSize($w->memory),
+                        $w->memory > 0 ? Functions::humanFileSize($w->memory) : '<color;fg=gray>??</>',
                         $w->name,
-                        $w->listen,
+                        $w->listen ?? '<color;fg=gray>-</>',
                         $connections === 0 ? '<color;fg=gray>0</>' : $connections,
                         $packages === 0 ? '<color;fg=gray>0</>' : $packages,
                         $rx === 0 && $tx === 0

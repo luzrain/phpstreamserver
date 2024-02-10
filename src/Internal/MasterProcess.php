@@ -6,12 +6,14 @@ namespace Luzrain\PhpRunner\Internal;
 
 use Luzrain\PhpRunner\Console\StdoutHandler;
 use Luzrain\PhpRunner\Exception\PhpRunnerException;
+use Luzrain\PhpRunner\Internal\ProcessMessage\Message;
+use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
+use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
 use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\ReloadStrategy\MaxMemoryReloadStrategy;
 use Luzrain\PhpRunner\ReloadStrategy\TTLReloadStrategy;
-use Luzrain\PhpRunner\Status\MasterProcessStatus;
-use Luzrain\PhpRunner\Status\WorkerProcessStatus;
-use Luzrain\PhpRunner\Status\WorkerStatus;
 use Luzrain\PhpRunner\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
@@ -36,6 +38,13 @@ final class MasterProcess
     private \DateTimeImmutable $startedAt;
     private int $status = self::STATUS_STARTING;
     private int $exitCode = 0;
+    private ProcessStatusPool $processStatusPool;
+
+    /**
+     * Socket pair for send messages from childs to master process
+     * @var array{0: resource, 1: resource}
+     */
+    private array $interProcessSocketPair;
 
     public function __construct(
         string|null $pidFile,
@@ -77,21 +86,16 @@ final class MasterProcess
             // Runs in caller process
             return 0;
         } elseif ($daemonize) {
-            // Runs in daemonized process
+            // Runs in daemonized master process
             StdoutHandler::reset();
         }
 
         $this->initServer();
         $this->saveMasterPid();
-        $this->createMasterPipe();
-        $this->initSignalHandler();
         $this->spawnWorkers();
         $this->status = self::STATUS_RUNNING;
         $this->logger->info(PhpRunner::NAME . ' has started');
-        $exitCode = ([$worker, $parentSocket] = $this->suspension->suspend())
-            ? $this->runWorker($worker, $parentSocket)
-            : $this->exitCode;
-
+        $exitCode = ($worker = $this->suspension->suspend()) ? $this->runWorker($worker) : $this->exitCode;
         isset($worker) ? exit($exitCode) : $this->onMasterShutdown();
 
         return $exitCode;
@@ -107,12 +111,34 @@ final class MasterProcess
         \cli_set_process_title(\sprintf('%s: master process  start_file=%s', PhpRunner::NAME, $this->startFile));
 
         $this->startedAt = new \DateTimeImmutable('now');
+        $this->interProcessSocketPair = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        \stream_set_blocking($this->interProcessSocketPair[0], false);
+        $this->processStatusPool = new ProcessStatusPool();
 
         // Init event loop.
         // Force use StreamSelectDriver in the master process because it uses pcntl_signal to handle signals, and it works better for this case.
         $this->eventLoop = new StreamSelectDriver();
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
+
+        $this->eventLoop->onReadable($this->interProcessSocketPair[0], function (string $id, mixed $fd) {
+            while (false !== ($line = \stream_get_line($fd, 1048576, "\r\n"))) {
+                $this->onMessageFromChild(\unserialize($line));
+            }
+        });
+
+        $onSignal = function (string $id, int $signo): void {
+            match ($signo) {
+                SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT => $this->stop(),
+                SIGCHLD => $this->watchChildProcesses(),
+                SIGUSR1 => $this->requestProcessesStatus(),
+                SIGUSR2 => $this->reload(),
+            };
+        };
+
+        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1, SIGUSR2] as $signo) {
+            $this->eventLoop->onSignal($signo, $onSignal);
+        }
     }
 
     /**
@@ -140,26 +166,9 @@ final class MasterProcess
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
             throw new PhpRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
-    }
 
-    private function createMasterPipe(): void
-    {
         if(!\file_exists($this->pipeFile)) {
             \posix_mkfifo($this->pipeFile, 0644);
-        }
-    }
-
-    private function initSignalHandler(): void
-    {
-        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1, SIGUSR2] as $signo) {
-            $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
-                match ($signo) {
-                    SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT => $this->stop(),
-                    SIGCHLD => $this->watchWorkers(),
-                    SIGUSR1 => $this->requestProcessesStatus(),
-                    SIGUSR2 => $this->reload(),
-                };
-            });
         }
     }
 
@@ -178,51 +187,54 @@ final class MasterProcess
 
     private function spawnWorker(WorkerProcess $worker): bool
     {
-        /** @var list{0: resource, 1: resource} $pair */
-        $pair = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = \pcntl_fork();
         if ($pid > 0) {
             // Master process
-            \fclose($pair[0]);
-            unset($pair[0]);
-            $this->pool->addChild($worker, $pid, $pair[1]);
+            $this->pool->addChild($worker, $pid);
             return false;
         } elseif ($pid === 0) {
             // Child process
-            \fclose($pair[1]);
-            unset($pair[1]);
-            $this->suspension->resume([$worker, $pair[0]]);
+            $this->suspension->resume($worker);
             return true;
         } else {
             throw new PhpRunnerException('fork fail');
         }
     }
 
-    private function watchWorkers(): void
+    private function watchChildProcesses(): void
     {
-        $status = 0;
         while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
             $exitCode = \pcntl_wexitstatus($status) ?: 0;
-            $worker = $this->pool->getWorkerByPid($pid);
-            $this->pool->deleteChild($pid);
-            $this->onWorkerStop($worker, $pid, $exitCode);
+            $this->onChildStop($pid, $exitCode);
         }
     }
 
-    /**
-     * Runs in forked process
-     * @param resource $parentSocket
-     */
-    private function runWorker(WorkerProcess $worker, mixed $parentSocket): int
+    // Runs in forked process
+    private function runWorker(WorkerProcess $worker): int
     {
         $this->eventLoop->stop();
-        unset($this->suspension, $this->eventLoop, $this->pool);
+        \fclose($this->interProcessSocketPair[0]);
+        unset($this->suspension, $this->eventLoop, $this->pool, $this->processStatusPool, $this->interProcessSocketPair[0]);
+        \gc_collect_cycles();
 
-        return $worker->run($this->logger, $parentSocket);
+        return $worker->run($this->logger, $this->interProcessSocketPair[1]);
     }
 
-    private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void
+    private function onMessageFromChild(Message $message): void
     {
+        if ($message instanceof ProcessInfo) {
+            $this->processStatusPool->addProcessInfo($message);
+        } elseif ($message instanceof ProcessStatus) {
+            $this->processStatusPool->addProcessStatus($message);
+        }
+    }
+
+    private function onChildStop(int $pid, int $exitCode): void
+    {
+        $worker = $this->pool->getWorkerByPid($pid);
+        $this->pool->deleteChild($pid);
+        $this->processStatusPool->deleteProcess($pid);
+
         switch ($this->status) {
             case self::STATUS_RUNNING:
                 match ($exitCode) {
@@ -305,7 +317,9 @@ final class MasterProcess
         }
 
         foreach ($this->pool->getAlivePids() as $pid) {
-            \posix_kill($pid, SIGUSR2);
+            if ($this->processStatusPool->isDetached($pid) === false) {
+                \posix_kill($pid, SIGUSR2);
+            }
         }
     }
 
@@ -328,45 +342,39 @@ final class MasterProcess
      */
     private function requestProcessesStatus(): void
     {
-        $pids = \iterator_to_array($this->pool->getAlivePids());
-        $callbackIds = [];
-        $data = [];
+        $monitoredPids = $this->processStatusPool->getMonitoredPids();
+        $receivedStatuses = 0;
         $timeoutCallbackId = '';
+        $subscriber = function () use (&$subscriber, &$receivedStatuses, &$monitoredPids, &$timeoutCallbackId): void {
+            if (++$receivedStatuses === \count($monitoredPids)) {
+                $this->eventLoop->cancel($timeoutCallbackId);
+                $this->processStatusPool->unSubscribeFromProcessStatus($subscriber);
+                $this->onAllWorkersStatusReady();
+            }
+        };
 
-        foreach ($pids as $pid) {
-            $fd = $this->pool->getChildSocketByPid($pid);
-            $callbackIds[] = $this->eventLoop->onReadable($fd, function (string $id, mixed $fd) use (&$pids, &$callbackIds, &$data, &$timeoutCallbackId) {
-                $this->eventLoop->cancel($id);
-                $dataReceived = Functions::streamRead($fd);
-                if ($dataReceived !== '') {
-                    $data[] = \unserialize($dataReceived);
-                }
-                if (\count($data) === \count($pids)) {
-                    $this->eventLoop->cancel($timeoutCallbackId);
-                    $this->onAllWorkersStatusReady($data);
-                    unset($pids, $callbackIds, $data, $timeoutCallbackId);
-                }
-            });
-        }
-
-        // Timeout for release empty data after 10 seconds if data from processes still not available
-        $timeoutCallbackId = $this->eventLoop->delay(10, function () use (&$pids, &$callbackIds, &$data, &$timeoutCallbackId) {
-            \array_walk($callbackIds, $this->eventLoop->cancel(...));
-            $this->onAllWorkersStatusReady($data);
-            unset($pids, $callbackIds, $data, $timeoutCallbackId);
+        // Do not wait statuses from childs more than 3 seconds
+        $timeoutCallbackId = $this->eventLoop->delay(3, function () use (&$subscriber) {
+            $this->processStatusPool->unSubscribeFromProcessStatus($subscriber);
+            $this->onAllWorkersStatusReady();
         });
 
-        // Send signal to all child processes
-        \array_walk($pids, fn(int $pid) => \posix_kill($pid, SIGUSR1));
+        $this->processStatusPool->subscribeToProcessStatus($subscriber);
+
+        // Send signal to child processes
+        \array_walk($monitoredPids, static fn(int $pid) => \posix_kill($pid, SIGUSR1));
     }
 
     /**
      * When all the status data from the child processes is ready, arrange it and send to the pipe file
-     *
-     * @param list<WorkerProcessStatus> $processes
      */
-    private function onAllWorkersStatusReady(array $processes): void
+    private function onAllWorkersStatusReady(): void
     {
+        $processes = [];
+        foreach ($this->pool->getAlivePids() as $pid) {
+            $processes[] = $this->processStatusPool->getProcessSatus($pid);
+        }
+
         /** @var list<WorkerStatus> $workers */
         $workers =  \array_map(fn(WorkerProcess $worker) => new WorkerStatus(
             user: $worker->getUser(),
@@ -384,7 +392,8 @@ final class MasterProcess
             processes: $processes,
         );
         $fd = \fopen($this->pipeFile, 'w');
-        Functions::streamWrite($fd, \serialize($status));
+        \fwrite($fd, \serialize($status));
+        \fclose($fd);
     }
 
     public function getStatus(): MasterProcessStatus
@@ -392,9 +401,9 @@ final class MasterProcess
         if ($this->isRunning() && \file_exists($this->pipeFile)) {
             \posix_kill($this->getPid(), SIGUSR1);
             $fd = \fopen($this->pipeFile, 'r');
-            $data = Functions::streamRead($fd, true);
+            \stream_set_blocking($fd, true);
             /** @var MasterProcessStatus $status */
-            $status = \unserialize($data);
+            $status = \unserialize((string) \stream_get_contents($fd));
         } else {
             /** @var list<WorkerStatus> $workers */
             $workers = \array_map(fn(WorkerProcess $worker) => new WorkerStatus(

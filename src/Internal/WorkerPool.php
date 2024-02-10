@@ -22,11 +22,6 @@ final class WorkerPool
      */
     private \WeakMap $pidMap;
 
-    /**
-     * @var array<int, resource>
-     */
-    private array $socketMap = [];
-
     public function __construct()
     {
         /** @psalm-suppress PropertyTypeCoercion */
@@ -39,10 +34,7 @@ final class WorkerPool
         $this->pidMap[$worker] = [];
     }
 
-    /**
-     * @param resource $socket child socket for interprocess communication
-     */
-    public function addChild(WorkerProcess $worker, int $pid, mixed $socket): void
+    public function addChild(WorkerProcess $worker, int $pid): void
     {
         if (!isset($this->pool[\spl_object_id($worker)])) {
             throw new PhpRunnerException('Worker is not fount in pool');
@@ -50,7 +42,6 @@ final class WorkerPool
 
         /** @psalm-suppress InvalidArgument */
         $this->pidMap[$worker][] = $pid;
-        $this->socketMap[$pid] = $socket;
     }
 
     /**
@@ -62,8 +53,6 @@ final class WorkerPool
         $pids = $this->pidMap[$worker] ?? [];
         unset($pids[\array_search($pid, $pids, true)]);
         $this->pidMap[$worker] = \array_values($pids);
-        \fclose($this->socketMap[$pid]);
-        unset($this->socketMap[$pid]);
     }
 
     public function getWorkerByPid(int $pid): WorkerProcess
@@ -113,13 +102,5 @@ final class WorkerPool
     public function getProcessesCount(): int
     {
         return \iterator_count($this->getAlivePids());
-    }
-
-    /**
-     * @return resource
-     */
-    public function getChildSocketByPid(int $pid): mixed
-    {
-        return $this->socketMap[$pid];
     }
 }

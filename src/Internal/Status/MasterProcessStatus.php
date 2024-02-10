@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Status;
+namespace Luzrain\PhpRunner\Internal\Status;
 
 use Luzrain\PhpRunner\Internal\JsonSerializible;
 use Luzrain\PhpRunner\PhpRunner;
@@ -52,6 +52,6 @@ final readonly class MasterProcessStatus implements \JsonSerializable
         $this->totalMemory = \array_sum(\array_map(fn(WorkerProcessStatus $p) => $p->memory, $this->processes));
         $this->workersCount = \count($this->workers);
         $this->processesCount = \count($this->processes);
-        $this->connectionsCount = \array_sum(\array_map(fn(WorkerProcessStatus $p) => \count($p->connections), $processes));
+        $this->connectionsCount = \array_sum(\array_map(fn(WorkerProcessStatus $p) => \count($p->connections ?? []), $processes));
     }
 }

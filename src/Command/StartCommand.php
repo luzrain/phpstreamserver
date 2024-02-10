@@ -7,8 +7,8 @@ namespace Luzrain\PhpRunner\Command;
 use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\Internal\MasterProcess;
+use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
 use Luzrain\PhpRunner\PhpRunner;
-use Luzrain\PhpRunner\Status\WorkerStatus;
 
 final class StartCommand implements Command
 {

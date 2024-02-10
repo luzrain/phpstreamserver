@@ -7,12 +7,14 @@ namespace Luzrain\PhpRunner;
 use Luzrain\PhpRunner\Exception\UserChangeException;
 use Luzrain\PhpRunner\Internal\ErrorHandler;
 use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PhpRunner\Internal\ProcessMessage\Message;
+use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
 use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PhpRunner\ReloadStrategy\TimerReloadStrategyInterface;
 use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
 use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
 use Luzrain\PhpRunner\Server\Server;
-use Luzrain\PhpRunner\Status\WorkerProcessStatus;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;
@@ -23,7 +25,7 @@ class WorkerProcess
     final public const RELOAD_EXIT_CODE = 100;
 
     private LoggerInterface $logger;
-    private readonly Driver $eventLoop;
+    private Driver $eventLoop;
     private \DateTimeImmutable $startedAt;
     /** @var array<ReloadStrategyInterface> */
     private array $reloadStrategies = [];
@@ -38,16 +40,30 @@ class WorkerProcess
      * @param null|\Closure(self):void $onReload
      */
     public function __construct(
-        private readonly string $name = 'none',
-        private readonly int $count = 1,
-        private readonly bool $reloadable = true,
+        private string $name = 'none',
+        private int $count = 1,
+        private bool $reloadable = true,
         private string|null $user = null,
         private string|null $group = null,
-        private readonly \Closure|null $onStart = null,
-        private readonly \Closure|null $onStop = null,
-        private readonly \Closure|null $onReload = null,
+        private \Closure|null $onStart = null,
+        private \Closure|null $onStop = null,
+        private \Closure|null $onReload = null,
     ) {
         $this->listenAddressesMap = new \WeakMap();
+    }
+
+    /**
+     * @internal
+     */
+    final public function run(LoggerInterface $logger, mixed $parentSocket): int
+    {
+        $this->setLogger($logger);
+        $this->parentSocket = $parentSocket;
+        $this->setUserAndGroup();
+        $this->initWorker();
+        $this->eventLoop->run();
+
+        return $this->exitCode;
     }
 
     final public function startServer(Server $server): void
@@ -131,21 +147,6 @@ class WorkerProcess
         });
     }
 
-    /**
-     * @internal
-     */
-    final public function run(LoggerInterface $logger, mixed $parentSocket): int
-    {
-        $this->setLogger($logger);
-        $this->parentSocket = $parentSocket;
-        $this->setUserAndGroup();
-        $this->initWorker();
-        $this->initSignalHandler();
-        $this->eventLoop->run();
-
-        return $this->exitCode;
-    }
-
     private function setUserAndGroup(): void
     {
         try {
@@ -171,19 +172,20 @@ class WorkerProcess
         $this->eventLoop->defer(function (): void {
             $this->onStart !== null && ($this->onStart)($this);
         });
-    }
 
-    private function initSignalHandler(): void
-    {
+        $onSignal = function (string $id, int $signo): void {
+            match ($signo) {
+                SIGTERM => $this->stop(),
+                SIGUSR1 => $this->updateStatus(),
+                SIGUSR2 => $this->reload(),
+            };
+        };
+
         foreach ([SIGTERM, SIGUSR1, SIGUSR2] as $signo) {
-            $this->eventLoop->onSignal($signo, function (string $id, int $signo): void {
-                match ($signo) {
-                    SIGTERM => $this->stop(),
-                    SIGUSR1 => $this->uploadStatus(),
-                    SIGUSR2 => $this->reload(),
-                };
-            });
+            $this->eventLoop->onSignal($signo, $onSignal);
         }
+
+        $this->sendMessageToMaster(new ProcessInfo(\posix_getpid(), $this->getName(), $this->getUser(), $this->startedAt, false));
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -208,17 +210,37 @@ class WorkerProcess
         }
     }
 
-    private function uploadStatus(): void
+    /**
+     * After the process is detached, only the basic supervisor will work for it.
+     * The event loop and communication with the master process will be stopped and destroyed.
+     * This can be useful to give control to an external program and have it monitored by the master process.
+     */
+    final public function detach(): void
     {
-        Functions::streamWrite($this->parentSocket, \serialize(new WorkerProcessStatus(
+        $identifiers = $this->getEventLoop()->getIdentifiers();
+        \array_walk($identifiers, $this->getEventLoop()->disable(...));
+        $this->getEventLoop()->stop();
+        $this->sendMessageToMaster(new ProcessInfo(\posix_getpid(), $this->getName(), $this->getUser(), $this->startedAt, true));
+        unset($this->eventLoop, $this->reloadStrategies, $this->logger, $this->parentSocket);
+        $this->onStart = null;
+        $this->onStop = null;
+        $this->onReload = null;
+        \gc_collect_cycles();
+    }
+
+    private function updateStatus(): void
+    {
+        $this->sendMessageToMaster(new ProcessStatus(
             pid: \posix_getpid(),
-            user: $this->getUser(),
             memory: \memory_get_usage(),
-            name: $this->getName(),
-            startedAt: $this->startedAt,
             listen: \implode(', ', \iterator_to_array($this->listenAddressesMap, false)),
             connectionStatistics: ConnectionStatistics::getGlobal(),
             connections: ActiveConnection::getList(),
-        )));
+        ));
+    }
+
+    private function sendMessageToMaster(Message $message): void
+    {
+        \fwrite($this->parentSocket, \serialize($message) . "\r\n");
     }
 }

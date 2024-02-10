@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Status;
+namespace Luzrain\PhpRunner\Internal\Status;
 
 use Luzrain\PhpRunner\Internal\JsonSerializible;
 

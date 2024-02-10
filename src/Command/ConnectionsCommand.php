@@ -34,7 +34,7 @@ final class ConnectionsCommand implements Command
         $pidMap = new \WeakMap();
 
         foreach ($status->processes as $process) {
-            foreach ($process->connections as $connection) {
+            foreach ($process->connections ?? [] as $connection) {
                 $connections[] = $connection;
                 $pidMap[$connection] = $process->pid;
             }

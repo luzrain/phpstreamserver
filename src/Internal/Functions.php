@@ -35,28 +35,6 @@ final class Functions
         return (\posix_getgrgid(\posix_getegid()) ?: [])['name'] ?? (string) \posix_getegid();
     }
 
-    /**
-     * @param resource $resource
-     */
-    public static function streamRead($resource, bool $blocking = false): string
-    {
-        $isBlocked = \stream_get_meta_data($resource)['blocked'];
-        \stream_set_blocking($resource, $blocking);
-        $buffer = (string) \stream_get_contents($resource, -1);
-        \stream_set_blocking($resource, $isBlocked);
-
-        return $buffer;
-    }
-
-    /**
-     * @param resource $resource
-     */
-    public static function streamWrite($resource, string $data): void
-    {
-        \fwrite($resource, $data);
-        \fflush($resource);
-    }
-
     public static function humanFileSize(int $bytes): string
     {
         if ($bytes < 1024) {
