@@ -137,7 +137,7 @@ final class HttpRequestStream implements StreamInterface
         }
 
         if ($partCount === 0 || $endOfBody === false) {
-            throw new \LogicException("Can't find multi-part content");
+            throw new \InvalidArgumentException("Can't find multi-part content");
         }
     }
 

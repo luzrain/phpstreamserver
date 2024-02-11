@@ -59,10 +59,6 @@ final class Request
                 throw new HttpException(505, true);
             }
 
-            if ($this->hasPayload && ($this->contentLength <= 0 && !$this->isChunked)) {
-                throw new HttpException(400, true);
-            }
-
             if (!$this->hasPayload) {
                 $this->isCompleted = true;
             }
@@ -74,7 +70,7 @@ final class Request
             throw new HttpException(413, true);
         }
 
-        if ($this->hasPayload && $this->contentLength > 0 && $bodySize === $this->contentLength) {
+        if ($this->hasPayload && $bodySize === $this->contentLength) {
             $this->isCompleted = true;
         }
     }
@@ -91,7 +87,7 @@ final class Request
         $this->method = $firstLineParts[0] ?? '';
         $this->uri = $firstLineParts[1] ?? '';
         $this->version = $firstLineParts[2] ?? '';
-        $this->hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true);
+        $this->hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true) && ($this->contentLength > 0 || $this->isChunked);
     }
 
     public function isCompleted(): bool
