@@ -21,7 +21,7 @@ final class HttpPostRequestTest extends ServerTestCase
         $this->assertSame('tt1=1&tt2=2', $response['raw_request']);
     }
 
-    public function testPostFormRequest(): void
+    public function testPostRequest(): void
     {
         // Act
         $response = $this->requestJsonDecode('POST', 'http://127.0.0.1:9080/request', [

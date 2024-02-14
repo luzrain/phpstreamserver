@@ -313,10 +313,14 @@ final class MasterProcess
             return;
         }
 
-        $this->logger->info(PhpRunner::NAME . ' reloading ...');
+        $masterPid = $this->getPid();
 
-        if (($masterPid = $this->getPid()) !== \posix_getpid()) {
-            // If it called from outside working process
+        if ($masterPid !== \posix_getppid()) {
+            $this->logger->info(PhpRunner::NAME . ' reloading ...');
+        }
+
+        // If it called from outside working process
+        if ($masterPid !== \posix_getpid()) {
             \posix_kill($masterPid, SIGUSR2);
             return;
         }

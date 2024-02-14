@@ -15,6 +15,7 @@ use Luzrain\PhpRunner\Command\WorkersCommand;
 use Luzrain\PhpRunner\Console\App;
 use Luzrain\PhpRunner\Internal\Logger;
 use Luzrain\PhpRunner\Internal\MasterProcess;
+use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Internal\WorkerPool;
 use Psr\Log\LoggerInterface;
 
@@ -77,5 +78,20 @@ final class PhpRunner
             new ConnectionsCommand($this->masterProcess),
             new StatusJsonCommand($this->masterProcess),
         ))->run($cmd);
+    }
+
+    public function stop(): void
+    {
+        $this->masterProcess->stop();
+    }
+
+    public function reload(): void
+    {
+        $this->masterProcess->reload();
+    }
+
+    public function getStatus(): MasterProcessStatus
+    {
+        return $this->masterProcess->getStatus();
     }
 }
