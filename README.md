@@ -17,7 +17,7 @@ PhpRunner is supports TLS encryption and the ability to implement custom protoco
 
 #### Key features:
 - Supervisor;
-- Workers lifecycle management (reload by TTL, MaxMemory, MaxRequests, OnException and more);
+- Workers lifecycle management (reload by TTL, max memory, max requests, on exception, on each request);
 - PSR-7 HTTP server;
 
 #### Requirements and limitations:  
