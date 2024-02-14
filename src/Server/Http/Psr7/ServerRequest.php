@@ -30,7 +30,6 @@ final class ServerRequest implements ServerRequestInterface
         $this->method = $method;
         $this->uri = new Uri($uri);
         $this->protocol = $protocol;
-        $this->serverParams = $serverParams;
         $this->setHeaders($requestStream->getHeaders());
         \parse_str($this->uri->getQuery(), $this->queryParams);
         $this->cookieParams = $requestStream->getHeaderOptions('Cookie');
@@ -38,6 +37,22 @@ final class ServerRequest implements ServerRequestInterface
 
         if (!$this->hasHeader('Host')) {
             $this->updateHostFromUri();
+        }
+
+        $this->serverParams = [...$serverParams, ...[
+            'SERVER_NAME' => $this->uri->getHost(),
+            'SERVER_PROTOCOL' => 'HTTP/' . $this->getProtocolVersion(),
+            'REQUEST_URI' => $this->uri->getPath(),
+            'QUERY_STRING' => $this->uri->getQuery(),
+            'REQUEST_METHOD' => $this->getMethod(),
+        ]];
+
+        if ($this->serverParams['QUERY_STRING'] !== '') {
+            $this->serverParams['REQUEST_URI'] .= '?' . $this->serverParams['QUERY_STRING'];
+        }
+
+        if ($this->uri->getScheme() === 'https') {
+            $this->serverParams['HTTPS'] = 'on';
         }
     }
 

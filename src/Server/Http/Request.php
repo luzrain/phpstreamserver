@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Server\Http;
 
 use Luzrain\PhpRunner\Exception\HttpException;
+use Luzrain\PhpRunner\PhpRunner;
 use Luzrain\PhpRunner\Server\Http\Psr7\HttpRequestStream;
 use Luzrain\PhpRunner\Server\Http\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
@@ -95,7 +96,7 @@ final class Request
         return $this->isCompleted;
     }
 
-    public function getPsrServerRequest(string $serverAddr, string $serverPort, string $remoteAddr, string $remotePort): ServerRequestInterface
+    public function getPsrServerRequest(string $serverAddr, int $serverPort, string $remoteAddr, int $remotePort): ServerRequestInterface
     {
         if (!$this->isCompleted()) {
             throw new \LogicException('ServerRequest cannot be created until request is complete');
@@ -106,12 +107,13 @@ final class Request
             method: $this->method,
             uri: $this->uri,
             protocol: $this->version,
-            serverParams: [...$_SERVER, ...[
-                'SERVER_ADDR' => $serverAddr,
-                'SERVER_PORT' => $serverPort,
+            serverParams: [
                 'REMOTE_ADDR' => $remoteAddr,
                 'REMOTE_PORT' => $remotePort,
-            ]],
+                'SERVER_ADDR' => $serverAddr,
+                'SERVER_PORT' => $serverPort,
+                'SERVER_SOFTWARE' => PhpRunner::VERSION_STRING,
+            ],
         );
     }
 }
