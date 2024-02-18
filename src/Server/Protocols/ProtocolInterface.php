@@ -14,14 +14,18 @@ use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 interface ProtocolInterface
 {
     /**
-     * Decode package and emit onMessage() callback if answer is not null
+     * Decode packet.
+     * This method may be called several times while the packet is receiving sequences of the packet on $buffer.
+     * Protocol should store parts of the package somewhere in the buffer and MUST return null if it knows that packet is incomplete.
+     * When the last part of the packet is received, the method MUST return the complete message. It can be any object based on the data received.
      *
      * @return TRequest|null
      */
     public function decode(ConnectionInterface $connection, string $buffer): mixed;
 
     /**
-     * Encode package before sending to client
+     * Encode packet before sending to client.
+     * MUST be a generator that generate strings.
      *
      * @param TResponse $response
      * @return \Generator<string>
@@ -30,7 +34,7 @@ interface ProtocolInterface
     public function encode(ConnectionInterface $connection, mixed $response): \Generator;
 
     /**
-     * Emits when an exception occurs while receiving a package
+     * Emits when an exception occurs while receiving a packet.
      *
      * @throws \Throwable
      */
