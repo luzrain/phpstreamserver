@@ -40,8 +40,8 @@ final class Server
         string $listen,
         private readonly ProtocolInterface $protocol = new Raw(),
         private readonly bool $tls = false,
-        string $tlsCertificate = '',
-        string $tlsCertificateKey = '',
+        string|null $tlsCertificate = null,
+        string|null $tlsCertificateKey = null,
         private readonly \Closure|null $onConnect = null,
         private readonly \Closure|null $onMessage = null,
         private readonly \Closure|null $onClose = null,
@@ -51,10 +51,10 @@ final class Server
 
         $this->socketContextData['socket']['backlog'] = self::DEFAULT_BACKLOG;
         $this->socketContextData['socket']['so_reuseport'] = 1;
-        if ($tls && $tlsCertificate !== '') {
+        if ($tls && $tlsCertificate !== null) {
             $this->socketContextData['ssl']['local_cert'] = $tlsCertificate;
         }
-        if ($tls && $tlsCertificateKey !== '') {
+        if ($tls && $tlsCertificateKey !== null) {
             $this->socketContextData['ssl']['local_pk'] = $tlsCertificateKey;
         }
     }
@@ -155,7 +155,7 @@ final class Server
         }
     }
 
-    public function getReadableListenAddress(): string
+    public function getListenAddress(): string
     {
         return \sprintf('%s://%s:%d', $this->transport, $this->host, $this->port);
     }

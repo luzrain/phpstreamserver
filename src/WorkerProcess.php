@@ -69,7 +69,7 @@ class WorkerProcess
 
     final public function startServer(Server $server): void
     {
-        $this->listenAddressesMap[$server] = $server->getReadableListenAddress();
+        $this->listenAddressesMap[$server] = $server->getListenAddress();
         $server->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
     }
 
