@@ -141,14 +141,15 @@ trait MessageTrait
     private function setHeaders(array $headers): void
     {
         foreach ($headers as $name => $value) {
+            $name = (string) $name;
             $normalizedName = $this->normalizeHeaderName($name);
-            $value = $this->normalizeHeaderValue($value);
+            $values = $this->normalizeHeaderValue($value);
             if (isset($this->headerNames[$normalizedName])) {
                 $name = $this->headerNames[$normalizedName];
-                $this->headers[$name] = \array_merge($this->headers[$name], $value);
+                $this->headers[$name] = \array_merge($this->headers[$name], $values);
             } else {
                 $this->headerNames[$normalizedName] = $name;
-                $this->headers[$name] = $value;
+                $this->headers[$name] = $values;
             }
         }
     }
