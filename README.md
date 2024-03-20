@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/luzrain/phprunner/assets/25800964/b6d62fc9-d08b-4ac7-be0b-2da6653d4c6b">
-    <img alt="PHPStreamServer logo" align="center" src="https://github.com/luzrain/phprunner/assets/25800964/9107aca7-13e0-40a9-b107-7dde99f171d1">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/luzrain/phprunner/assets/25800964/3e1bb7da-5fa8-47cf-8c95-5454b8b5959f">
+    <img alt="PHPStreamServer logo" align="center" width="70%" src="https://github.com/luzrain/phprunner/assets/25800964/5664f293-41a5-424e-9f52-a403b222b17d">
   </picture>
 </p>
 
