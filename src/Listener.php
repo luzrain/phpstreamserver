@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner;
+namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PhpRunner\Exception\TlsHandshakeException;
-use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
-use Luzrain\PhpRunner\Server\Connection\TcpConnection;
-use Luzrain\PhpRunner\Server\Connection\UdpConnection;
-use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
-use Luzrain\PhpRunner\Server\Protocols\Raw;
+use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
+use Luzrain\PHPStreamServer\Server\Connection\TcpConnection;
+use Luzrain\PHPStreamServer\Server\Connection\UdpConnection;
+use Luzrain\PHPStreamServer\Server\Protocols\ProtocolInterface;
+use Luzrain\PHPStreamServer\Server\Protocols\Raw;
 use Revolt\EventLoop\Driver;
 
 final class Listener

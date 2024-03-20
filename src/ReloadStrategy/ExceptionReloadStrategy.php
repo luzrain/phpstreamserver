@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
-use Luzrain\PhpRunner\Exception\HttpException;
+use Luzrain\PHPStreamServer\Exception\HttpException;
 
 /**
  * Reload worker each time after exception occurs

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Protocols;
+namespace Luzrain\PHPStreamServer\Server\Protocols;
 
-use Luzrain\PhpRunner\Exception\EncodeTypeError;
-use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\Exception\TlsHandshakeException;
-use Luzrain\PhpRunner\Server;
-use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
-use Luzrain\PhpRunner\Server\Http\Request;
+use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
+use Luzrain\PHPStreamServer\Exception\HttpException;
+use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
+use Luzrain\PHPStreamServer\Server\Http\Request;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

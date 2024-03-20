@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Command;
+namespace Luzrain\PHPStreamServer\Command;
 
-use Luzrain\PhpRunner\Console\Command;
-use Luzrain\PhpRunner\Console\Table;
-use Luzrain\PhpRunner\Internal\Functions;
-use Luzrain\PhpRunner\Internal\MasterProcess;
-use Luzrain\PhpRunner\Server;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
+use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Server;
 
 final class StatusCommand implements Command
 {

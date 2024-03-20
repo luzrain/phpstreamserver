@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal\ProcessMessage;
+namespace Luzrain\PHPStreamServer\Internal\ProcessMessage;
 
 /**
  * @internal

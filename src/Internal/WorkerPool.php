@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
-use Luzrain\PhpRunner\WorkerProcess;
+use Luzrain\PHPStreamServer\Exception\PhpRunnerException;
+use Luzrain\PHPStreamServer\WorkerProcess;
 
 /**
  * @internal

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Test;
+namespace Luzrain\PHPStreamServer\Test;
 
 use PHPUnit\Framework\TestCase;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Console;
+namespace Luzrain\PHPStreamServer\Console;
 
-use Luzrain\PhpRunner\Internal\Functions;
-use Luzrain\PhpRunner\Server;
+use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Server;
 
 final class App
 {

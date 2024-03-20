@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Http;
+namespace Luzrain\PHPStreamServer\Server\Http;
 
-use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\Server;
-use Luzrain\PhpRunner\Server\Http\Psr7\HttpRequestStream;
-use Luzrain\PhpRunner\Server\Http\Psr7\ServerRequest;
+use Luzrain\PHPStreamServer\Exception\HttpException;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\Server\Http\Psr7\HttpRequestStream;
+use Luzrain\PHPStreamServer\Server\Http\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**

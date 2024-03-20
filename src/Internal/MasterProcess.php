@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Console\StdoutHandler;
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
-use Luzrain\PhpRunner\Internal\ProcessMessage\Message;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
-use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
-use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
-use Luzrain\PhpRunner\Server;
-use Luzrain\PhpRunner\WorkerProcess;
+use Luzrain\PHPStreamServer\Console\StdoutHandler;
+use Luzrain\PHPStreamServer\Exception\PhpRunnerException;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\Message;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PHPStreamServer\Internal\Status\MasterProcessStatus;
+use Luzrain\PHPStreamServer\Internal\Status\WorkerStatus;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;

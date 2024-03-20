@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Http;
+namespace Luzrain\PHPStreamServer\Server\Http;
 
-use Luzrain\PhpRunner\Server;
+use Luzrain\PHPStreamServer\Server;
 
 final readonly class ErrorPage implements \Stringable
 {

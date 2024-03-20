@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Connection;
+namespace Luzrain\PHPStreamServer\Server\Connection;
 
-use Luzrain\PhpRunner\Internal\JsonSerializible;
+use Luzrain\PHPStreamServer\Internal\JsonSerializible;
 
 /**
  * @internal

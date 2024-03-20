@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Exception;
+namespace Luzrain\PHPStreamServer\Exception;
 
-use Luzrain\PhpRunner\Internal\Functions;
-use Luzrain\PhpRunner\Server\Http\ErrorPage;
-use Luzrain\PhpRunner\Server\Http\Psr7\Response;
-use Luzrain\PhpRunner\Server\Http\Psr7\StringStream;
+use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Server\Http\ErrorPage;
+use Luzrain\PHPStreamServer\Server\Http\Psr7\Response;
+use Luzrain\PHPStreamServer\Server\Http\Psr7\StringStream;
 use Psr\Http\Message\ResponseInterface;
 
 final class HttpException extends \Exception

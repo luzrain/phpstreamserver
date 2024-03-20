@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner;
+namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PhpRunner\Command\ConnectionsCommand;
-use Luzrain\PhpRunner\Command\ProcessesCommand;
-use Luzrain\PhpRunner\Command\ReloadCommand;
-use Luzrain\PhpRunner\Command\StartCommand;
-use Luzrain\PhpRunner\Command\StatusCommand;
-use Luzrain\PhpRunner\Command\StatusJsonCommand;
-use Luzrain\PhpRunner\Command\StopCommand;
-use Luzrain\PhpRunner\Command\WorkersCommand;
-use Luzrain\PhpRunner\Console\App;
-use Luzrain\PhpRunner\Internal\Logger;
-use Luzrain\PhpRunner\Internal\MasterProcess;
-use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
-use Luzrain\PhpRunner\Internal\WorkerPool;
+use Luzrain\PHPStreamServer\Command\ConnectionsCommand;
+use Luzrain\PHPStreamServer\Command\ProcessesCommand;
+use Luzrain\PHPStreamServer\Command\ReloadCommand;
+use Luzrain\PHPStreamServer\Command\StartCommand;
+use Luzrain\PHPStreamServer\Command\StatusCommand;
+use Luzrain\PHPStreamServer\Command\StatusJsonCommand;
+use Luzrain\PHPStreamServer\Command\StopCommand;
+use Luzrain\PHPStreamServer\Command\WorkersCommand;
+use Luzrain\PHPStreamServer\Console\App;
+use Luzrain\PHPStreamServer\Internal\Logger;
+use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\Status\MasterProcessStatus;
+use Luzrain\PHPStreamServer\Internal\WorkerPool;
 use Psr\Log\LoggerInterface;
 
 final class Server

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Command;
+namespace Luzrain\PHPStreamServer\Command;
 
-use Luzrain\PhpRunner\Console\Command;
-use Luzrain\PhpRunner\Console\Table;
-use Luzrain\PhpRunner\Internal\MasterProcess;
-use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
+use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\Status\WorkerStatus;
 
 final class WorkersCommand implements Command
 {

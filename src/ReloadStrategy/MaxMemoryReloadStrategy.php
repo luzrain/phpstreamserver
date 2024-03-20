@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
 /**
  * Reload worker if worker memory usage has increased $maxMemory value

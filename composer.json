@@ -30,12 +30,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Luzrain\\PhpRunner\\": "src/"
+            "Luzrain\\PHPStreamServer\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Luzrain\\PhpRunner\\Test\\": "tests/"
+            "Luzrain\\PHPStreamServer\\Test\\": "tests/"
         }
     },
     "suggest": {

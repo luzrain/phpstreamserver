@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\Exception\TlsHandshakeException;
-use Luzrain\PhpRunner\Exception\TooLargePayload;
+use Luzrain\PHPStreamServer\Exception\HttpException;
+use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
+use Luzrain\PHPStreamServer\Exception\TooLargePayload;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 

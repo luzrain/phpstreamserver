@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
-use Luzrain\PhpRunner\Internal\Status\WorkerProcessStatus;
+use Luzrain\PHPStreamServer\Exception\PhpRunnerException;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PHPStreamServer\Internal\Status\WorkerProcessStatus;
 
 /**
  * @internal

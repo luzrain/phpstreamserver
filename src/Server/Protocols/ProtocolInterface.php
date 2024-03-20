@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Protocols;
+namespace Luzrain\PHPStreamServer\Server\Protocols;
 
-use Luzrain\PhpRunner\Exception\EncodeTypeError;
-use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
+use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
 
 /**
  * @template TRequest
