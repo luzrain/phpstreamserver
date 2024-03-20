@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
-use Luzrain\PHPStreamServer\Exception\PhpRunnerException;
+use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\ProcessMessage\Message;
 use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
 use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
@@ -155,13 +155,13 @@ final class MasterProcess
     {
         $pid = \pcntl_fork();
         if ($pid === -1) {
-            throw new PhpRunnerException('Fork fail');
+            throw new PHPStreamServerException('Fork fail');
         }
         if ($pid > 0) {
             return true;
         }
         if (\posix_setsid() === -1) {
-            throw new PhpRunnerException('Setsid fail');
+            throw new PHPStreamServerException('Setsid fail');
         }
         return false;
     }
@@ -169,7 +169,7 @@ final class MasterProcess
     private function saveMasterPid(): void
     {
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
-            throw new PhpRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
+            throw new PHPStreamServerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
 
         if(!\file_exists($this->pipeFile)) {
@@ -202,7 +202,7 @@ final class MasterProcess
             $this->suspension->resume($worker);
             return true;
         } else {
-            throw new PhpRunnerException('fork fail');
+            throw new PHPStreamServerException('fork fail');
         }
     }
 
