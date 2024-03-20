@@ -1,8 +1,8 @@
 {
-    "name": "luzrain/phprunner",
+    "name": "luzrain/phpstreamserver",
     "description": "High performance PHP application server",
-    "keywords": ["phprunner", "async", "http", "server", "process"],
-    "homepage": "https://github.com/luzrain/phprunner",
+    "keywords": ["phpstreamserver", "async", "http", "server", "process", "socket", "stream"],
+    "homepage": "https://github.com/luzrain/phpstreamserver",
     "type": "library",
     "license": "MIT",
     "authors": [

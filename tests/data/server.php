@@ -19,8 +19,8 @@ use Psr\Http\Message\UploadedFileInterface;
 $tempFiles = [];
 $streamResponse = \fopen('php://temp', 'rw');
 \fwrite($streamResponse, 'ok-answer from stream');
-$phpRunner = new Server();
-$phpRunner->addWorkers(
+$server = new Server();
+$server->addWorkers(
     new WorkerProcess(
         name: 'Worker 1',
         count: 1,
@@ -153,4 +153,4 @@ $phpRunner->addWorkers(
         },
     ),
 );
-exit($phpRunner->run());
+exit($server->run());
