@@ -5,13 +5,13 @@ declare(strict_types=1);
 include __DIR__ . '/../../vendor/autoload.php';
 
 use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Listener;
+use Luzrain\PhpRunner\Server;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Http\Psr7\Response;
 use Luzrain\PhpRunner\Server\Protocols\Http;
 use Luzrain\PhpRunner\Server\Protocols\Raw;
 use Luzrain\PhpRunner\Server\Protocols\Text;
-use Luzrain\PhpRunner\Server\Server;
 use Luzrain\PhpRunner\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
@@ -19,7 +19,7 @@ use Psr\Http\Message\UploadedFileInterface;
 $tempFiles = [];
 $streamResponse = \fopen('php://temp', 'rw');
 \fwrite($streamResponse, 'ok-answer from stream');
-$phpRunner = new PhpRunner();
+$phpRunner = new Server();
 $phpRunner->addWorkers(
     new WorkerProcess(
         name: 'Worker 1',
@@ -33,7 +33,7 @@ $phpRunner->addWorkers(
         name: 'HTTP Server',
         count: 2,
         onStart: function (WorkerProcess $worker) use (&$tempFiles, $streamResponse) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'tcp://0.0.0.0:9080',
                 protocol: new Http(),
                 onClose: function () use (&$tempFiles) {
@@ -86,7 +86,7 @@ $phpRunner->addWorkers(
         name: 'HTTPS Server',
         count: 1,
         onStart: function (WorkerProcess $worker) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'tcp://127.0.0.1:9081',
                 tls: true,
                 tlsCertificate: __DIR__ . '/localhost.crt',
@@ -104,7 +104,7 @@ $phpRunner->addWorkers(
         name: 'TCP TEXT Server',
         count: 1,
         onStart: function (WorkerProcess $worker) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'tcp://127.0.0.1:9082',
                 protocol: new Text(),
                 onMessage: function (ConnectionInterface $connection, string $data): void {
@@ -117,7 +117,7 @@ $phpRunner->addWorkers(
         name: 'UDP TEXT Server',
         count: 1,
         onStart: function (WorkerProcess $worker) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'udp://127.0.0.1:9083',
                 protocol: new Text(),
                 onMessage: function (ConnectionInterface $connection, string $data): void {
@@ -130,7 +130,7 @@ $phpRunner->addWorkers(
         name: 'TCP RAW Server',
         count: 1,
         onStart: function (WorkerProcess $worker) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'tcp://127.0.0.1:9084',
                 protocol: new Raw(),
                 onMessage: function (ConnectionInterface $connection, string $data): void {
@@ -143,7 +143,7 @@ $phpRunner->addWorkers(
         name: 'UDP RAW Server',
         count: 1,
         onStart: function (WorkerProcess $worker) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'udp://127.0.0.1:9085',
                 protocol: new Raw(),
                 onMessage: function (ConnectionInterface $connection, string $data): void {

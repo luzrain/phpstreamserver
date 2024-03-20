@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PhpRunner\Server\Http;
 
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Server;
 
 final readonly class ErrorPage implements \Stringable
 {
@@ -15,7 +15,7 @@ final readonly class ErrorPage implements \Stringable
         private string $title = '',
         private \Throwable|null $exception = null,
     ) {
-        $this->version = PhpRunner::VERSION_STRING;
+        $this->version = Server::VERSION_STRING;
     }
 
     public function __toString()

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Server\Http;
 
 use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Server;
 use Luzrain\PhpRunner\Server\Http\Psr7\HttpRequestStream;
 use Luzrain\PhpRunner\Server\Http\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
@@ -112,7 +112,7 @@ final class Request
                 'REMOTE_PORT' => $remotePort,
                 'SERVER_ADDR' => $serverAddr,
                 'SERVER_PORT' => $serverPort,
-                'SERVER_SOFTWARE' => PhpRunner::VERSION_STRING,
+                'SERVER_SOFTWARE' => Server::VERSION_STRING,
             ],
         );
     }

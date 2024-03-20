@@ -37,19 +37,20 @@ Here is example of simple http server.
 // server.php
 
 use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Listener;
+use Luzrain\PhpRunner\Server;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Http\Psr7\Response;
 use Luzrain\PhpRunner\Server\Protocols\Http;
-use Luzrain\PhpRunner\Server\Server;
+use Luzrain\PhpRunner\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 
-$phpRunner = new PhpRunner();
+$phpRunner = new Server();
 $phpRunner->addWorkers(
     new WorkerProcess(
         name: 'HTTP Server',
         onStart: function (WorkerProcess $worker) {
-            $worker->startServer(new Server(
+            $worker->startListener(new Listener(
                 listen: 'tcp://0.0.0.0:80',
                 protocol: new Http(),
                 onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {

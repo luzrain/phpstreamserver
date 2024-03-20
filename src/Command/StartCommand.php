@@ -8,7 +8,7 @@ use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\Internal\MasterProcess;
 use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Server;
 
 final class StartCommand implements Command
 {
@@ -32,11 +32,11 @@ final class StartCommand implements Command
         $isDaemon = \in_array('-d', $arguments, true) || \in_array('--daemon', $arguments, true);
         $status = $this->masterProcess->getStatus();
 
-        echo "❯ " . PhpRunner::TITLE . "\n";
+        echo "❯ " . Server::TITLE . "\n";
         echo (new Table(indent: 1))
             ->addRows([
                 ['PHP version:', $status->phpVersion],
-                [PhpRunner::NAME . ' version:', $status->version],
+                [Server::NAME . ' version:', $status->version],
                 ['Event loop driver:', $status->eventLoop],
                 ['Workers count:', $status->workersCount],
             ])

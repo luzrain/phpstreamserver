@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server;
+namespace Luzrain\PhpRunner;
 
 use Luzrain\PhpRunner\Exception\TlsHandshakeException;
 use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
@@ -13,7 +13,7 @@ use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
 use Luzrain\PhpRunner\Server\Protocols\Raw;
 use Revolt\EventLoop\Driver;
 
-final class Server
+final class Listener
 {
     private string $transport;
     private string $host;

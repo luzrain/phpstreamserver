@@ -7,7 +7,7 @@ namespace Luzrain\PhpRunner\Server\Protocols;
 use Luzrain\PhpRunner\Exception\EncodeTypeError;
 use Luzrain\PhpRunner\Exception\HttpException;
 use Luzrain\PhpRunner\Exception\TlsHandshakeException;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Server;
 use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
 use Luzrain\PhpRunner\Server\Http\Request;
 use Psr\Http\Message\ResponseInterface;
@@ -79,7 +79,7 @@ final class Http implements ProtocolInterface
             $response = $response->withHeader('Connection', $this->psrRequest->getHeaderLine('Connection'));
         }
         if (!$response->hasHeader('Server')) {
-            $response = $response->withHeader('Server', PhpRunner::VERSION_STRING);
+            $response = $response->withHeader('Server', Server::VERSION_STRING);
         }
         if (!$response->hasHeader('Date')) {
             $response = $response->withHeader('Date', \date(\DateTimeInterface::RFC7231));

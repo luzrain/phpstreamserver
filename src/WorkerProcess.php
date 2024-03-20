@@ -14,7 +14,6 @@ use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PhpRunner\ReloadStrategy\TimerReloadStrategyInterface;
 use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
 use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
-use Luzrain\PhpRunner\Server\Server;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;
@@ -67,15 +66,15 @@ class WorkerProcess
         return $this->exitCode;
     }
 
-    final public function startServer(Server $server): void
+    final public function startListener(Listener $listener): void
     {
-        $this->listenAddressesMap[$server] = $server->getListenAddress();
-        $server->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
+        $this->listenAddressesMap[$listener] = $listener->getListenAddress();
+        $listener->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
     }
 
-    final public function stopServer(Server $server): void
+    final public function stopListener(Listener $listener): void
     {
-        $server->stop();
+        $listener->stop();
     }
 
     final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
@@ -160,7 +159,7 @@ class WorkerProcess
 
     private function initWorker(): void
     {
-        \cli_set_process_title(\sprintf('%s: worker process  %s', PhpRunner::NAME, $this->getName()));
+        \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->getName()));
 
         $this->startedAt = new \DateTimeImmutable('now');
 

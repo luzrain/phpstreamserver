@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PhpRunner\Console;
 
 use Luzrain\PhpRunner\Internal\Functions;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Server;
 
 final class App
 {
@@ -62,7 +62,7 @@ final class App
 
     private function showHelp(): void
     {
-        echo PhpRunner::TITLE . "\n";
+        echo Server::TITLE . "\n";
         echo "<color;fg=yellow>Usage:</>\n";
         echo \sprintf("  %s %s <command> [options]\n", PHP_BINARY, Functions::getStartFile());
         echo "<color;fg=yellow>Options:</>\n";

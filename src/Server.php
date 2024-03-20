@@ -19,7 +19,7 @@ use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
 use Luzrain\PhpRunner\Internal\WorkerPool;
 use Psr\Log\LoggerInterface;
 
-final class PhpRunner
+final class Server
 {
     public const VERSION = '0.1.0';
     public const VERSION_STRING = 'phprunner/' . self::VERSION;

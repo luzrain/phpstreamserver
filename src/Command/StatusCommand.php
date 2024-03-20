@@ -8,7 +8,7 @@ use Luzrain\PhpRunner\Console\Command;
 use Luzrain\PhpRunner\Console\Table;
 use Luzrain\PhpRunner\Internal\Functions;
 use Luzrain\PhpRunner\Internal\MasterProcess;
-use Luzrain\PhpRunner\PhpRunner;
+use Luzrain\PhpRunner\Server;
 
 final class StatusCommand implements Command
 {
@@ -31,11 +31,11 @@ final class StatusCommand implements Command
     {
         $status = $this->masterProcess->getStatus();
 
-        echo ($status->isRunning ? '<color;fg=green>●</> ' : '● ') . PhpRunner::TITLE . "\n";
+        echo ($status->isRunning ? '<color;fg=green>●</> ' : '● ') . Server::TITLE . "\n";
 
         echo (new Table(indent: 1))
             ->addRows([
-                [PhpRunner::NAME . ' version:', $status->version],
+                [Server::NAME . ' version:', $status->version],
                 ['PHP version:', $status->phpVersion],
                 ['Event loop driver:', $status->eventLoop],
                 ['Start file:', $status->startFile],
