@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner;
+namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PhpRunner\Exception\UserChangeException;
-use Luzrain\PhpRunner\Internal\ErrorHandler;
-use Luzrain\PhpRunner\Internal\Functions;
-use Luzrain\PhpRunner\Internal\ProcessMessage\Message;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
-use Luzrain\PhpRunner\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PhpRunner\ReloadStrategy\TimerReloadStrategyInterface;
-use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
-use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
+use Luzrain\PHPStreamServer\Exception\UserChangeException;
+use Luzrain\PHPStreamServer\Internal\ErrorHandler;
+use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\Message;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
+use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Exception;
+namespace Luzrain\PHPStreamServer\Exception;
 
-use Luzrain\PhpRunner\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\Functions;
 
 final class TooLargePayload extends \Exception
 {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal\Status;
+namespace Luzrain\PHPStreamServer\Internal\Status;
 
-use Luzrain\PhpRunner\Internal\JsonSerializible;
+use Luzrain\PHPStreamServer\Internal\JsonSerializible;
 
 /**
  * @internal

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal\ProcessMessage;
+namespace Luzrain\PHPStreamServer\Internal\ProcessMessage;
 
-use Luzrain\PhpRunner\Server\Connection\ActiveConnection;
-use Luzrain\PhpRunner\Server\Connection\ConnectionStatistics;
+use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
 
 /**
  * @internal

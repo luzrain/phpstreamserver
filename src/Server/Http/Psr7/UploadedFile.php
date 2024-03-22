@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Http\Psr7;
+namespace Luzrain\PHPStreamServer\Server\Http\Psr7;
 
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;

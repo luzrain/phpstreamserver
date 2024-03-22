@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 include __DIR__ . '/../../vendor/autoload.php';
 
-use Luzrain\PhpRunner\Exception\HttpException;
-use Luzrain\PhpRunner\Listener;
-use Luzrain\PhpRunner\Server;
-use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
-use Luzrain\PhpRunner\Server\Http\Psr7\Response;
-use Luzrain\PhpRunner\Server\Protocols\Http;
-use Luzrain\PhpRunner\Server\Protocols\Raw;
-use Luzrain\PhpRunner\Server\Protocols\Text;
-use Luzrain\PhpRunner\WorkerProcess;
+use Luzrain\PHPStreamServer\Exception\HttpException;
+use Luzrain\PHPStreamServer\Listener;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
+use Luzrain\PHPStreamServer\Server\Http\Psr7\Response;
+use Luzrain\PHPStreamServer\Server\Protocols\Http;
+use Luzrain\PHPStreamServer\Server\Protocols\Raw;
+use Luzrain\PHPStreamServer\Server\Protocols\Text;
+use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
 $tempFiles = [];
 $streamResponse = \fopen('php://temp', 'rw');
 \fwrite($streamResponse, 'ok-answer from stream');
-$phpRunner = new Server();
-$phpRunner->addWorkers(
+$server = new Server();
+$server->addWorkers(
     new WorkerProcess(
         name: 'Worker 1',
         count: 1,
@@ -153,4 +153,4 @@ $phpRunner->addWorkers(
         },
     ),
 );
-exit($phpRunner->run());
+exit($server->run());

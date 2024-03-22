@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Console\StdoutHandler;
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
-use Luzrain\PhpRunner\Internal\ProcessMessage\Message;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
-use Luzrain\PhpRunner\Internal\Status\MasterProcessStatus;
-use Luzrain\PhpRunner\Internal\Status\WorkerStatus;
-use Luzrain\PhpRunner\Server;
-use Luzrain\PhpRunner\WorkerProcess;
+use Luzrain\PHPStreamServer\Console\StdoutHandler;
+use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\Message;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PHPStreamServer\Internal\Status\MasterProcessStatus;
+use Luzrain\PHPStreamServer\Internal\Status\WorkerStatus;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -66,7 +66,7 @@ final class MasterProcess
         $this->startFile = Functions::getStartFile();
 
         $runDirectory = \posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir();
-        $this->pidFile = $pidFile ?? \sprintf('%s/phprunner.%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
+        $this->pidFile = $pidFile ?? \sprintf('%s/phpss.%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->pipeFile = \sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
 
         if (!\is_dir($pidFileDir = \dirname($this->pidFile))) {
@@ -155,13 +155,13 @@ final class MasterProcess
     {
         $pid = \pcntl_fork();
         if ($pid === -1) {
-            throw new PhpRunnerException('Fork fail');
+            throw new PHPStreamServerException('Fork fail');
         }
         if ($pid > 0) {
             return true;
         }
         if (\posix_setsid() === -1) {
-            throw new PhpRunnerException('Setsid fail');
+            throw new PHPStreamServerException('Setsid fail');
         }
         return false;
     }
@@ -169,7 +169,7 @@ final class MasterProcess
     private function saveMasterPid(): void
     {
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
-            throw new PhpRunnerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
+            throw new PHPStreamServerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
 
         if(!\file_exists($this->pipeFile)) {
@@ -202,7 +202,7 @@ final class MasterProcess
             $this->suspension->resume($worker);
             return true;
         } else {
-            throw new PhpRunnerException('fork fail');
+            throw new PHPStreamServerException('fork fail');
         }
     }
 

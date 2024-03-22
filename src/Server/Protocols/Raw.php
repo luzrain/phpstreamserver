@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Protocols;
+namespace Luzrain\PHPStreamServer\Server\Protocols;
 
-use Luzrain\PhpRunner\Server\Connection\ConnectionInterface;
+use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
 
 /**
  * @implements ProtocolInterface<string, string>

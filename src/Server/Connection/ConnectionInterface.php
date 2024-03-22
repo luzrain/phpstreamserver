@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Connection;
+namespace Luzrain\PHPStreamServer\Server\Connection;
 
 interface ConnectionInterface
 {

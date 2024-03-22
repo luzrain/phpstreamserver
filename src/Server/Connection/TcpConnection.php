@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Connection;
+namespace Luzrain\PHPStreamServer\Server\Connection;
 
-use Luzrain\PhpRunner\Exception\EncodeTypeError;
-use Luzrain\PhpRunner\Exception\SendTypeError;
-use Luzrain\PhpRunner\Exception\TlsHandshakeException;
-use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
+use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
+use Luzrain\PHPStreamServer\Exception\SendTypeError;
+use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
+use Luzrain\PHPStreamServer\Server\Protocols\ProtocolInterface;
 use Revolt\EventLoop\Driver;
 
 final class TcpConnection implements ConnectionInterface

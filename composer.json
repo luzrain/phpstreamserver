@@ -1,8 +1,8 @@
 {
-    "name": "luzrain/phprunner",
+    "name": "luzrain/phpstreamserver",
     "description": "High performance PHP application server",
-    "keywords": ["phprunner", "async", "http", "server", "process"],
-    "homepage": "https://github.com/luzrain/phprunner",
+    "keywords": ["phpstreamserver", "async", "http", "server", "process", "socket", "stream"],
+    "homepage": "https://github.com/luzrain/phpstreamserver",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -30,12 +30,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Luzrain\\PhpRunner\\": "src/"
+            "Luzrain\\PHPStreamServer\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Luzrain\\PhpRunner\\Test\\": "tests/"
+            "Luzrain\\PHPStreamServer\\Test\\": "tests/"
         }
     },
     "suggest": {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
-use Luzrain\PhpRunner\WorkerProcess;
+use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\WorkerProcess;
 
 /**
  * @internal
@@ -37,7 +37,7 @@ final class WorkerPool
     public function addChild(WorkerProcess $worker, int $pid): void
     {
         if (!isset($this->pool[\spl_object_id($worker)])) {
-            throw new PhpRunnerException('Worker is not fount in pool');
+            throw new PHPStreamServerException('Worker is not fount in pool');
         }
 
         /** @psalm-suppress InvalidArgument */
@@ -63,7 +63,7 @@ final class WorkerPool
             }
         }
 
-        throw new PhpRunnerException(\sprintf('No workers found associated with %d pid', $pid));
+        throw new PHPStreamServerException(\sprintf('No workers found associated with %d pid', $pid));
     }
 
     /**

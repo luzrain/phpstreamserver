@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Internal;
+namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PhpRunner\Exception\PhpRunnerException;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessInfo;
-use Luzrain\PhpRunner\Internal\ProcessMessage\ProcessStatus;
-use Luzrain\PhpRunner\Internal\Status\WorkerProcessStatus;
+use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
+use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PHPStreamServer\Internal\Status\WorkerProcessStatus;
 
 /**
  * @internal
@@ -83,7 +83,7 @@ final class ProcessStatusPool
     public function getProcessSatus(int $pid): WorkerProcessStatus
     {
         if (!isset($this->processInfoMap[$pid])) {
-            throw new PhpRunnerException(\sprintf('Cannot find child process with pid %s', $pid));
+            throw new PHPStreamServerException(\sprintf('Cannot find child process with pid %s', $pid));
         }
 
         return new WorkerProcessStatus(

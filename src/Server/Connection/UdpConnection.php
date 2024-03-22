@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PhpRunner\Server\Connection;
+namespace Luzrain\PHPStreamServer\Server\Connection;
 
-use Luzrain\PhpRunner\Exception\EncodeTypeError;
-use Luzrain\PhpRunner\Exception\SendTypeError;
-use Luzrain\PhpRunner\Server\Protocols\ProtocolInterface;
+use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
+use Luzrain\PHPStreamServer\Exception\SendTypeError;
+use Luzrain\PHPStreamServer\Server\Protocols\ProtocolInterface;
 
 final class UdpConnection implements ConnectionInterface
 {
