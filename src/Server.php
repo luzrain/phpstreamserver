@@ -21,7 +21,7 @@ use Psr\Log\LoggerInterface;
 
 final class Server
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '0.2.0';
     public const VERSION_STRING = 'phpstreamserver/' . self::VERSION;
     public const NAME = 'PHPStreamServer';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
