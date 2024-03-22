@@ -46,25 +46,24 @@ use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 
 $server = new Server();
-$server->addWorkers(
-    new WorkerProcess(
-        name: 'HTTP Server',
-        onStart: function (WorkerProcess $worker) {
-            $worker->startListener(new Listener(
-                listen: 'tcp://0.0.0.0:80',
-                protocol: new Http(),
-                onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
-                    $response = match ($data->getUri()->getPath()) {
-                        '/' => new Response(body: 'Hello world'),
-                        '/ping' => new Response(body: 'pong'),
-                        default => throw HttpException::createNotFoundException(),
-                    };
-                    $connection->send($response);
-                },
-            ));
-        },
-    ),
-);
+$server->addWorkers(new WorkerProcess(
+    name: 'HTTP Server',
+    onStart: function (WorkerProcess $worker) {
+        $worker->startListener(new Listener(
+            listen: 'tcp://0.0.0.0:80',
+            protocol: new Http(),
+            onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
+                $response = match ($data->getUri()->getPath()) {
+                    '/' => new Response(body: 'Hello world'),
+                    '/ping' => new Response(body: 'pong'),
+                    default => throw HttpException::createNotFoundException(),
+                };
+                $connection->send($response);
+            },
+        ));
+    },
+));
+
 exit($server->run());
 ```
 
