@@ -10,6 +10,7 @@ use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
 use Luzrain\PHPStreamServer\Internal\Status\WorkerProcessStatus;
 
 /**
+ * Object contains all the status information about child processes
  * @internal
  */
 final class ProcessStatusPool

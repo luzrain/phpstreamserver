@@ -65,7 +65,7 @@ final class ProcessesCommand implements Command
                     ];
                 }));
         } else {
-            echo "  <color;fg=yellow>There are no running processes</>\n";
+            echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no running processes</>\n";
         }
 
         return 0;

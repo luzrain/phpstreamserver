@@ -44,8 +44,8 @@ final class StatusCommand implements Command
                     : 'inactive',
                 ],
                 ['Workers count:', $status->workersCount],
-                ['Processes count:', $status->processesCount > 0 ? $status->processesCount : '<color;fg=gray>0</>'],
-                ['Memory usage:', $status->totalMemory > 0 ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
+                ['Processes count:', $status->processesCount > 0 || $status->isRunning ? $status->processesCount : '<color;fg=gray>0</>'],
+                ['Memory usage:', $status->totalMemory > 0 || $status->isRunning ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
             ]);
 
         return 0;

@@ -61,7 +61,7 @@ final class ConnectionsCommand implements Command
                     ];
                 }));
         } else {
-            echo "  <color;fg=yellow>There are no active connections</>\n";
+            echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no active connections</>\n";
         }
 
         return 0;

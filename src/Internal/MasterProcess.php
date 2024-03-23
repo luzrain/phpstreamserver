@@ -254,8 +254,7 @@ final class MasterProcess
             case self::STATUS_SHUTDOWN:
                 if ($this->pool->getProcessesCount() === 0) {
                     // All processes are stopped now
-                    $this->logger->info(Server::NAME . ' stopped');
-                    $this->suspension->resume();
+                    $this->doStopProcess();
                 }
                 break;
         }
@@ -293,17 +292,31 @@ final class MasterProcess
 
         $this->status = self::STATUS_SHUTDOWN;
         $this->exitCode = $code;
+
+        // Send SIGTERM signal to all child processes
         foreach ($this->pool->getAlivePids() as $pid) {
             \posix_kill($pid, SIGTERM);
         }
-        $this->eventLoop->delay($this->stopTimeout, function (): void {
-            foreach ($this->pool->getAlivePids() as $pid) {
-                \posix_kill($pid, SIGKILL);
-                $worker = $this->pool->getWorkerByPid($pid);
-                $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->getName(), $pid, $this->stopTimeout));
-            }
-            $this->suspension->resume();
-        });
+
+        if ($this->pool->getWorkerCount() === 0) {
+            $this->doStopProcess();
+        } else {
+            $this->eventLoop->delay($this->stopTimeout, function (): void {
+                // Send SIGKILL signal to all child processes ater timeout
+                foreach ($this->pool->getAlivePids() as $pid) {
+                    \posix_kill($pid, SIGKILL);
+                    $worker = $this->pool->getWorkerByPid($pid);
+                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->getName(), $pid, $this->stopTimeout));
+                }
+                $this->doStopProcess();
+            });
+        }
+    }
+
+    private function doStopProcess(): void
+    {
+        $this->logger->info(Server::NAME . ' stopped');
+        $this->suspension->resume();
     }
 
     public function reload(): void
@@ -352,6 +365,12 @@ final class MasterProcess
     private function requestProcessesStatus(): void
     {
         $monitoredPids = $this->processStatusPool->getMonitoredPids();
+
+        if (\count($monitoredPids) === 0) {
+            $this->onAllWorkersStatusReady();
+            return;
+        }
+
         $receivedStatuses = 0;
         $timeoutCallbackId = '';
         $subscriber = function () use (&$subscriber, &$receivedStatuses, &$monitoredPids, &$timeoutCallbackId): void {
@@ -370,7 +389,7 @@ final class MasterProcess
 
         $this->processStatusPool->subscribeToProcessStatus($subscriber);
 
-        // Send signal to child processes
+        // Send SIGUSR1 signal to child processes for request process details
         \array_walk($monitoredPids, static fn(int $pid) => \posix_kill($pid, SIGUSR1));
     }
 

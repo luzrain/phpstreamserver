@@ -43,20 +43,25 @@ final class StartCommand implements Command
         ;
 
         echo "❯ Workers\n";
-        echo (new Table(indent: 1))
-            ->setHeaderRow([
-                'User',
-                'Worker',
-                'Count',
-            ])
-            ->addRows(\array_map(function (WorkerStatus $w) {
-                return [
-                    $w->user,
-                    $w->name,
-                    $w->count,
-                ];
-            }, $status->workers))
-        ;
+
+        if ($status->workersCount > 0) {
+            echo (new Table(indent: 1))
+                ->setHeaderRow([
+                    'User',
+                    'Worker',
+                    'Count',
+                ])
+                ->addRows(\array_map(function (WorkerStatus $w) {
+                    return [
+                        $w->user,
+                        $w->name,
+                        $w->count,
+                    ];
+                }, $status->workers))
+            ;
+        } else {
+            echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";
+        }
 
         if (!$isDaemon) {
             echo "Press Ctrl+C to stop.\n";
