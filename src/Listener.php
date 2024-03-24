@@ -141,13 +141,13 @@ final class Listener
         );
     }
 
-    private function onMessage(ConnectionInterface $connection, mixed $package): void
+    private function onMessage(ConnectionInterface $connection, mixed $packet): void
     {
         if ($this->onMessage !== null) {
-            ($this->onMessage)($connection, $package);
+            ($this->onMessage)($connection, $packet);
         }
         foreach ($this->reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_REQUEST, $package)) {
+            if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_REQUEST, $packet)) {
                 $this->eventLoop->defer(function (): void {
                     ($this->reloadCallback)();
                 });

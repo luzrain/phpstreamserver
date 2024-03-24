@@ -107,10 +107,10 @@ final class TcpConnection implements ConnectionInterface
         while (!empty($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE))) {
             $this->connectionStatistics->incRx(\strlen($recvBuffer));
             try {
-                if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
+                if (($packet = $this->protocol->decode($this, $recvBuffer)) !== null) {
                     $this->connectionStatistics->incPackages();
                     if ($this->onMessage !== null) {
-                        ($this->onMessage)($this, $package);
+                        ($this->onMessage)($this, $packet);
                     }
                 }
             } catch (\Throwable $e) {

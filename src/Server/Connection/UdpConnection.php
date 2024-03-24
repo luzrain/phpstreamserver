@@ -44,10 +44,10 @@ final class UdpConnection implements ConnectionInterface
         $this->connectionStatistics = new ConnectionStatistics();
         $this->connectionStatistics->incRx(\strlen($recvBuffer ?: ''));
 
-        if (($package = $this->protocol->decode($this, $recvBuffer)) !== null) {
+        if (($packet = $this->protocol->decode($this, $recvBuffer)) !== null) {
             $this->connectionStatistics->incPackages();
             if ($this->onMessage !== null) {
-                ($this->onMessage)($this, $package);
+                ($this->onMessage)($this, $packet);
             }
         }
     }
