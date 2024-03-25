@@ -50,6 +50,7 @@ final class TcpConnection implements ConnectionInterface
         private readonly \Closure|null $onClose = null,
         private readonly \Closure|null $onError = null,
     ) {
+        $this->connectionStatistics = new ConnectionStatistics();
         $clientSocket = \stream_socket_accept($socket, 0, $remoteAddress);
         if ($clientSocket === false) {
             if ($this->onError) {
@@ -73,7 +74,6 @@ final class TcpConnection implements ConnectionInterface
 
         \stream_set_blocking($this->socket, false);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->socket, $this->baseRead(...));
-        $this->connectionStatistics = new ConnectionStatistics();
         ActiveConnection::addConnection($this);
 
         if ($this->onConnect !== null) {
