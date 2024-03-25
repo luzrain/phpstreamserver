@@ -177,9 +177,8 @@ final class HttpRequestStream implements StreamInterface
      */
     public function detach(): mixed
     {
-        $length = $this->size === null ? null : $this->getSize();
-        $bodyStream = \fopen('php://memory', 'rw');
-        \stream_copy_to_stream($this->stream, $bodyStream, $length, $this->globalBodyOffset);
+        $bodyStream = \fopen('php://temp', 'rw');
+        \stream_copy_to_stream($this->stream, $bodyStream, $this->getSize(), $this->globalBodyOffset);
 
         return $bodyStream;
     }

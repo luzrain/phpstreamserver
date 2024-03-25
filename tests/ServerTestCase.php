@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Test;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 
@@ -14,7 +15,10 @@ abstract class ServerTestCase extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$client = new Client(['http_errors' => false, 'verify' => false]);
+        self::$client = new Client([
+            RequestOptions::HTTP_ERRORS => false,
+            RequestOptions::VERIFY => false,
+        ]);
     }
 
     protected function requestJsonDecode(string $method, string $uri, array $options = []): array
