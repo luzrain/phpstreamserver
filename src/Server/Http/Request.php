@@ -71,7 +71,11 @@ final class Request
             throw new HttpException(413, true);
         }
 
-        if ($this->hasPayload && $bodySize === $this->contentLength) {
+        if ($this->hasPayload && $this->contentLength > 0 && $bodySize === $this->contentLength) {
+            $this->isCompleted = true;
+        }
+
+        if ($this->isChunked && $this->hasPayload && \str_contains($buffer, "\r\n0\r\n\r\n")) {
             $this->isCompleted = true;
         }
     }

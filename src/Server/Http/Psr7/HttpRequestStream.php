@@ -46,10 +46,13 @@ final class HttpRequestStream implements StreamInterface
             throw new \InvalidArgumentException('Header is not valid');
         }
 
-        $this->globalBodyOffset = \ftell($stream);
+        $this->globalBodyOffset = \ftell($this->stream);
         $this->bodyPointer = 0;
-        if ($this->size === null) {
-            \fseek($this->stream, 0, SEEK_END);
+
+        \fseek($this->stream, 0, SEEK_END);
+
+        if ($this->isChunked()) {
+            \stream_filter_append($this->stream, 'dechunk', STREAM_FILTER_READ);
         }
     }
 
@@ -57,6 +60,11 @@ final class HttpRequestStream implements StreamInterface
     {
         /** @psalm-suppress PossiblyNullArgument */
         return \str_starts_with($this->getHeader('Content-Type', ''), 'multipart/');
+    }
+
+    public function isChunked(): bool
+    {
+        return $this->getHeader('Transfer-Encoding', '') === 'chunked';
     }
 
     public function getHeaderSize(): int
