@@ -14,6 +14,8 @@ final class HttpRequestStream implements StreamInterface
     private readonly int $globalBodyOffset;
     private int $bodyPointer;
     private readonly int|null $size;
+    private bool|null $isChunked = null;
+    private bool|null $isMultipart = null;
     private array $headers = [];
     private array $headerOptionsCache = [];
 
@@ -59,12 +61,12 @@ final class HttpRequestStream implements StreamInterface
     public function isMultiPart(): bool
     {
         /** @psalm-suppress PossiblyNullArgument */
-        return \str_starts_with($this->getHeader('Content-Type', ''), 'multipart/');
+        return $this->isMultipart ??= \str_starts_with($this->getHeader('Content-Type', ''), 'multipart/');
     }
 
     public function isChunked(): bool
     {
-        return $this->getHeader('Transfer-Encoding', '') === 'chunked';
+        return $this->isChunked ??= $this->getHeader('Transfer-Encoding', '') === 'chunked';
     }
 
     public function getHeaderSize(): int

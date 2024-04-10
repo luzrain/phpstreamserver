@@ -20,7 +20,6 @@ final class Request
     private HttpRequestStream $requestStream;
     private bool $isInitiated = false;
     private bool $isCompleted = false;
-    private bool $isChunked;
     private bool $hasPayload;
     private string $method;
     private string $uri;
@@ -49,15 +48,15 @@ final class Request
             $this->init(firstLine: \strstr($buffer, "\r\n", true));
 
             if ($this->requestStream->getHeaderSize() >= $this->maxHeaderSize) {
-                throw new HttpException(413, true);
+                throw new HttpException(httpCode: 413, closeConnection: true);
             }
 
             if ($this->method === '' || $this->uri === '' || $this->version === '') {
-                throw new HttpException(400, true);
+                throw new HttpException(httpCode: 400, closeConnection: true);
             }
 
             if (!\in_array($this->version, ['1.0', '1.1'], true)) {
-                throw new HttpException(505, true);
+                throw new HttpException(httpCode: 505, closeConnection: true);
             }
 
             if (!$this->hasPayload) {
@@ -68,14 +67,14 @@ final class Request
         $bodySize = $this->requestStream->getSize();
 
         if ($this->hasPayload && $this->maxBodySize > 0 && $bodySize > $this->maxBodySize) {
-            throw new HttpException(413, true);
+            throw new HttpException(httpCode: 413, closeConnection: true);
         }
 
         if ($this->hasPayload && $this->contentLength > 0 && $bodySize === $this->contentLength) {
             $this->isCompleted = true;
         }
 
-        if ($this->isChunked && $this->hasPayload && \str_contains($buffer, "\r\n0\r\n\r\n")) {
+        if ($this->requestStream->isChunked() && $this->hasPayload && \str_contains($buffer, "0\r\n\r\n")) {
             $this->isCompleted = true;
         }
     }
@@ -88,11 +87,10 @@ final class Request
         $this->isInitiated = true;
         $this->requestStream = new HttpRequestStream($this->resource);
         $this->contentLength = (int) $this->requestStream->getHeader('content-length', '0');
-        $this->isChunked = $this->requestStream->getHeader('transfer-encoding', '') === 'chunked';
         $this->method = $firstLineParts[0] ?? '';
         $this->uri = $firstLineParts[1] ?? '';
         $this->version = $firstLineParts[2] ?? '';
-        $this->hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true) && ($this->contentLength > 0 || $this->isChunked);
+        $this->hasPayload = \in_array($this->method, ['POST', 'PUT', 'PATCH'], true) && ($this->contentLength > 0 || $this->requestStream->isChunked());
     }
 
     public function isCompleted(): bool
