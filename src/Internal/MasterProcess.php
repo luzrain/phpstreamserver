@@ -339,9 +339,7 @@ final class MasterProcess
         }
 
         foreach ($this->pool->getAlivePids() as $pid) {
-            if ($this->processStatusPool->isDetached($pid) === false) {
-                \posix_kill($pid, SIGUSR2);
-            }
+            \posix_kill($pid, $this->processStatusPool->isDetached($pid) ? SIGTERM : SIGUSR2);
         }
     }
 
