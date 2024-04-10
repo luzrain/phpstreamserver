@@ -206,13 +206,15 @@ class WorkerProcess
 
     final public function reload(): void
     {
-        if ($this->isReloadable()) {
-            $this->exitCode = self::RELOAD_EXIT_CODE;
-            try {
-                $this->onReload !== null && ($this->onReload)($this);
-            } finally {
-                $this->eventLoop->stop();
-            }
+        if (!$this->isReloadable()) {
+            return;
+        }
+
+        $this->exitCode = self::RELOAD_EXIT_CODE;
+        try {
+            $this->onReload !== null && ($this->onReload)($this);
+        } finally {
+            $this->eventLoop->stop();
         }
     }
 
