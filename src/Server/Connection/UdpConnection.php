@@ -6,10 +6,14 @@ namespace Luzrain\PHPStreamServer\Server\Connection;
 
 use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
 use Luzrain\PHPStreamServer\Exception\SendTypeError;
+use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterInterface;
+use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterTrait;
 use Luzrain\PHPStreamServer\Server\Protocols\ProtocolInterface;
 
-final class UdpConnection implements ConnectionInterface
+final class UdpConnection implements ConnectionInterface, EventEmitterInterface
 {
+    use EventEmitterTrait;
+
     private const MAX_UDP_PACKAGE_SIZE = 65535;
 
     private string $remoteAddress;
@@ -23,32 +27,28 @@ final class UdpConnection implements ConnectionInterface
 
     /**
      * @param resource $socket
-     * @param null|\Closure(self, mixed):void $onMessage
-     * @param null|\Closure(self, int, string):void $onError
      */
     public function __construct(
         private readonly mixed $socket,
         private readonly ProtocolInterface $protocol,
-        private readonly \Closure|null $onMessage = null,
-        private readonly \Closure|null $onError = null,
     ) {
+        $this->connectionStatistics = new ConnectionStatistics();
+    }
+
+    public function accept(): void
+    {
         $recvBuffer = \stream_socket_recvfrom($this->socket, self::MAX_UDP_PACKAGE_SIZE, 0, $remoteAddress);
         if ($recvBuffer === false) {
-            if ($this->onError) {
-                ($this->onError)($this, self::CONNECT_FAIL, 'connection failed');
-            }
+            $this->emit('error', $this, self::CONNECT_FAIL, 'connection failed');
             return;
         }
 
         $this->remoteAddress = $remoteAddress;
-        $this->connectionStatistics = new ConnectionStatistics();
         $this->connectionStatistics->incRx(\strlen($recvBuffer ?: ''));
 
         if (($packet = $this->protocol->decode($this, $recvBuffer)) !== null) {
             $this->connectionStatistics->incPackages();
-            if ($this->onMessage !== null) {
-                ($this->onMessage)($this, $packet);
-            }
+            $this->emit('message', $this, $packet);
         }
     }
 

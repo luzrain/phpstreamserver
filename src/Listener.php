@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer;
 
 use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
 use Luzrain\PHPStreamServer\Server\Connection\TcpConnection;
 use Luzrain\PHPStreamServer\Server\Connection\UdpConnection;
@@ -114,12 +115,16 @@ final class Listener
      */
     private function acceptUdpConnection(string $id, mixed $socket): void
     {
-        new UdpConnection(
+        $connection = new UdpConnection(
             socket: $socket,
             protocol: clone $this->protocol,
-            onMessage: $this->onMessage(...),
-            onError: $this->onError,
         );
+
+        $this->onMessage !== null && $connection->on('message', $this->onMessage);
+        $this->onError !== null && $connection->on('error', $this->onError);
+        $connection->on('message', $this->checkReload(...));
+
+        $connection->accept();
     }
 
     /**
@@ -129,23 +134,27 @@ final class Listener
      */
     private function acceptTcpConnection(string $id, mixed $socket): void
     {
-        new TcpConnection(
+        $connection = new TcpConnection(
             socket: $socket,
             eventLoop: $this->eventLoop,
             protocol: clone $this->protocol,
             tls: $this->tls,
-            onConnect: $this->onConnect,
-            onMessage: $this->onMessage(...),
-            onClose: $this->onClose,
-            onError: $this->onError,
         );
+
+        $this->onConnect !== null && $connection->on('connect', $this->onConnect);
+        $this->onMessage !== null && $connection->on('message', $this->onMessage);
+        $this->onClose !== null && $connection->on('close', $this->onClose);
+        $this->onError !== null && $connection->on('error', $this->onError);
+        $connection->on('message', $this->checkReload(...));
+        $connection->on('connect', static function (ConnectionInterface $connection): void {
+            ActiveConnection::addConnection($connection);
+        });
+
+        $connection->accept();
     }
 
-    private function onMessage(ConnectionInterface $connection, mixed $packet): void
+    private function checkReload(ConnectionInterface $connection, mixed $packet): void
     {
-        if ($this->onMessage !== null) {
-            ($this->onMessage)($connection, $packet);
-        }
         foreach ($this->reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_REQUEST, $packet)) {
                 $this->eventLoop->defer(function (): void {
