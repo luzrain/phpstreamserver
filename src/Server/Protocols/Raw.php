@@ -4,25 +4,22 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Server\Protocols;
 
+use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterTrait;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
 
-/**
- * @implements ProtocolInterface<string, string>
- */
 final class Raw implements ProtocolInterface
 {
-    public function decode(ConnectionInterface $connection, string $buffer): string
+    use EventEmitterTrait;
+
+    public function handle(ConnectionInterface $connection): void
     {
-        return $buffer;
+        $connection->on($connection::EVENT_DATA, function (string $buffer) use (&$connection) {
+            $this->emit(self::EVENT_MESSAGE, $connection, $buffer);
+        });
     }
 
     public function encode(ConnectionInterface $connection, mixed $response): \Generator
     {
         yield $response;
-    }
-
-    public function onException(ConnectionInterface $connection, \Throwable $e): void
-    {
-        throw $e;
     }
 }

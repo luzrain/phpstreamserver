@@ -117,12 +117,20 @@ final class Listener
     {
         $connection = new UdpConnection(
             socket: $socket,
-            protocol: clone $this->protocol,
+            encoder: $this->protocol->encode(...),
         );
 
-        $this->onMessage !== null && $connection->on('message', $this->onMessage);
-        $this->onError !== null && $connection->on('error', $this->onError);
-        $connection->on('message', $this->checkReload(...));
+        $this->protocol->handle($connection);
+
+        if ($this->onMessage !== null) {
+            $this->protocol->on($this->protocol::EVENT_MESSAGE, $this->onMessage);
+        }
+
+        if ($this->onError !== null) {
+            $connection->on($connection::EVENT_ERROR, $this->onError);
+        }
+
+        $this->protocol->on($this->protocol::EVENT_MESSAGE, $this->processMessage(...));
 
         $connection->accept();
     }
@@ -137,24 +145,38 @@ final class Listener
         $connection = new TcpConnection(
             socket: $socket,
             eventLoop: $this->eventLoop,
-            protocol: clone $this->protocol,
             tls: $this->tls,
+            encoder: $this->protocol->encode(...),
         );
 
-        $this->onConnect !== null && $connection->on('connect', $this->onConnect);
-        $this->onMessage !== null && $connection->on('message', $this->onMessage);
-        $this->onClose !== null && $connection->on('close', $this->onClose);
-        $this->onError !== null && $connection->on('error', $this->onError);
-        $connection->on('message', $this->checkReload(...));
-        $connection->on('connect', static function (ConnectionInterface $connection): void {
+        $this->protocol->handle($connection);
+
+        if ($this->onConnect !== null) {
+            $connection->on($connection::EVENT_CONNECT, $this->onConnect);
+        }
+        if ($this->onMessage !== null) {
+            $this->protocol->on($this->protocol::EVENT_MESSAGE, $this->onMessage);
+        }
+        if ($this->onClose !== null) {
+            $connection->on($connection::EVENT_CLOSE, $this->onClose);
+        }
+        if ($this->onError !== null) {
+            $connection->on($connection::EVENT_ERROR, $this->onError);
+        }
+
+        $this->protocol->on($this->protocol::EVENT_MESSAGE, $this->processMessage(...));
+
+        $connection->on($connection::EVENT_CONNECT, static function (ConnectionInterface $connection): void {
             ActiveConnection::addConnection($connection);
         });
 
         $connection->accept();
     }
 
-    private function checkReload(ConnectionInterface $connection, mixed $packet): void
+    private function processMessage(ConnectionInterface $connection, mixed $packet): void
     {
+        $connection->getStatistics()->incPackages();
+
         foreach ($this->reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_REQUEST, $packet)) {
                 $this->eventLoop->defer(function (): void {

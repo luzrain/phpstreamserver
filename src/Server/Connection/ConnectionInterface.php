@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Server\Connection;
 
-interface ConnectionInterface
+use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterInterface;
+
+interface ConnectionInterface extends EventEmitterInterface
 {
+    public const EVENT_CONNECT = 'connect';
+    public const EVENT_CLOSE = 'close';
+    public const EVENT_DATA = 'data';
+    public const EVENT_ERROR = 'error';
+
     public const READ_BUFFER_SIZE = 204800;
     public const WRITE_BUFFER_SIZE = 204800;
-    public const CONNECT_FAIL = 1;
-    public const SEND_FAIL = 2;
 
     public function send(mixed $response): bool;
     public function getRemoteAddress(): string;

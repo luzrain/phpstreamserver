@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Server\Connection;
 
-use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
-use Luzrain\PHPStreamServer\Exception\SendTypeError;
+use Luzrain\PHPStreamServer\Exception\ConnectionClosedException;
+use Luzrain\PHPStreamServer\Exception\ConnectionFailedException;
 use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
-use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterInterface;
 use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterTrait;
-use Luzrain\PHPStreamServer\Server\Protocols\ProtocolInterface;
 use Revolt\EventLoop\Driver;
 
-final class TcpConnection implements ConnectionInterface, EventEmitterInterface
+final class TcpConnection implements ConnectionInterface
 {
     use EventEmitterTrait;
 
@@ -43,19 +41,20 @@ final class TcpConnection implements ConnectionInterface, EventEmitterInterface
     public function __construct(
         private readonly mixed $socket,
         private readonly Driver $eventLoop,
-        private readonly ProtocolInterface $protocol,
-        private readonly bool $tls = false,
+        private readonly bool $tls,
+        /** @var \Closure(ConnectionInterface, mixed): \Generator $encoder */
+        private readonly \Closure $encoder,
     ) {
         $this->connectionStatistics = new ConnectionStatistics();
     }
 
     public function accept(): void
     {
-        $clientSocket = \stream_socket_accept($this->socket, 0, $remoteAddress);
-        if ($clientSocket === false) {
-            $this->emit('error', $this, self::CONNECT_FAIL, 'connection failed');
+        if (false === $clientSocket = \stream_socket_accept($this->socket, 0, $remoteAddress)) {
+            $this->emit(self::EVENT_ERROR, $this, new ConnectionFailedException());
             return;
         }
+
         $this->clientSocket = $clientSocket;
         $this->remoteAddress = $remoteAddress;
 
@@ -65,14 +64,14 @@ final class TcpConnection implements ConnectionInterface, EventEmitterInterface
             try {
                 $this->doTlsHandshake($this->clientSocket);
             } catch (TlsHandshakeException $e) {
-                $this->protocol->onException($this, $e);
-                throw $e;
+                $this->emit(self::EVENT_ERROR, $this, $e);
+                return;
             }
         }
 
         \stream_set_blocking($this->clientSocket, false);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->clientSocket, $this->baseRead(...));
-        $this->emit('connect', $this);
+        $this->emit(self::EVENT_CONNECT, $this);
     }
 
     /**
@@ -98,16 +97,9 @@ final class TcpConnection implements ConnectionInterface, EventEmitterInterface
      */
     public function baseRead(string $id, mixed $socket): void
     {
-        while (!empty($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE))) {
+        while ('' !== ($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE)) && $recvBuffer !== false) {
             $this->connectionStatistics->incRx(\strlen($recvBuffer));
-            try {
-                if (($packet = $this->protocol->decode($this, $recvBuffer)) !== null) {
-                    $this->connectionStatistics->incPackages();
-                    $this->emit('message', $this, $packet);
-                }
-            } catch (\Throwable $e) {
-                $this->protocol->onException($this, $e);
-            }
+            $this->emit(self::EVENT_DATA, $recvBuffer);
         }
 
         // Check connection closed
@@ -123,19 +115,14 @@ final class TcpConnection implements ConnectionInterface, EventEmitterInterface
             return false;
         }
 
-        try {
-            $this->sendBufferLevel1 = $this->protocol->encode($this, $response);
-            $this->sendBufferLevel2 = $this->sendBufferLevel1->current();
-            // First try to write directly, if buffer was not flushed completely, then schedule write in event loop
-            if (!$this->doWrite()) {
-                $this->onWritableCallbackId = $this->eventLoop->onWritable($this->clientSocket, function (string $id) {
-                    $this->doWrite() && $this->eventLoop->cancel($id);
-                });
-            }
-        } catch (EncodeTypeError $e) {
-            $typeError = new SendTypeError(self::class, $e->acceptType, $e->givenType);
-            $this->protocol->onException($this, $typeError);
-            throw $typeError;
+        $this->sendBufferLevel1 = ($this->encoder)($this, $response);
+        $this->sendBufferLevel2 = $this->sendBufferLevel1->current();
+
+        // First try to write directly, if buffer was not flushed completely, then schedule write in event loop
+        if (!$this->doWrite()) {
+            $this->onWritableCallbackId = $this->eventLoop->onWritable($this->clientSocket, function (string $id) {
+                $this->doWrite() && $this->eventLoop->cancel($id);
+            });
         }
 
         return true;
@@ -174,7 +161,7 @@ final class TcpConnection implements ConnectionInterface, EventEmitterInterface
 
         $this->connectionStatistics->incFails();
         $this->destroy();
-        $this->emit('error', $this, self::SEND_FAIL, 'connection closed');
+        $this->emit(self::EVENT_ERROR, $this, new ConnectionClosedException());
 
         return true;
     }
@@ -247,7 +234,7 @@ final class TcpConnection implements ConnectionInterface, EventEmitterInterface
         /** @psalm-suppress InvalidPropertyAssignmentValue */
         \fclose($this->clientSocket);
 
-        $this->emit('close', $this);
+        $this->emit(self::EVENT_CLOSE, $this);
     }
 
     public function getStatistics(): ConnectionStatistics

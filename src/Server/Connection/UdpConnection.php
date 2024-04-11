@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Server\Connection;
 
-use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
-use Luzrain\PHPStreamServer\Exception\SendTypeError;
-use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterInterface;
+use Luzrain\PHPStreamServer\Exception\ConnectionFailedException;
 use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterTrait;
-use Luzrain\PHPStreamServer\Server\Protocols\ProtocolInterface;
 
-final class UdpConnection implements ConnectionInterface, EventEmitterInterface
+final class UdpConnection implements ConnectionInterface
 {
     use EventEmitterTrait;
 
@@ -30,7 +27,8 @@ final class UdpConnection implements ConnectionInterface, EventEmitterInterface
      */
     public function __construct(
         private readonly mixed $socket,
-        private readonly ProtocolInterface $protocol,
+        /** @var \Closure(ConnectionInterface, mixed): \Generator $encoder */
+        private readonly \Closure $encoder,
     ) {
         $this->connectionStatistics = new ConnectionStatistics();
     }
@@ -39,29 +37,18 @@ final class UdpConnection implements ConnectionInterface, EventEmitterInterface
     {
         $recvBuffer = \stream_socket_recvfrom($this->socket, self::MAX_UDP_PACKAGE_SIZE, 0, $remoteAddress);
         if ($recvBuffer === false) {
-            $this->emit('error', $this, self::CONNECT_FAIL, 'connection failed');
+            $this->emit(self::EVENT_ERROR, $this, new ConnectionFailedException());
             return;
         }
 
         $this->remoteAddress = $remoteAddress;
         $this->connectionStatistics->incRx(\strlen($recvBuffer ?: ''));
-
-        if (($packet = $this->protocol->decode($this, $recvBuffer)) !== null) {
-            $this->connectionStatistics->incPackages();
-            $this->emit('message', $this, $packet);
-        }
+        $this->emit(self::EVENT_DATA, $recvBuffer);
     }
 
     public function send(mixed $response): bool
     {
-        try {
-            $sendBuffer = \implode('', \iterator_to_array($this->protocol->encode($this, $response)));
-        } catch (EncodeTypeError $e) {
-            $typeError = new SendTypeError(self::class, $e->acceptType, $e->givenType);
-            $this->protocol->onException($this, $typeError);
-            throw $typeError;
-        }
-
+        $sendBuffer = \implode('', \iterator_to_array(($this->encoder)($this, $response)));
         $this->connectionStatistics->incTx(\strlen($sendBuffer));
 
         return \stream_socket_sendto($this->socket, $sendBuffer, 0, $this->getRemoteAddress()) !== false;

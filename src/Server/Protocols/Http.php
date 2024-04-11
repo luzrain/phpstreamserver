@@ -7,21 +7,24 @@ namespace Luzrain\PHPStreamServer\Server\Protocols;
 use Luzrain\PHPStreamServer\Exception\EncodeTypeError;
 use Luzrain\PHPStreamServer\Exception\HttpException;
 use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
+use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterTrait;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
 use Luzrain\PHPStreamServer\Server\Http\Request;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-/**
- * @implements ProtocolInterface<ServerRequestInterface, ResponseInterface>
- */
 final class Http implements ProtocolInterface
 {
+    use EventEmitterTrait;
+
     private const MAX_HEADER_SIZE = 32768;
 
-    private Request|null $request = null;
-    private ServerRequestInterface|null $psrRequest = null;
+    /** @var \WeakMap<ConnectionInterface, Request> */
+    private \WeakMap $parserByConnection;
+
+    /** @var \WeakMap<ConnectionInterface, ServerRequestInterface> */
+    private \WeakMap $requestByConnection;
 
     public function __construct(
         /**
@@ -31,52 +34,64 @@ final class Http implements ProtocolInterface
          */
         private readonly int $maxBodySize = 0,
     ) {
+        /** @psalm-suppress PropertyTypeCoercion */
+        $this->parserByConnection = new \WeakMap();
+        /** @psalm-suppress PropertyTypeCoercion */
+        $this->requestByConnection = new \WeakMap();
     }
 
-    /**
-     * @throws HttpException
-     */
-    public function decode(ConnectionInterface $connection, string $buffer): ServerRequestInterface|null
+    public function handle(ConnectionInterface $connection): void
     {
-        $this->request ??= new Request(
-            maxHeaderSize: self::MAX_HEADER_SIZE,
-            maxBodySize: $this->maxBodySize,
-        );
+        $connection->on($connection::EVENT_ERROR, $this->handleException(...));
+        $connection->on($connection::EVENT_DATA, function (string $buffer) use (&$connection) {
+            $this->parserByConnection[$connection] ??= new Request(
+                maxHeaderSize: self::MAX_HEADER_SIZE,
+                maxBodySize: $this->maxBodySize,
+            );
 
-        try {
-            $this->request->parse($buffer);
-            if ($this->request->isCompleted()) {
-                $this->psrRequest = $this->request->getPsrServerRequest(
-                    serverAddr: $connection->getLocalIp(),
-                    serverPort: $connection->getLocalPort(),
-                    remoteAddr: $connection->getRemoteIp(),
-                    remotePort: $connection->getRemotePort(),
-                );
-                return $this->psrRequest;
+            try {
+                $this->parserByConnection[$connection]->parse($buffer);
+                if ($this->parserByConnection[$connection]->isCompleted()) {
+                    $psrRequest = $this->parserByConnection[$connection]->getPsrServerRequest(
+                        serverAddr: $connection->getLocalIp(),
+                        serverPort: $connection->getLocalPort(),
+                        remoteAddr: $connection->getRemoteIp(),
+                        remotePort: $connection->getRemotePort(),
+                    );
+
+                    $this->requestByConnection[$connection] = $psrRequest;
+                    $this->parserByConnection->offsetUnset($connection);
+                    $this->emit(self::EVENT_MESSAGE, $connection, $psrRequest);
+                }
+            } catch (\InvalidArgumentException $e) {
+                $this->handleException($connection, new HttpException(400, true, $e));
+            } catch (\Throwable $e) {
+                $this->handleException($connection, $e);
             }
-        } catch (\InvalidArgumentException $e) {
-            throw new HttpException(400, true, $e);
-        }
-
-        return null;
+        });
     }
 
     /**
      * @return \Generator<string>
-     * @throws EncodeTypeError
      */
     public function encode(ConnectionInterface $connection, mixed $response): \Generator
     {
         if (!$response instanceof ResponseInterface) {
-            throw new EncodeTypeError(ResponseInterface::class, \get_debug_type($response));
+            $this->handleException($connection, new EncodeTypeError(ResponseInterface::class, \get_debug_type($response)));
         }
 
-        $version = $this->psrRequest?->getProtocolVersion() ?? $response->getProtocolVersion();
+        $version = $this->requestByConnection->offsetExists($connection)
+            ? $this->requestByConnection[$connection]->getProtocolVersion()
+            : $response->getProtocolVersion();
+
         $msg = 'HTTP/' . $version . ' ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase() . "\r\n";
-        if ($this->shouldClose()) {
+        if ($this->shouldClose($connection)) {
             $response = $response->withHeader('Connection', 'close');
-        } elseif(!$response->hasHeader('Connection') && $this->psrRequest !== null && $this->psrRequest->hasHeader('Connection')) {
-            $response = $response->withHeader('Connection', $this->psrRequest->getHeaderLine('Connection'));
+        } elseif(!$response->hasHeader('Connection')
+            && $this->requestByConnection->offsetExists($connection)
+            && $this->requestByConnection[$connection]->hasHeader('Connection') === true
+        ) {
+            $response = $response->withHeader('Connection', $this->requestByConnection[$connection]->getHeaderLine('Connection'));
         }
         if (!$response->hasHeader('Server')) {
             $response = $response->withHeader('Server', Server::VERSION_STRING);
@@ -112,38 +127,42 @@ final class Http implements ProtocolInterface
             $connection->close();
         }
 
-        $this->request = null;
-        $this->psrRequest = null;
+        $this->parserByConnection->offsetUnset($connection);
+        $this->requestByConnection->offsetUnset($connection);
     }
 
     /**
      * @throws \Throwable
      */
-    public function onException(ConnectionInterface $connection, \Throwable $e): void
+    private function handleException(ConnectionInterface $connection, \Throwable $e): void
     {
         if ($e instanceof HttpException) {
             $httpRequestException = $e;
         } elseif ($e instanceof TlsHandshakeException) {
             $httpRequestException = new HttpException(400, true, $e);
         } else {
-            $httpRequestException = new HttpException(500, $this->shouldClose(), $e);
+            $httpRequestException = new HttpException(500, $this->shouldClose($connection), $e);
         }
 
         $connection->send($httpRequestException->getResponse());
-        $this->request = null;
-        $this->psrRequest = null;
 
-        if (!$e instanceof HttpException) {
-            throw $e;
+        $this->parserByConnection->offsetUnset($connection);
+        $this->requestByConnection->offsetUnset($connection);
+
+        if ($e instanceof HttpException) {
+            return;
         }
+
+        throw $e;
     }
 
-    private function shouldClose(): bool
+    private function shouldClose(ConnectionInterface $connection): bool
     {
-        if ($this->psrRequest !== null) {
-            return $this->psrRequest->getHeaderLine('Connection') === 'close' || $this->psrRequest->getProtocolVersion() === '1.0';
-        } else {
-            return true;
+        if (isset($this->requestByConnection[$connection])) {
+            return $this->requestByConnection[$connection]->getHeaderLine('Connection') === 'close'
+                || $this->requestByConnection[$connection]->getProtocolVersion() === '1.0';
         }
+
+        return true;
     }
 }
