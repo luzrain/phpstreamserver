@@ -25,4 +25,5 @@ interface ConnectionInterface extends EventEmitterInterface
     public function getLocalPort(): int;
     public function close(): void;
     public function getStatistics(): ConnectionStatistics;
+    public function accept(): void;
 }
