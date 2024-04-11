@@ -52,6 +52,7 @@ final class Listener
 
         $this->socketContextData['socket']['backlog'] = self::DEFAULT_BACKLOG;
         $this->socketContextData['socket']['so_reuseport'] = 1;
+        $this->socketContextData['ssl']['verify_peer'] = false;
         if ($tls && $tlsCertificate !== null) {
             $this->socketContextData['ssl']['local_cert'] = $tlsCertificate;
         }
