@@ -60,9 +60,10 @@ final class TcpConnection implements ConnectionInterface
 
         // TLS handshake
         if ($this->tls) {
-            \stream_set_blocking($this->clientSocket, true);
+            $tls = new TlsEncryption($this->clientSocket);
             try {
-                $this->doTlsHandshake($this->clientSocket);
+                $tls->encrypt();
+                unset($tls);
             } catch (TlsHandshakeException $e) {
                 $this->emit(self::EVENT_ERROR, $this, $e);
                 return;
@@ -73,24 +74,6 @@ final class TcpConnection implements ConnectionInterface
         \stream_set_chunk_size($this->clientSocket, self::READ_CHUNK_SIZE);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->clientSocket, $this->baseRead(...));
         $this->emit(self::EVENT_CONNECT, $this);
-    }
-
-    /**
-     * @param resource $socket
-     * @throws TlsHandshakeException
-     */
-    private function doTlsHandshake(mixed $socket): void
-    {
-        $error = '';
-        \set_error_handler(static function (int $type, string $message) use (&$error): bool {
-            $error = $message;
-            return true;
-        });
-        $tlsHandshakeCompleted = (bool) \stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_SERVER);
-        \restore_error_handler();
-        if (!$tlsHandshakeCompleted) {
-            throw new TlsHandshakeException($error);
-        }
     }
 
     /**
