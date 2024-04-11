@@ -13,8 +13,8 @@ interface ConnectionInterface extends EventEmitterInterface
     public const EVENT_DATA = 'data';
     public const EVENT_ERROR = 'error';
 
-    public const READ_BUFFER_SIZE = 204800;
-    public const WRITE_BUFFER_SIZE = 204800;
+    public const READ_CHUNK_SIZE = 65536;
+    public const WRITE_CHUNK_SIZE = 204800;
 
     public function send(mixed $response): bool;
     public function getRemoteAddress(): string;

@@ -10,7 +10,7 @@ use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
 use Luzrain\PHPStreamServer\Internal\EventEmitter\EventEmitterTrait;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
-use Luzrain\PHPStreamServer\Server\Http\Request;
+use Luzrain\PHPStreamServer\Server\Http\RequestParser;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -20,7 +20,7 @@ final class Http implements ProtocolInterface
 
     private const MAX_HEADER_SIZE = 32768;
 
-    /** @var \WeakMap<ConnectionInterface, Request> */
+    /** @var \WeakMap<ConnectionInterface, RequestParser> */
     private \WeakMap $parserByConnection;
 
     /** @var \WeakMap<ConnectionInterface, ServerRequestInterface> */
@@ -44,7 +44,7 @@ final class Http implements ProtocolInterface
     {
         $connection->on($connection::EVENT_ERROR, $this->handleException(...));
         $connection->on($connection::EVENT_DATA, function (string $buffer) use (&$connection) {
-            $this->parserByConnection[$connection] ??= new Request(
+            $this->parserByConnection[$connection] ??= new RequestParser(
                 maxHeaderSize: self::MAX_HEADER_SIZE,
                 maxBodySize: $this->maxBodySize,
             );
@@ -110,7 +110,7 @@ final class Http implements ProtocolInterface
         }
         $msg .= "\r\n";
 
-        if (($response->getBody()->getSize() ?? 0) <= $connection::WRITE_BUFFER_SIZE) {
+        if (($response->getBody()->getSize() ?? 0) <= $connection::WRITE_CHUNK_SIZE) {
             $response->getBody()->rewind();
             $msg .= $response->getBody()->getContents();
             yield $msg;
@@ -118,7 +118,7 @@ final class Http implements ProtocolInterface
             yield $msg;
             $response->getBody()->rewind();
             while (!$response->getBody()->eof()) {
-                yield $response->getBody()->read($connection::WRITE_BUFFER_SIZE);
+                yield $response->getBody()->read($connection::WRITE_CHUNK_SIZE);
             }
             $response->getBody()->close();
         }

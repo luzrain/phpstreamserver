@@ -13,13 +13,14 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * @internal
  */
-final class Request
+final class RequestParser
 {
     /** @var resource */
-    private mixed $resource;
+    private mixed $stream;
     private HttpRequestStream $requestStream;
     private bool $isInitiated = false;
     private bool $isCompleted = false;
+    private bool $isHeadersCompleted = false;
     private bool $hasPayload;
     private string $method;
     private string $uri;
@@ -30,7 +31,7 @@ final class Request
         private readonly int $maxHeaderSize,
         private readonly int $maxBodySize,
     ) {
-        $this->resource = \fopen('php://temp', 'rw');
+        $this->stream = \fopen('php://temp', 'rw');
     }
 
     /**
@@ -42,14 +43,16 @@ final class Request
             return;
         }
 
-        \fwrite($this->resource, $buffer);
+        \fseek($this->stream, 0, SEEK_END);
+        \fwrite($this->stream, $buffer);
+
+        if (!$this->isHeadersEnd()) {
+            return;
+        }
 
         if ($this->isInitiated === false) {
-            $this->init(firstLine: \strstr($buffer, "\r\n", true));
-
-            if ($this->requestStream->getHeaderSize() >= $this->maxHeaderSize) {
-                throw new HttpException(httpCode: 413, closeConnection: true);
-            }
+            \rewind($this->stream);
+            $this->init(firstLine: \stream_get_line($this->stream, $this->maxHeaderSize, "\r\n"));
 
             if ($this->method === '' || $this->uri === '' || $this->version === '') {
                 throw new HttpException(httpCode: 400, closeConnection: true);
@@ -79,13 +82,39 @@ final class Request
         }
     }
 
+    /**
+     * @throws HttpException
+     */
+    private function isHeadersEnd(): bool
+    {
+        if ($this->isHeadersCompleted) {
+            return true;
+        }
+
+        \rewind($this->stream);
+        while (false !== ($line = \stream_get_line($this->stream, $this->maxHeaderSize, "\r\n"))) {
+            // Empty line cause by double new line, we reached the end of the headers section
+            if ($line === '') {
+                $this->isHeadersCompleted = true;
+                break;
+            }
+        }
+
+        $headersSize = \ftell($this->stream) ?: 0;
+        if ($headersSize >= $this->maxHeaderSize) {
+            throw new HttpException(httpCode: 431, closeConnection: true);
+        }
+
+        return $this->isHeadersCompleted;
+    }
+
     private function init(string $firstLine): void
     {
         /** @var list<string> $firstLineParts */
         $firstLineParts = \sscanf($firstLine, '%s %s HTTP/%s');
 
         $this->isInitiated = true;
-        $this->requestStream = new HttpRequestStream($this->resource);
+        $this->requestStream = new HttpRequestStream($this->stream);
         $this->contentLength = (int) $this->requestStream->getHeader('content-length', '0');
         $this->method = $firstLineParts[0] ?? '';
         $this->uri = $firstLineParts[1] ?? '';

@@ -36,4 +36,9 @@ trait EventEmitterTrait
             }
         }
     }
+
+    private function removeAllListeners(): void
+    {
+        $this->eventListeners = [];
+    }
 }

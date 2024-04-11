@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 include __DIR__ . '/../../vendor/autoload.php';
 
-\startServer();
-\register_shutdown_function(stopServer(...));
+if (!\getServerStatus()->is_running) {
+    \startServer();
+    \register_shutdown_function(stopServer(...));
+}
 
 function startServer(): void
 {

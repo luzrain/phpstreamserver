@@ -27,12 +27,10 @@ final class HttpRequestStream implements StreamInterface
         \fseek($this->stream, $offset);
         $this->globalOffset = $offset;
         $this->size = $size;
-        $endOfHeaders = false;
 
         while (false !== ($line = \stream_get_line($this->stream, self::BUFFER_SIZE, "\r\n"))) {
             // Empty line cause by double new line, we reached the end of the headers section
             if ($line === '') {
-                $endOfHeaders = true;
                 break;
             }
             $parts = \explode(':', $line, 2);
@@ -42,10 +40,6 @@ final class HttpRequestStream implements StreamInterface
             $key = \strtolower($parts[0]);
             $value = \trim($parts[1]);
             $this->headers[$key] = isset($this->headers[$key]) ? "{$this->headers[$key]}, $value" : $value;
-        }
-
-        if ($endOfHeaders === false) {
-            throw new \InvalidArgumentException('Header is not valid');
         }
 
         $this->globalBodyOffset = \ftell($this->stream);

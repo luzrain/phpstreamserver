@@ -70,6 +70,7 @@ final class TcpConnection implements ConnectionInterface
         }
 
         \stream_set_blocking($this->clientSocket, false);
+        \stream_set_chunk_size($this->clientSocket, self::READ_CHUNK_SIZE);
         $this->onReadableCallbackId = $this->eventLoop->onReadable($this->clientSocket, $this->baseRead(...));
         $this->emit(self::EVENT_CONNECT, $this);
     }
@@ -97,7 +98,11 @@ final class TcpConnection implements ConnectionInterface
      */
     public function baseRead(string $id, mixed $socket): void
     {
-        while ('' !== ($recvBuffer = \fread($socket, self::READ_BUFFER_SIZE)) && $recvBuffer !== false) {
+        while (
+            '' !== ($recvBuffer = \fread($socket, self::READ_CHUNK_SIZE))
+            && $recvBuffer !== false
+            && $this->status !== self::STATUS_CLOSING
+        ) {
             $this->connectionStatistics->incRx(\strlen($recvBuffer));
             $this->emit(self::EVENT_DATA, $recvBuffer);
         }
@@ -235,6 +240,7 @@ final class TcpConnection implements ConnectionInterface
         \fclose($this->clientSocket);
 
         $this->emit(self::EVENT_CLOSE, $this);
+        $this->removeAllListeners();
     }
 
     public function getStatistics(): ConnectionStatistics

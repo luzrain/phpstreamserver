@@ -83,7 +83,7 @@ $server->addWorkers(
             $worker->startListener(new Listener(
                 listen: 'tcp://0.0.0.0:9086',
                 protocol: new Http(
-                    maxBodySize: 1024,
+                    maxBodySize: 102400,
                 ),
                 onMessage: function (ConnectionInterface $connection, ServerRequestInterface $data): void {
                     $connection->send(new Response(body: 'ok', headers: ['Content-Type' => 'text/plain']));
