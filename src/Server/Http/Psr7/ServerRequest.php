@@ -284,27 +284,30 @@ final class ServerRequest implements ServerRequestInterface
         $payload = [];
         $files = [];
         $fileStructureStr = '';
+        $payloadStructureStr = '';
         $fileStructureList = [];
         foreach ($parts as $part) {
             /** @var HttpRequestStream $part */
-            $name = $part->getName();
-            if ($name === null) {
+            if (null === $name = $part->getName()) {
                 continue;
             }
             if ($part->isFile()) {
-                $fileStructureStr .= "$name&";
+                $fileStructureStr .= "$name=0&";
                 $fileStructureList[] = new UploadedFile($part);
             } else {
-                $payload[$name] = $part->getContents();
+                $payloadStructureStr .= "$name={$part->getContents()}&";
             }
         }
-        if (!empty($fileStructureList)) {
+
+        if ($fileStructureList !== []) {
             $i = 0;
             \parse_str($fileStructureStr, $files);
-            \array_walk_recursive($files, static function (mixed &$item) use ($fileStructureList, &$i) {
+            \array_walk_recursive($files, static function (mixed &$item) use (&$fileStructureList, &$i) {
                 $item = $fileStructureList[$i++];
             });
         }
+
+        \parse_str($payloadStructureStr, $payload);
 
         return [$payload, $files];
     }
