@@ -107,7 +107,10 @@ final class MasterProcess
      */
     private function initServer(): void
     {
-        \cli_set_process_title(\sprintf('%s: master process  start_file=%s', Server::NAME, $this->startFile));
+        // some command line SAPIs (e.g. phpdbg) don't have that function
+        if (\function_exists('cli_set_process_title')) {
+            \cli_set_process_title(\sprintf('%s: master process  start_file=%s', Server::NAME, $this->startFile));
+        }
 
         $this->startedAt = new \DateTimeImmutable('now');
         $this->interProcessSocketPair = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
