@@ -15,6 +15,7 @@ use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
 use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
 use Psr\Log\LoggerInterface;
+use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;
 
@@ -165,7 +166,7 @@ class WorkerProcess
 
         /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
-
+        EventLoop::setDriver($this->eventLoop);
         $this->setErrorHandler(ErrorHandler::handleException(...));
 
         // onStart callback
