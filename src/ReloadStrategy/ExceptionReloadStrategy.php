@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
-use Luzrain\PHPStreamServer\Exception\HttpException;
+use Amp\Http\Server\ClientException;
+use Amp\Http\Server\HttpErrorException;
 
 /**
  * Reload worker each time after exception occurs
@@ -13,7 +14,8 @@ class ExceptionReloadStrategy implements ReloadStrategyInterface
 {
     /** @var array<class-string<\Throwable>> */
     private array $allowedExceptions = [
-        HttpException::class,
+        ClientException::class,
+        HttpErrorException::class,
     ];
 
     /**

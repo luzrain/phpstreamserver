@@ -10,9 +10,8 @@ use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\ProcessMessage\Message;
 use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
 use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
-use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
 use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
 use Psr\Log\LoggerInterface;
@@ -29,13 +28,12 @@ class WorkerProcess
     private LoggerInterface $logger;
     private Driver $eventLoop;
     private \DateTimeImmutable $startedAt;
-    /** @var array<ReloadStrategyInterface> */
-    private array $reloadStrategies = [];
     /** @var resource parent socket for interprocess communication */
     private mixed $parentSocket;
     private int $exitCode = 0;
     private \WeakMap $listenAddressesMap;
-    private TrafficStatisticStore $connectionPool;
+    private TrafficStatisticStore $trafficStatisticStore;
+    private ReloadStrategyTrigger $reloadStrategyTrigger;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -53,7 +51,7 @@ class WorkerProcess
         private \Closure|null $onReload = null,
     ) {
         $this->listenAddressesMap = new \WeakMap();
-        $this->connectionPool = new TrafficStatisticStore();
+        $this->trafficStatisticStore = new TrafficStatisticStore();
     }
 
     /**
@@ -70,32 +68,14 @@ class WorkerProcess
         return $this->exitCode;
     }
 
-    final public function startListener(Listener $listener): void
-    {
-        $this->listenAddressesMap[$listener] = $listener->getListenAddress();
-        $listener->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
-    }
-
     final public function startHttpServer(HttpServer $server): void
     {
-        $server->start($this->logger, $this->connectionPool);
-    }
-
-    final public function stopListener(Listener $listener): void
-    {
-        $listener->stop();
+        $server->start($this->logger, $this->trafficStatisticStore, $this->reloadStrategyTrigger);
     }
 
     final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
     {
-        \array_push($this->reloadStrategies, ...$reloadStrategies);
-        foreach ($reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy instanceof TimerReloadStrategyInterface) {
-                $this->eventLoop->repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
-                    $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload();
-                });
-            }
-        }
+        $this->reloadStrategyTrigger->addReloadStrategies(...$reloadStrategies);
     }
 
     final public function setLogger(LoggerInterface $logger): void
@@ -143,16 +123,9 @@ class WorkerProcess
      */
     final public function setErrorHandler(\Closure $errorHandler): void
     {
-        $this->eventLoop->setErrorHandler(function (\Throwable $e) use ($errorHandler) {
-            $errorHandler($e);
-            foreach ($this->reloadStrategies as $reloadStrategy) {
-                if ($reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_EXCEPTION, $e)) {
-                    $this->eventLoop->defer(function () use ($reloadStrategy): void {
-                        $this->reload();
-                    });
-                    break;
-                }
-            }
+        $this->eventLoop->setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
+            $errorHandler($exception);
+            $this->reloadStrategyTrigger->exception($exception);
         });
     }
 
@@ -202,6 +175,8 @@ class WorkerProcess
             \gc_collect_cycles();
             \gc_mem_caches();
         });
+
+        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
         $this->sendMessageToMaster(new ProcessInfo(\posix_getpid(), $this->getName(), $this->getUser(), $this->startedAt, false));
     }
@@ -256,7 +231,7 @@ class WorkerProcess
             memory: \memory_get_usage(),
             listen: \implode(', ', \iterator_to_array($this->listenAddressesMap, false)),
             connectionStatistics: ConnectionStatistics::getGlobal(),
-            connections: $this->connectionPool->getConnections(),
+            connections: $this->trafficStatisticStore->getConnections(),
         ));
     }
 

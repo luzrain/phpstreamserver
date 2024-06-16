@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PHPStreamServer\Exception\HttpException;
-use Luzrain\PHPStreamServer\Exception\TlsHandshakeException;
-use Luzrain\PHPStreamServer\Exception\TooLargePayload;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
@@ -74,11 +71,6 @@ final class ErrorHandler
             default => 'Uncaught Exception: ' . $exception->getMessage(),
         };
 
-        $level = match ($exception::class) {
-            TlsHandshakeException::class, TooLargePayload::class, HttpException::class => LogLevel::NOTICE,
-            default => LogLevel::CRITICAL,
-        };
-
-        self::$logger->log($level, $message, ['exception' => $exception]);
+        self::$logger->log(LogLevel::CRITICAL, $message, ['exception' => $exception]);
     }
 }

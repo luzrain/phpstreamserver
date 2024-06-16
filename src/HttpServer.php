@@ -14,11 +14,13 @@ use Amp\Socket\BindContext;
 use Amp\Socket\Certificate;
 use Amp\Socket\InternetAddress;
 use Amp\Socket\ServerTlsContext;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Server\Http\ClientExceptionHandleMiddleware;
+use Luzrain\PHPStreamServer\Server\Http\ReloadStrategyTriggerMiddleware;
 use Luzrain\PHPStreamServer\Server\Http\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
 use Luzrain\PHPStreamServer\Server\Http\AddServerHeadersMiddleware;
-use Luzrain\PHPStreamServer\Server\Http\ErrorHandler;
+use Luzrain\PHPStreamServer\Server\Http\HttpErrorHandler;
 use Luzrain\PHPStreamServer\Server\Http\HttpClientFactory;
 use Luzrain\PHPStreamServer\Server\Http\HttpServerSocketFactory;
 use Psr\Log\LoggerInterface;
@@ -63,8 +65,11 @@ final readonly class HttpServer
         }
     }
 
-    public function start(LoggerInterface $logger, TrafficStatisticStore $trafficStatisticStore): void
-    {
+    public function start(
+        LoggerInterface $logger,
+        TrafficStatisticStore $trafficStatisticStore,
+        ReloadStrategyTrigger $reloadStrategyTrigger,
+    ): void {
         $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $trafficStatisticStore);
         $clientFactory = new HttpClientFactory($logger, $this->connectionLimitPerIp, $trafficStatisticStore, $this->onConnect, $this->onClose);
         $middleware = [];
@@ -87,6 +92,7 @@ final readonly class HttpServer
         $middleware[] = new AddServerHeadersMiddleware();
         $middleware[] = new RequestsCounterMiddleware($trafficStatisticStore);
         $middleware[] = new ClientExceptionHandleMiddleware();
+        $middleware[] = new ReloadStrategyTriggerMiddleware($reloadStrategyTrigger);
 
         $context = (new BindContext())
             ->withReusePort()
@@ -117,6 +123,6 @@ final readonly class HttpServer
         );
 
         $socketHttpServer->expose(new InternetAddress($this->host, $this->port), $context);
-        $socketHttpServer->start($this->requestHandler, new ErrorHandler());
+        $socketHttpServer->start($this->requestHandler, new HttpErrorHandler());
     }
 }
