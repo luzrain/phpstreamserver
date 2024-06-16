@@ -14,6 +14,7 @@ use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
 use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
+use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
@@ -34,6 +35,7 @@ class WorkerProcess
     private mixed $parentSocket;
     private int $exitCode = 0;
     private \WeakMap $listenAddressesMap;
+    private TrafficStatisticStore $connectionPool;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -51,6 +53,7 @@ class WorkerProcess
         private \Closure|null $onReload = null,
     ) {
         $this->listenAddressesMap = new \WeakMap();
+        $this->connectionPool = new TrafficStatisticStore();
     }
 
     /**
@@ -71,6 +74,11 @@ class WorkerProcess
     {
         $this->listenAddressesMap[$listener] = $listener->getListenAddress();
         $listener->start($this->eventLoop, $this->reloadStrategies, $this->reload(...));
+    }
+
+    final public function startHttpServer(HttpServer $server): void
+    {
+        $server->start($this->logger, $this->connectionPool);
     }
 
     final public function stopListener(Listener $listener): void
@@ -248,7 +256,7 @@ class WorkerProcess
             memory: \memory_get_usage(),
             listen: \implode(', ', \iterator_to_array($this->listenAddressesMap, false)),
             connectionStatistics: ConnectionStatistics::getGlobal(),
-            connections: ActiveConnection::getList(),
+            connections: $this->connectionPool->getConnections(),
         ));
     }
 

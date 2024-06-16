@@ -8,6 +8,7 @@ use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Server\Connection;
 use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
 
 final class ConnectionsCommand implements Command
@@ -51,13 +52,13 @@ final class ConnectionsCommand implements Command
                     'Remote address',
                     'Bytes (RX / TX)',
                 ])
-                ->addRows(\array_map(array: $connections, callback: function (ActiveConnection $c) use ($pidMap) {
+                ->addRows(\array_map(array: $connections, callback: function (Connection $c) use ($pidMap) {
                     return [
                         (string) $pidMap[$c],
                         'tcp',
                         $c->localIp . ':' . $c->localPort,
                         $c->remoteIp . ':' . $c->remotePort,
-                        \sprintf('(%s / %s)', Functions::humanFileSize($c->statistics->getRx()), Functions::humanFileSize($c->statistics->getTx())),
+                        \sprintf('(%s / %s)', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx)),
                     ];
                 }));
         } else {

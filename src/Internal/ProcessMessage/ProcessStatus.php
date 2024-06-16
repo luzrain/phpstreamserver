@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\ProcessMessage;
 
-use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
+use Luzrain\PHPStreamServer\Server\Connection;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
 
 /**
@@ -17,7 +17,7 @@ final readonly class ProcessStatus implements Message
         public int $memory,
         public string $listen,
         public ConnectionStatistics $connectionStatistics,
-        /** @var list<ActiveConnection> */
+        /** @var list<Connection> */
         public array $connections,
     ) {
     }
