@@ -33,7 +33,7 @@ final class ReloadStrategyTrigger
         }
     }
 
-    public function request(Request $request): void
+    public function emitRequest(Request $request): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy->shouldReload(ReloadStrategyInterface::EVENT_CODE_REQUEST, $request)) {
@@ -43,7 +43,7 @@ final class ReloadStrategyTrigger
         }
     }
 
-    public function exception(\Throwable $throwable): void
+    public function emitException(\Throwable $throwable): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy->shouldReload(ReloadStrategyInterface::EVENT_CODE_EXCEPTION, $throwable)) {

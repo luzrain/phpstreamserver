@@ -82,12 +82,12 @@ final class MasterProcess
             return 1;
         }
 
-        if ($daemonize && $this->daemonize()) {
+        if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
             return 0;
         } elseif ($daemonize) {
             // Runs in daemonized master process
-            StdoutHandler::reset();
+            StdoutHandler::disableStdout();
         }
 
         $this->initServer();
@@ -131,18 +131,14 @@ final class MasterProcess
             }
         });
 
-        $onSignal = function (string $id, int $signo): void {
-            match ($signo) {
-                SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT => $this->stop(),
-                SIGCHLD => $this->watchChildProcesses(),
-                SIGUSR1 => $this->requestProcessesStatus(),
-                SIGUSR2 => $this->reload(),
-            };
-        };
-
-        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT, SIGCHLD, SIGUSR1, SIGUSR2] as $signo) {
-            $this->eventLoop->onSignal($signo, $onSignal);
-        }
+        $this->eventLoop->onSignal(SIGINT, fn() => $this->stop());
+        $this->eventLoop->onSignal(SIGTERM, fn() => $this->stop());
+        $this->eventLoop->onSignal(SIGHUP, fn() => $this->stop());
+        $this->eventLoop->onSignal(SIGTSTP, fn() => $this->stop());
+        $this->eventLoop->onSignal(SIGTSTP, fn() => $this->stop());
+        $this->eventLoop->onSignal(SIGCHLD, fn() => $this->watchChildProcesses());
+        $this->eventLoop->onSignal(SIGUSR1, fn() => $this->requestProcessesStatus());
+        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->reload());
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
@@ -156,7 +152,7 @@ final class MasterProcess
      *
      * @return bool return true in master process and false in child
      */
-    private function daemonize(): bool
+    private function doDaemonize(): bool
     {
         $pid = \pcntl_fork();
         if ($pid === -1) {

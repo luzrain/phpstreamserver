@@ -25,11 +25,11 @@ final readonly class ReloadStrategyTriggerMiddleware implements Middleware
         try {
             return $requestHandler->handleRequest($request);
         } catch (\Throwable $e) {
-            $this->reloadStrategyTrigger->exception($e);
+            $this->reloadStrategyTrigger->emitException($e);
 
             throw $e;
         } finally {
-            $this->reloadStrategyTrigger->request($request);
+            $this->reloadStrategyTrigger->emitRequest($request);
         }
     }
 }

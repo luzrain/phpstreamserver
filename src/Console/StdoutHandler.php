@@ -36,7 +36,7 @@ final class StdoutHandler
         self::restreamOutputBuffer($stream);
     }
 
-    public static function reset(): void
+    public static function disableStdout(): void
     {
         self::$isRegistered = false;
         \ob_end_clean();

@@ -56,10 +56,11 @@ class WorkerProcess
 
     /**
      * @internal
+     * @param resource $parentSocket
      */
     final public function run(LoggerInterface $logger, mixed $parentSocket): int
     {
-        $this->setLogger($logger);
+        $this->logger = $logger;
         $this->parentSocket = $parentSocket;
         $this->setUserAndGroup();
         $this->initWorker();
@@ -103,11 +104,6 @@ class WorkerProcess
         return $this->count;
     }
 
-    final public function isReloadable(): bool
-    {
-        return $this->reloadable;
-    }
-
     final public function getUser(): string
     {
         return $this->user ?? Functions::getCurrentUser();
@@ -125,7 +121,7 @@ class WorkerProcess
     {
         $this->eventLoop->setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
             $errorHandler($exception);
-            $this->reloadStrategyTrigger->exception($exception);
+            $this->reloadStrategyTrigger->emitException($exception);
         });
     }
 
@@ -158,17 +154,9 @@ class WorkerProcess
             $this->onStart !== null && ($this->onStart)($this);
         });
 
-        $onSignal = function (string $id, int $signo): void {
-            match ($signo) {
-                SIGTERM => $this->stop(),
-                SIGUSR1 => $this->updateStatus(),
-                SIGUSR2 => $this->reload(),
-            };
-        };
-
-        foreach ([SIGTERM, SIGUSR1, SIGUSR2] as $signo) {
-            $this->eventLoop->onSignal($signo, $onSignal);
-        }
+        $this->eventLoop->onSignal(SIGTERM, fn () => $this->stop());
+        $this->eventLoop->onSignal(SIGUSR1, fn () => $this->updateStatus());
+        $this->eventLoop->onSignal(SIGUSR2, fn () => $this->reload());
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
@@ -193,7 +181,7 @@ class WorkerProcess
 
     final public function reload(): void
     {
-        if (!$this->isReloadable()) {
+        if (!$this->reloadable) {
             return;
         }
 
