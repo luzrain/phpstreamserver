@@ -14,6 +14,7 @@ use Luzrain\PHPStreamServer\Internal\Status\WorkerStatus;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
+use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
@@ -120,6 +121,7 @@ final class MasterProcess
         // Init event loop.
         // Force use StreamSelectDriver in the master process because it uses pcntl_signal to handle signals, and it works better for this case.
         $this->eventLoop = new StreamSelectDriver();
+        EventLoop::setDriver($this->eventLoop);
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
 
@@ -220,7 +222,8 @@ final class MasterProcess
     // Runs in forked process
     private function runWorker(WorkerProcess $worker): int
     {
-        $this->eventLoop->stop();
+        $this->eventLoop->queue(fn() => $this->eventLoop->stop());
+        $this->eventLoop->run();
         \fclose($this->interProcessSocketPair[0]);
         unset($this->suspension, $this->eventLoop, $this->pool, $this->processStatusPool, $this->interProcessSocketPair[0]);
         \gc_collect_cycles();
