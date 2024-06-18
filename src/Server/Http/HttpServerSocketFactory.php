@@ -15,7 +15,7 @@ use Amp\Socket\SocketAddress;
 use Amp\Sync\LocalSemaphore;
 use Amp\Sync\PosixSemaphore;
 use Amp\Sync\Semaphore;
-use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 
 final readonly class HttpServerSocketFactory implements ServerSocketFactory
 {
@@ -23,7 +23,7 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
 
     public function __construct(
         int|null $connectionLimit,
-        private TrafficStatisticStore $trafficStatisticStore,
+        private TrafficStatus $trafficStatisticStore,
     ) {
         $serverSocketFactory = new ResourceServerSocketFactory();
 
@@ -43,7 +43,7 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
 
         return new class($serverSocket, $this->trafficStatisticStore) implements ServerSocket
         {
-            public function __construct(private readonly ServerSocket $serverSocket, private readonly TrafficStatisticStore $trafficStatisticStore)
+            public function __construct(private readonly ServerSocket $serverSocket, private readonly TrafficStatus $trafficStatisticStore)
             {
             }
 

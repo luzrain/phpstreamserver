@@ -7,13 +7,12 @@ namespace Luzrain\PHPStreamServer;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\ProcessMessage\Message;
-use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessInfo;
-use Luzrain\PHPStreamServer\Internal\ProcessMessage\ProcessStatus;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Swawn;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\Server\Connection\ConnectionStatistics;
-use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
@@ -24,16 +23,15 @@ class WorkerProcess
     final public const STOP_EXIT_CODE = 0;
     final public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
+    private const HEARTBEAT_PERIOD = 5;
 
     private LoggerInterface $logger;
     private Driver $eventLoop;
-    private \DateTimeImmutable $startedAt;
-    /** @var resource parent socket for interprocess communication */
-    private mixed $parentSocket;
     private int $exitCode = 0;
     private \WeakMap $listenAddressesMap;
-    private TrafficStatisticStore $trafficStatisticStore;
+    private TrafficStatus $trafficStatisticStore;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
+    private \Closure $masterPublisher;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -51,17 +49,15 @@ class WorkerProcess
         private \Closure|null $onReload = null,
     ) {
         $this->listenAddressesMap = new \WeakMap();
-        $this->trafficStatisticStore = new TrafficStatisticStore();
     }
 
     /**
      * @internal
-     * @param resource $parentSocket
      */
-    final public function run(LoggerInterface $logger, mixed $parentSocket): int
+    final public function run(LoggerInterface $logger, \Closure $masterPublisher): int
     {
         $this->logger = $logger;
-        $this->parentSocket = $parentSocket;
+        $this->masterPublisher = $masterPublisher;
         $this->setUserAndGroup();
         $this->initWorker();
         $this->eventLoop->run();
@@ -142,8 +138,6 @@ class WorkerProcess
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->getName()));
         }
 
-        $this->startedAt = new \DateTimeImmutable('now');
-
         /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
         EventLoop::setDriver($this->eventLoop);
@@ -155,7 +149,6 @@ class WorkerProcess
         });
 
         $this->eventLoop->onSignal(SIGTERM, fn () => $this->stop());
-        $this->eventLoop->onSignal(SIGUSR1, fn () => $this->updateStatus());
         $this->eventLoop->onSignal(SIGUSR2, fn () => $this->reload());
 
         // Force run garbage collection periodically
@@ -164,9 +157,18 @@ class WorkerProcess
             \gc_mem_caches();
         });
 
+        $this->trafficStatisticStore = new TrafficStatus($this->masterPublisher);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
-        $this->sendMessageToMaster(new ProcessInfo(\posix_getpid(), $this->getName(), $this->getUser(), $this->startedAt, false));
+        ($this->masterPublisher)(new Swawn(
+            pid: \posix_getpid(),
+            user: $this->getUser(),
+            name: $this->getName(),
+            startedAt: new \DateTimeImmutable('now'),
+        ));
+
+        ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage()));
+        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage())));
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -203,28 +205,12 @@ class WorkerProcess
         $identifiers = $this->getEventLoop()->getIdentifiers();
         \array_walk($identifiers, $this->getEventLoop()->disable(...));
         $this->getEventLoop()->stop();
-        $this->sendMessageToMaster(new ProcessInfo(\posix_getpid(), $this->getName(), $this->getUser(), $this->startedAt, true));
-        unset($this->eventLoop, $this->reloadStrategies, $this->logger, $this->parentSocket);
+        ($this->masterPublisher)(new Detach(\posix_getpid()));
+        unset($this->eventLoop, $this->reloadStrategies, $this->logger);
         $this->onStart = null;
         $this->onStop = null;
         $this->onReload = null;
         \gc_collect_cycles();
         \gc_mem_caches();
-    }
-
-    private function updateStatus(): void
-    {
-        $this->sendMessageToMaster(new ProcessStatus(
-            pid: \posix_getpid(),
-            memory: \memory_get_usage(),
-            listen: \implode(', ', \iterator_to_array($this->listenAddressesMap, false)),
-            connectionStatistics: ConnectionStatistics::getGlobal(),
-            connections: $this->trafficStatisticStore->getConnections(),
-        ));
-    }
-
-    private function sendMessageToMaster(Message $message): void
-    {
-        \fwrite($this->parentSocket, \serialize($message) . "\r\n");
     }
 }

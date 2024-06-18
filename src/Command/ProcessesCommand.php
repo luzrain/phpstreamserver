@@ -8,7 +8,7 @@ use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\Status\WorkerProcessStatus;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Process;
 
 final class ProcessesCommand implements Command
 {
@@ -29,11 +29,11 @@ final class ProcessesCommand implements Command
 
     public function run(array $arguments): int
     {
-        $status = $this->masterProcess->getStatus();
+        $status = $this->masterProcess->getServerStatus();
 
         echo "❯ Processes\n";
 
-        if ($status->processesCount > 0) {
+        if ($status->getProcessesCount() > 0) {
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'Pid',
@@ -45,23 +45,18 @@ final class ProcessesCommand implements Command
                     'Requests',
                     'Bytes (RX / TX)',
                 ])
-                ->addRows(\array_map(array: $status->processes, callback: function (WorkerProcessStatus $w) {
-                    $connections = \count($w->connections ?? []);
-                    $packages = $w->connectionStatistics?->getPackages() ?? 0;
-                    $rx = $w->connectionStatistics?->getRx() ?? 0;
-                    $tx = $w->connectionStatistics?->getTx() ?? 0;
-
+                ->addRows(\array_map(array: $status->processes, callback: function (Process $w) {
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
                         $w->memory > 0 ? Functions::humanFileSize($w->memory) : '<color;fg=gray>??</>',
                         $w->name,
                         $w->listen ?? '<color;fg=gray>-</>',
-                        $connections === 0 ? '<color;fg=gray>0</>' : $connections,
-                        $packages === 0 ? '<color;fg=gray>0</>' : $packages,
-                        $rx === 0 && $tx === 0
-                            ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($rx), Functions::humanFileSize($tx))
-                            : \sprintf('(%s / %s)', Functions::humanFileSize($rx), Functions::humanFileSize($tx)),
+                        $w->connections === 0 ? '<color;fg=gray>0</>' : $w->connections,
+                        $w->requests === 0 ? '<color;fg=gray>0</>' : $w->requests,
+                        $w->rx === 0 && $w->tx === 0
+                            ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx))
+                            : \sprintf('(%s / %s)', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx)),
                     ];
                 }));
         } else {

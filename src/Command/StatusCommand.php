@@ -29,7 +29,9 @@ final class StatusCommand implements Command
 
     public function run(array $arguments): int
     {
-        $status = $this->masterProcess->getStatus();
+        $status = $this->masterProcess->getServerStatus();
+        $processesCount = $status->getProcessesCount();
+        $totalMemory = $status->getTotalMemory();
 
         echo ($status->isRunning ? '<color;fg=green>●</> ' : '● ') . Server::TITLE . "\n";
 
@@ -43,9 +45,9 @@ final class StatusCommand implements Command
                     ? '<color;fg=green>active</> since ' . ($status->startedAt?->format(\DateTimeInterface::RFC7231) ?? '?')
                     : 'inactive',
                 ],
-                ['Workers count:', $status->workersCount],
-                ['Processes count:', $status->processesCount > 0 || $status->isRunning ? $status->processesCount : '<color;fg=gray>0</>'],
-                ['Memory usage:', $status->totalMemory > 0 || $status->isRunning ? Functions::humanFileSize($status->totalMemory) : '<color;fg=gray>0</>'],
+                ['Workers count:', $status->getWorkersCount()],
+                ['Processes count:', $processesCount > 0 || $status->isRunning ? $processesCount : '<color;fg=gray>0</>'],
+                ['Memory usage:', $totalMemory > 0 || $status->isRunning ? Functions::humanFileSize($totalMemory) : '<color;fg=gray>0</>'],
             ]);
 
         return 0;

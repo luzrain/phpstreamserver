@@ -26,7 +26,7 @@ final class StatusJsonCommand implements Command
 
     public function run(array $arguments): int
     {
-        $status = $this->masterProcess->getStatus();
+        $status = $this->masterProcess->getServerStatus();
         echo \json_encode($status);
 
         return 0;

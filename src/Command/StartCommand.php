@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\Command;
 use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\Status\WorkerStatus;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Worker;
 use Luzrain\PHPStreamServer\Server;
 
 final class StartCommand implements Command
@@ -30,7 +30,7 @@ final class StartCommand implements Command
     public function run(array $arguments): int
     {
         $isDaemon = \in_array('-d', $arguments, true) || \in_array('--daemon', $arguments, true);
-        $status = $this->masterProcess->getStatus();
+        $status = $this->masterProcess->getServerStatus();
 
         echo "❯ " . Server::TITLE . "\n";
         echo (new Table(indent: 1))
@@ -38,20 +38,20 @@ final class StartCommand implements Command
                 ['PHP version:', $status->phpVersion],
                 [Server::NAME . ' version:', $status->version],
                 ['Event loop driver:', $status->eventLoop],
-                ['Workers count:', $status->workersCount],
+                ['Workers count:', $status->getWorkersCount()],
             ])
         ;
 
         echo "❯ Workers\n";
 
-        if ($status->workersCount > 0) {
+        if ($status->getWorkersCount() > 0) {
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'User',
                     'Worker',
                     'Count',
                 ])
-                ->addRows(\array_map(function (WorkerStatus $w) {
+                ->addRows(\array_map(function (Worker $w) {
                     return [
                         $w->user,
                         $w->name,

@@ -8,10 +8,8 @@ use Amp\Http\Server\Driver\Client;
 use Amp\Http\Server\Driver\ClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\SocketClientFactory;
-use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\Server\Connection;
-use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 use Psr\Log\LoggerInterface;
 
 final readonly class HttpClientFactory implements ClientFactory
@@ -21,7 +19,7 @@ final readonly class HttpClientFactory implements ClientFactory
     public function __construct(
         LoggerInterface $logger,
         int|null $connectionLimitPerIp,
-        private TrafficStatisticStore $trafficStatisticStore,
+        private TrafficStatus $trafficStatisticStore,
         private \Closure|null $onConnectCallback = null,
         private \Closure|null $onCloseCallback = null,
     ) {
@@ -48,17 +46,7 @@ final readonly class HttpClientFactory implements ClientFactory
 
     private function onConnect(Socket $socket, Client $client): void
     {
-        $localAddress = $client->getLocalAddress();
-        $remoteAddress = $client->getRemoteAddress();
-        \assert($localAddress instanceof InternetAddress);
-        \assert($remoteAddress instanceof InternetAddress);
-
-        $this->trafficStatisticStore->addConnection($socket, new Connection(
-            localIp: $localAddress->getAddress(),
-            localPort: (string) $localAddress->getPort(),
-            remoteIp: $remoteAddress->getAddress(),
-            remotePort: (string) $remoteAddress->getPort(),
-        ));
+        $this->trafficStatisticStore->addConnection($socket);
 
         if ($this->onConnectCallback !== null) {
             ($this->onConnectCallback)($client);

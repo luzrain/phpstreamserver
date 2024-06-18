@@ -4,48 +4,22 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Server;
 
-use Luzrain\PHPStreamServer\Internal\JsonSerializible;
-
-final class Connection implements \JsonSerializable
+final class Connection
 {
-    use JsonSerializible;
-
-    /**
-     * @readonly
-     * @psalm-allow-private-mutation
-     */
+    public readonly \DateTimeImmutable $connectedAt;
+    public readonly string $localIp;
+    public readonly string $localPort;
+    public readonly string $remoteIp;
+    public readonly string $remotePort;
     public int $rx = 0;
-
-    /**
-     * @readonly
-     * @psalm-allow-private-mutation
-     */
     public int $tx = 0;
 
-    public \DateTimeImmutable $connectedAt;
-
-    public function __construct(
-        public string $localIp,
-        public string $localPort,
-        public string $remoteIp,
-        public string $remotePort,
-    ) {
-        $this->connectedAt = new \DateTimeImmutable();
-    }
-
-    /**
-     * @param positive-int $val
-     */
-    public function incRx(int $val): void
+    public function __construct(string $localIp, string $localPort, string $remoteIp, string $remotePort)
     {
-        $this->rx += $val;
-    }
-
-    /**
-     * @param positive-int $val
-     */
-    public function incTx(int $val): void
-    {
-        $this->tx += $val;
+        $this->connectedAt = new \DateTimeImmutable('now');
+        $this->localIp = $localIp;
+        $this->localPort = $localPort;
+        $this->remoteIp = $remoteIp;
+        $this->remotePort = $remotePort;
     }
 }

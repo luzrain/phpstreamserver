@@ -11,13 +11,13 @@ use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
 use Amp\Socket\TlsInfo;
 use Amp\Socket\TlsState;
-use Luzrain\PHPStreamServer\Server\TrafficStatisticStore;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 
 final readonly class TrafficCountingSocket implements Socket, ResourceStream, \IteratorAggregate
 {
     use ReadableStreamIteratorAggregate;
 
-    public function __construct(private Socket $socket, private TrafficStatisticStore $trafficStatisticStore)
+    public function __construct(private Socket $socket, private TrafficStatus $trafficStatisticStore)
     {
     }
 

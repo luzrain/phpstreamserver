@@ -8,8 +8,7 @@ use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Server\Connection;
-use Luzrain\PHPStreamServer\Server\Connection\ActiveConnection;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 
 final class ConnectionsCommand implements Command
 {
@@ -30,16 +29,7 @@ final class ConnectionsCommand implements Command
 
     public function run(array $arguments): int
     {
-        $status = $this->masterProcess->getStatus();
-        $connections = [];
-        $pidMap = new \WeakMap();
-
-        foreach ($status->processes as $process) {
-            foreach ($process->connections ?? [] as $connection) {
-                $connections[] = $connection;
-                $pidMap[$connection] = $process->pid;
-            }
-        }
+        $connections = $this->masterProcess->getServerStatus()->connections;
 
         echo "❯ Connections\n";
 
@@ -47,15 +37,13 @@ final class ConnectionsCommand implements Command
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'Pid',
-                    'Transport',
                     'Local address',
                     'Remote address',
                     'Bytes (RX / TX)',
                 ])
-                ->addRows(\array_map(array: $connections, callback: function (Connection $c) use ($pidMap) {
+                ->addRows(\array_map(array: $connections, callback: function (Connection $c) {
                     return [
-                        (string) $pidMap[$c],
-                        'tcp',
+                        $c->pid,
                         $c->localIp . ':' . $c->localPort,
                         $c->remoteIp . ':' . $c->remotePort,
                         \sprintf('(%s / %s)', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx)),
