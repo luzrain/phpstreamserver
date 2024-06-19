@@ -28,7 +28,6 @@ class WorkerProcess
     private LoggerInterface $logger;
     private Driver $eventLoop;
     private int $exitCode = 0;
-    private \WeakMap $listenAddressesMap;
     private TrafficStatus $trafficStatisticStore;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
     private \Closure $masterPublisher;
@@ -48,7 +47,6 @@ class WorkerProcess
         private \Closure|null $onStop = null,
         private \Closure|null $onReload = null,
     ) {
-        $this->listenAddressesMap = new \WeakMap();
     }
 
     /**
@@ -195,22 +193,41 @@ class WorkerProcess
         }
     }
 
-    /**
-     * After the process is detached, only the basic supervisor will work for it.
-     * The event loop and communication with the master process will be stopped and destroyed.
-     * This can be useful to give control to an external program and have it monitored by the master process.
-     */
-    final public function detach(): void
+    private function detach(): void
     {
         $identifiers = $this->getEventLoop()->getIdentifiers();
-        \array_walk($identifiers, $this->getEventLoop()->disable(...));
-        $this->getEventLoop()->stop();
+        \array_walk($identifiers, $this->getEventLoop()->cancel(...));
+        $this->eventLoop->stop();
+
         ($this->masterPublisher)(new Detach(\posix_getpid()));
-        unset($this->eventLoop, $this->reloadStrategies, $this->logger);
-        $this->onStart = null;
-        $this->onStop = null;
-        $this->onReload = null;
+
+        unset(
+            $this->eventLoop,
+            $this->logger,
+            $this->trafficStatisticStore,
+            $this->reloadStrategyTrigger,
+            $this->masterPublisher,
+            $this->onStart,
+            $this->onStop,
+            $this->onReload,
+        );
+
         \gc_collect_cycles();
         \gc_mem_caches();
+    }
+
+    /**
+     * Give control to an external program and have it monitored by the master process.
+     *
+     * @param string $path path to a binary executable or a script
+     * @param array $args array of argument strings passed to the program
+     * @see https://www.php.net/manual/en/function.pcntl-exec.php
+     */
+    public function exec(string $path, array $args = []): never
+    {
+        $this->detach();
+        $envVars = [...\getenv(), ...$_ENV];
+        \pcntl_exec($path, $args, $envVars);
+        exit(0);
     }
 }
