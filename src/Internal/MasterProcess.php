@@ -13,7 +13,6 @@ use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
-use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
 
 /**
@@ -105,8 +104,7 @@ final class MasterProcess
         }
 
         // Init event loop.
-        // Force use StreamSelectDriver in the master process because it uses pcntl_signal to handle signals, and it works better for this case.
-        $this->eventLoop = new StreamSelectDriver();
+        $this->eventLoop = new SupervisorDriver();
         EventLoop::setDriver($this->eventLoop);
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
@@ -116,9 +114,9 @@ final class MasterProcess
         $this->eventLoop->onSignal(SIGHUP, fn() => $this->stop());
         $this->eventLoop->onSignal(SIGTSTP, fn() => $this->stop());
         $this->eventLoop->onSignal(SIGTSTP, fn() => $this->stop());
-        $this->eventLoop->onSignal(SIGCHLD, fn() => $this->watchChildProcesses());
         $this->eventLoop->onSignal(SIGUSR1, fn() => $this->requestServerStatus());
         $this->eventLoop->onSignal(SIGUSR2, fn() => $this->reload());
+        $this->eventLoop->onChildProcessExit($this->onChildStop(...));
 
         $this->interprocess = new Interprocess();
         $this->serverStatus = new ServerStatus($this->pool->getWorkers(), true);
@@ -188,14 +186,6 @@ final class MasterProcess
             return true;
         } else {
             throw new PHPStreamServerException('fork fail');
-        }
-    }
-
-    private function watchChildProcesses(): void
-    {
-        while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
-            $exitCode = \pcntl_wexitstatus($status) ?: 0;
-            $this->onChildStop($pid, $exitCode);
         }
     }
 
