@@ -9,6 +9,7 @@ final readonly class Heartbeat
     public function __construct(
         public int $pid,
         public int $memory,
+        public int $time,
     ) {
     }
 }

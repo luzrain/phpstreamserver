@@ -23,7 +23,7 @@ class WorkerProcess
     final public const STOP_EXIT_CODE = 0;
     final public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
-    private const HEARTBEAT_PERIOD = 5;
+    public const HEARTBEAT_PERIOD = 3;
 
     private LoggerInterface $logger;
     private Driver $eventLoop;
@@ -165,8 +165,8 @@ class WorkerProcess
             startedAt: new \DateTimeImmutable('now'),
         ));
 
-        ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage()));
-        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage())));
+        ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage(), \hrtime(true)));
+        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage(), \hrtime(true))));
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void

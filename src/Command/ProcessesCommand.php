@@ -43,8 +43,9 @@ final class ProcessesCommand implements Command
                     'Connections',
                     'Requests',
                     'Bytes (RX / TX)',
+                    'Status',
                 ])
-                ->addRows(\array_map(array: $status->processes, callback: function (Process $w) {
+                ->addRows(\array_map(array: $status->getProcesses(), callback: function (Process $w) {
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
@@ -55,6 +56,11 @@ final class ProcessesCommand implements Command
                         $w->rx === 0 && $w->tx === 0
                             ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx))
                             : \sprintf('(%s / %s)', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx)),
+                        match(true) {
+                            $w->detached => '<color;bg=blue>[DETACHED]</>',
+                            $w->blocked => '<color;bg=yellow>[BLOCKED]</>',
+                            default => '<color;bg=green>[OK]</>',
+                        },
                     ];
                 }));
         } else {

@@ -11,12 +11,14 @@ final class Process
         public string $user,
         public string $name,
         public \DateTimeImmutable $startedAt,
+        public int $time = 0,
         public int $memory = 0,
         public bool $detached = false,
         public int $requests = 0,
         public int $rx = 0,
         public int $tx = 0,
         public int $connections = 0,
+        public bool $blocked = false,
     ) {
     }
 }

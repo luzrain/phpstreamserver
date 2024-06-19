@@ -39,7 +39,7 @@ final class WorkersCommand implements Command
                     'Worker',
                     'Count',
                 ])
-                ->addRows(\array_map(array: $status->workers, callback: fn(Worker $w) => [
+                ->addRows(\array_map(array: $status->getWorkers(), callback: fn(Worker $w) => [
                     $w->user,
                     $w->name,
                     $w->count,

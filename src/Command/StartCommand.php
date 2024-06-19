@@ -57,7 +57,7 @@ final class StartCommand implements Command
                         $w->name,
                         $w->count,
                     ];
-                }, $status->workers))
+                }, $status->getWorkers()))
             ;
         } else {
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";

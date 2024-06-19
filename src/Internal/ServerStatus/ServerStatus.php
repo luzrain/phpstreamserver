@@ -16,29 +16,35 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
+use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-/**
- * @todo: force delete connection when process reloaded or detached
- */
 final class ServerStatus
 {
-    public string $version;
-    public string $phpVersion;
-    public string $eventLoop;
-    public string $startFile;
-    public \DateTimeImmutable|null $startedAt;
-    public bool $isRunning;
+    public const BLOCKED_LABEL_PERSISTENCE = 30;
+    public const BLOCK_WARNING_TRESHOLD = 6;
+
+    public readonly string $version;
+    public readonly string $phpVersion;
+    public readonly string $eventLoop;
+    public readonly string $startFile;
+    public readonly \DateTimeImmutable|null $startedAt;
+    public readonly bool $isRunning;
 
     /**
      * @var list<Worker>
      */
-    public array $workers = [];
+    private array $workers = [];
 
     /**
      * @var array<positive-int, Process>
      */
-    public array $processes = [];
+    private array $processes = [];
+
+    /**
+     * @var array<positive-int, true>
+     */
+    private array $blockedProcesses = [];
 
     /**
      * @param iterable<WorkerProcess> $workers
@@ -70,10 +76,22 @@ final class ServerStatus
 
         $interprocess->subscribe(Heartbeat::class, function (Heartbeat $message) {
             $this->processes[$message->pid]->memory = $message->memory;
+            $this->processes[$message->pid]->time = $message->time;
+
+            if (!isset($this->blockedProcesses[$message->pid])) {
+                $this->processes[$message->pid]->blocked = false;
+            }
         });
 
         $interprocess->subscribe(Detach::class, function (Detach $message) {
             $this->processes[$message->pid]->detached = true;
+            $this->processes[$message->pid]->memory = 0;
+            $this->processes[$message->pid]->requests = 0;
+            $this->processes[$message->pid]->rx = 0;
+            $this->processes[$message->pid]->tx = 0;
+            $this->processes[$message->pid]->connections = 0;
+            $this->processes[$message->pid]->time = 0;
+            $this->processes[$message->pid]->blocked = false;
         });
 
         $interprocess->subscribe(RxtInc::class, function (RxtInc $message) {
@@ -102,14 +120,40 @@ final class ServerStatus
         unset($this->processes[$pid]);
     }
 
+    public function markProcessAsBlocked(int $pid): void
+    {
+        $this->blockedProcesses[$pid] = true;
+        $this->processes[$pid]->blocked = true;
+
+        EventLoop::delay(self::BLOCKED_LABEL_PERSISTENCE, function () use ($pid) {
+            unset($this->blockedProcesses[$pid]);
+        });
+    }
+
     public function getWorkersCount(): int
     {
         return \count($this->workers);
     }
 
+    /**
+     * @return list<Worker>
+     */
+    public function getWorkers(): array
+    {
+        return $this->workers;
+    }
+
     public function getProcessesCount(): int
     {
         return \count($this->processes);
+    }
+
+    /**
+     * @return list<Process>
+     */
+    public function getProcesses(): array
+    {
+        return \array_values($this->processes);
     }
 
     public function getTotalMemory(): int

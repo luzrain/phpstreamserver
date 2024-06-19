@@ -26,7 +26,7 @@ final class Server
     public const NAME = 'PHPStreamServer';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
 
-    private WorkerPool $pool;
+    private WorkerPool $workerPool;
     private MasterProcess $masterProcess;
 
     public function __construct(
@@ -50,18 +50,18 @@ final class Server
          */
         LoggerInterface|null $logger = null,
     ) {
-        $this->pool = new WorkerPool();
+        $this->workerPool = new WorkerPool();
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
             stopTimeout: $this->stopTimeout,
-            pool: $this->pool,
+            workerPool: $this->workerPool,
             logger: $logger ?? new Logger($logFile),
         );
     }
 
     public function addWorkers(WorkerProcess ...$workers): self
     {
-        \array_walk($workers, $this->pool->addWorker(...));
+        \array_walk($workers, $this->workerPool->addWorker(...));
 
         return $this;
     }
