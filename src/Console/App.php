@@ -22,29 +22,26 @@ final class App
 
         // Supress any output
         if (\in_array('-q', $arguments, true) || \in_array('--quiet', $arguments, true)) {
-            \ob_start(static fn() => '', 1);
+            StdoutHandler::disableStdout();
         }
 
         // Force show help
         if (\in_array('-h', $arguments, true) || \in_array('--help', $arguments, true)) {
-            $this->showHelp();
-            return 0;
+            return $this->showHelp();
         }
 
         foreach ($this->commands as $command) {
             if ($command->getCommand() === $option) {
-                $command->run($arguments);
-                return 0;
+                return $command->run($arguments);
             }
         }
 
         // Show help by default
-        $this->showHelp();
-        return 0;
+        return $this->showHelp();
     }
 
     /**
-     * @return array{string, array}
+     * @return array{string, list<string>}
      */
     private function parseCommand(string $cmd): array
     {
@@ -60,11 +57,11 @@ final class App
         return [$parts[0] ?? '', \array_filter(\explode(' ', $parts[1] ?? ''))];
     }
 
-    private function showHelp(): void
+    private function showHelp(): int
     {
-        echo Server::TITLE . "\n";
+        echo \sprintf("%s (%s)\n", Server::TITLE, Server::VERSION);
         echo "<color;fg=yellow>Usage:</>\n";
-        echo \sprintf("  %s %s <command> [options]\n", PHP_BINARY, Functions::getStartFile());
+        echo \sprintf("  %s <command> [options]\n", \basename(Functions::getStartFile()));
         echo "<color;fg=yellow>Options:</>\n";
         echo (new Table(indent: 1))->addRows([
             ['<color;fg=green>-h, --help</>', 'Show help'],
@@ -75,5 +72,7 @@ final class App
         echo (new Table(indent: 1))->addRows(\array_map(array: $this->commands, callback: function (Command $command) {
             return ["<color;fg=green>{$command->getCommand()}</>", $command->getHelp()];
         }));
+
+        return 0;
     }
 }
