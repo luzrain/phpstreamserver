@@ -57,9 +57,9 @@ final class ProcessesCommand implements Command
                             ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx))
                             : \sprintf('(%s / %s)', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx)),
                         match(true) {
-                            $w->detached => '<color;bg=blue>[DETACHED]</>',
-                            $w->blocked => '<color;bg=yellow>[BLOCKED]</>',
-                            default => '<color;bg=green>[OK]</>',
+                            $w->detached => '[<color;fg=cyan>DETACHED</>]',
+                            $w->blocked => '[<color;fg=yellow>BLOCKED</>]',
+                            default => '[<color;fg=green>OK</>]',
                         },
                     ];
                 }));
