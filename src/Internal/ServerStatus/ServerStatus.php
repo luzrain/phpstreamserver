@@ -12,7 +12,7 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Swawn;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
@@ -41,11 +41,6 @@ final class ServerStatus
     public array $processes = [];
 
     /**
-     * @var array<positive-int, Connection>
-     */
-    public array $connections = [];
-
-    /**
      * @param iterable<WorkerProcess> $workers
      */
     public function __construct(iterable $workers, bool $isRunning)
@@ -64,7 +59,7 @@ final class ServerStatus
 
     public function subscribeToWorkerMessages(Interprocess $interprocess): void
     {
-        $interprocess->subscribe(Swawn::class, function (Swawn $message) {
+        $interprocess->subscribe(Spawn::class, function (Spawn $message) {
             $this->processes[$message->pid] = new Process(
                 pid: $message->pid,
                 user: $message->user,
@@ -83,12 +78,10 @@ final class ServerStatus
 
         $interprocess->subscribe(RxtInc::class, function (RxtInc $message) {
             $this->processes[$message->pid]->rx += $message->rx;
-            $this->connections[$this->uniqueConnectionId($message->pid, $message->connectionId)]->rx += $message->rx;
         });
 
         $interprocess->subscribe(TxtInc::class, function (TxtInc $message) {
             $this->processes[$message->pid]->tx += $message->tx;
-            $this->connections[$this->uniqueConnectionId($message->pid, $message->connectionId)]->tx += $message->tx;
         });
 
         $interprocess->subscribe(RequestInc::class, function (RequestInc $message) {
@@ -97,25 +90,11 @@ final class ServerStatus
 
         $interprocess->subscribe(Connect::class, function (Connect $message) {
             $this->processes[$message->pid]->connections++;
-            $this->connections[$this->uniqueConnectionId($message->pid, $message->connectionId)] = new Connection(
-                pid: $message->pid,
-                connectedAt: $message->connectedAt,
-                localIp: $message->localIp,
-                localPort: $message->localPort,
-                remoteIp: $message->remoteIp,
-                remotePort: $message->remotePort,
-            );
         });
 
         $interprocess->subscribe(Disconnect::class, function (Disconnect $message) {
-            unset($this->connections[$this->uniqueConnectionId($message->pid, $message->connectionId)]);
             $this->processes[$message->pid]->connections--;
         });
-    }
-
-    private function uniqueConnectionId(int $pid, int $connectionId): int
-    {
-        return (int) ($pid . $connectionId);
     }
 
     public function deleteProcess(int $pid): void
@@ -136,6 +115,11 @@ final class ServerStatus
     public function getTotalMemory(): int
     {
         return (int) \array_sum(\array_map(static fn(Process $p) => $p->memory, $this->processes));
+    }
+
+    public function getTotalConnections(): int
+    {
+        return (int) \array_sum(\array_map(static fn(Process $p) => $p->connections, $this->processes));
     }
 
     public function isDetached(int $pid): bool

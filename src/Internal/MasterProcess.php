@@ -109,11 +109,12 @@ final class MasterProcess
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
 
-        $this->eventLoop->onSignal(SIGINT, fn() => $this->stop());
-        $this->eventLoop->onSignal(SIGTERM, fn() => $this->stop());
-        $this->eventLoop->onSignal(SIGHUP, fn() => $this->stop());
-        $this->eventLoop->onSignal(SIGTSTP, fn() => $this->stop());
-        $this->eventLoop->onSignal(SIGTSTP, fn() => $this->stop());
+        $stopCallback = fn() => $this->stop();
+        $this->eventLoop->onSignal(SIGINT, $stopCallback);
+        $this->eventLoop->onSignal(SIGTERM, $stopCallback);
+        $this->eventLoop->onSignal(SIGHUP, $stopCallback);
+        $this->eventLoop->onSignal(SIGTSTP, $stopCallback);
+        $this->eventLoop->onSignal(SIGTSTP, $stopCallback);
         $this->eventLoop->onSignal(SIGUSR1, fn() => $this->requestServerStatus());
         $this->eventLoop->onSignal(SIGUSR2, fn() => $this->reload());
         $this->eventLoop->onChildProcessExit($this->onChildStop(...));

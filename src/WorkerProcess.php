@@ -10,7 +10,7 @@ use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Swawn;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Psr\Log\LoggerInterface;
@@ -160,7 +160,7 @@ class WorkerProcess
         $this->trafficStatisticStore = new TrafficStatus($this->masterPublisher);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
-        ($this->masterPublisher)(new Swawn(
+        ($this->masterPublisher)(new Spawn(
             pid: \posix_getpid(),
             user: $this->getUser(),
             name: $this->getName(),

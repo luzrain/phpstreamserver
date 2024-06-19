@@ -35,7 +35,7 @@ final class TrafficStatus
     }
 
     /**
-     * @return Connection
+     * @return list<Connection>
      */
     public function getConnections(): array
     {
@@ -87,7 +87,6 @@ final class TrafficStatus
     {
         $this->connectionMap[$socket]->rx += $val;
         $this->rx += $val;
-
 
         ($this->masterPublisher)(new RxtInc(
             pid: \posix_getpid(),
