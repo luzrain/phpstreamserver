@@ -10,15 +10,15 @@ use Psr\Log\LoggerTrait;
 /**
  * @internal
  */
-final class Logger implements LoggerInterface
+final readonly class Logger implements LoggerInterface
 {
     use LoggerTrait;
 
     private const DEFAULT_JSON_FLAGS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR;
 
-    public function __construct(private readonly string|null $logFile = null)
+    public function __construct(private string|null $logFile = null)
     {
-        if ($this->logFile !== null && !\is_file($this->logFile)) {
+        if ($this->logFile !== null && !\file_exists($this->logFile)) {
             if (!\is_dir(\dirname($this->logFile))) {
                 \mkdir(\dirname($this->logFile), 0777, true);
             }
