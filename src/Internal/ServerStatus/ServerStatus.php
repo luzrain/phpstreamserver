@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\InterprocessPipe\Interprocess;
+use Luzrain\PHPStreamServer\Internal\InterprocessPipe;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
@@ -21,7 +21,7 @@ use Revolt\EventLoop\DriverFactory;
 
 final class ServerStatus
 {
-    public const BLOCKED_LABEL_PERSISTENCE = 30;
+    private const BLOCKED_LABEL_PERSISTENCE = 30;
     public const BLOCK_WARNING_TRESHOLD = 6;
 
     public readonly string $version;
@@ -67,9 +67,9 @@ final class ServerStatus
         }
     }
 
-    public function subscribeToWorkerMessages(Interprocess $interprocess): void
+    public function subscribeToWorkerMessages(InterprocessPipe $pipe): void
     {
-        $interprocess->subscribe(Spawn::class, function (Spawn $message) {
+        $pipe->subscribe(Spawn::class, function (Spawn $message) {
             $this->processes[$message->pid] = new Process(
                 pid: $message->pid,
                 user: $message->user,
@@ -78,7 +78,7 @@ final class ServerStatus
             );
         });
 
-        $interprocess->subscribe(Heartbeat::class, function (Heartbeat $message) {
+        $pipe->subscribe(Heartbeat::class, function (Heartbeat $message) {
             $this->processes[$message->pid]->memory = $message->memory;
             $this->processes[$message->pid]->time = $message->time;
 
@@ -87,7 +87,7 @@ final class ServerStatus
             }
         });
 
-        $interprocess->subscribe(Detach::class, function (Detach $message) {
+        $pipe->subscribe(Detach::class, function (Detach $message) {
             $this->processes[$message->pid]->detached = true;
             $this->processes[$message->pid]->memory = 0;
             $this->processes[$message->pid]->requests = 0;
@@ -98,23 +98,23 @@ final class ServerStatus
             $this->processes[$message->pid]->blocked = false;
         });
 
-        $interprocess->subscribe(RxtInc::class, function (RxtInc $message) {
+        $pipe->subscribe(RxtInc::class, function (RxtInc $message) {
             $this->processes[$message->pid]->rx += $message->rx;
         });
 
-        $interprocess->subscribe(TxtInc::class, function (TxtInc $message) {
+        $pipe->subscribe(TxtInc::class, function (TxtInc $message) {
             $this->processes[$message->pid]->tx += $message->tx;
         });
 
-        $interprocess->subscribe(RequestInc::class, function (RequestInc $message) {
+        $pipe->subscribe(RequestInc::class, function (RequestInc $message) {
             $this->processes[$message->pid]->requests += $message->requests;
         });
 
-        $interprocess->subscribe(Connect::class, function (Connect $message) {
+        $pipe->subscribe(Connect::class, function (Connect $message) {
             $this->processes[$message->pid]->connections++;
         });
 
-        $interprocess->subscribe(Disconnect::class, function (Disconnect $message) {
+        $pipe->subscribe(Disconnect::class, function (Disconnect $message) {
             $this->processes[$message->pid]->connections--;
         });
     }

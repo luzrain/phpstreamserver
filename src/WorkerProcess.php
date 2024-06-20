@@ -7,6 +7,7 @@ namespace Luzrain\PHPStreamServer;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\InterprocessPipe;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
@@ -33,7 +34,7 @@ class WorkerProcess
     private int $exitCode = 0;
     private TrafficStatus $trafficStatisticStore;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
-    private \Closure $masterPublisher;
+    private InterprocessPipe $pipe;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -55,14 +56,14 @@ class WorkerProcess
     }
 
     /**
+     * @param resource $workerPipeResource
      * @internal
      */
-    final public function run(LoggerInterface $logger, \Closure $masterPublisher): int
+    final public function run(LoggerInterface $logger, mixed $workerPipeResource): int
     {
         $this->logger = $logger;
-        $this->masterPublisher = $masterPublisher;
         $this->setUserAndGroup();
-        $this->initWorker();
+        $this->initWorker($workerPipeResource);
         $this->eventLoop->run();
 
         return $this->exitCode;
@@ -134,19 +135,22 @@ class WorkerProcess
         }
     }
 
-    private function initWorker(): void
+    /**
+     * @param resource $workerPipeResource
+     */
+    private function initWorker(mixed $workerPipeResource): void
     {
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->getName()));
         }
 
-        $this->pid = \posix_getpid();
-
         /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
         EventLoop::setDriver($this->eventLoop);
         $this->setErrorHandler(ErrorHandler::handleException(...));
+        $this->pid = \posix_getpid();
+        $this->pipe = new InterprocessPipe($workerPipeResource);
 
         // onStart callback
         $this->eventLoop->defer(function (): void {
@@ -162,18 +166,18 @@ class WorkerProcess
             \gc_mem_caches();
         });
 
-        $this->trafficStatisticStore = new TrafficStatus($this->masterPublisher);
+        $this->trafficStatisticStore = new TrafficStatus($this->pipe);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
-        ($this->masterPublisher)(new Spawn(
+        $this->pipe->publish(new Spawn(
             pid: $this->pid,
             user: $this->getUser(),
             name: $this->getName(),
             startedAt: new \DateTimeImmutable('now'),
         ));
 
-        ($this->masterPublisher)(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true)));
-        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => ($this->masterPublisher)(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true))));
+        $this->pipe->publish(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true)));
+        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => $this->pipe->publish(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true))));
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -200,25 +204,16 @@ class WorkerProcess
         }
     }
 
-    private function detach(): void
+    public function detach(): void
     {
         $identifiers = $this->getEventLoop()->getIdentifiers();
         \array_walk($identifiers, $this->getEventLoop()->cancel(...));
         $this->eventLoop->stop();
-
-        ($this->masterPublisher)(new Detach($this->pid));
-
-        unset(
-            $this->eventLoop,
-            $this->logger,
-            $this->trafficStatisticStore,
-            $this->reloadStrategyTrigger,
-            $this->masterPublisher,
-            $this->onStart,
-            $this->onStop,
-            $this->onReload,
-        );
-
+        $this->pipe->publish(new Detach($this->pid));
+        unset($this->trafficStatisticStore, $this->reloadStrategyTrigger, $this->pipe);
+        $this->onStart = null;
+        $this->onStop = null;
+        $this->onReload = null;
         \gc_collect_cycles();
         \gc_mem_caches();
     }

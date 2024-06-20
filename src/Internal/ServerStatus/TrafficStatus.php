@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
+use Luzrain\PHPStreamServer\Internal\InterprocessPipe;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
@@ -29,7 +30,7 @@ final class TrafficStatus
     public int $connections = 0;
     public int $requests = 0;
 
-    public function __construct(private \Closure $masterPublisher)
+    public function __construct(private readonly InterprocessPipe $pipe)
     {
         $this->connectionMap = new \WeakMap();
     }
@@ -59,7 +60,7 @@ final class TrafficStatus
         $this->connections++;
         $this->connectionMap[$socket] = $connection;
 
-        ($this->masterPublisher)(new Connect(
+        $this->pipe->publish(new Connect(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             connectedAt: $connection->connectedAt,
@@ -74,7 +75,7 @@ final class TrafficStatus
     {
         unset($this->connectionMap[$socket]);
 
-        ($this->masterPublisher)(new Disconnect(
+        $this->pipe->publish(new Disconnect(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
         ));
@@ -88,7 +89,7 @@ final class TrafficStatus
         $this->connectionMap[$socket]->rx += $val;
         $this->rx += $val;
 
-        ($this->masterPublisher)(new RxtInc(
+        $this->pipe->publish(new RxtInc(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             rx: $val,
@@ -103,7 +104,7 @@ final class TrafficStatus
         $this->connectionMap[$socket]->tx += $val;
         $this->tx += $val;
 
-        ($this->masterPublisher)(new TxtInc(
+        $this->pipe->publish(new TxtInc(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             tx: $val,
@@ -114,7 +115,7 @@ final class TrafficStatus
     {
         $this->requests += $val;
 
-        ($this->masterPublisher)(new RequestInc(
+        $this->pipe->publish(new RequestInc(
             pid: \posix_getpid(),
             requests: $val,
         ));

@@ -6,7 +6,6 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\InterprocessPipe\Interprocess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
@@ -33,8 +32,13 @@ final class MasterProcess
     private Suspension $suspension;
     private int $status = self::STATUS_STARTING;
     private int $exitCode = 0;
-    private Interprocess $interprocess;
+    private InterprocessPipe $pipe;
     private ServerStatus $serverStatus;
+
+    /**
+     * @var resource $workerPipeResource
+     */
+    private mixed $workerPipeResource;
 
     public function __construct(
         string|null $pidFile,
@@ -109,9 +113,10 @@ final class MasterProcess
         $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = $this->eventLoop->getSuspension();
 
-        $this->interprocess = new Interprocess();
+        [$masterPipe, $this->workerPipeResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $this->pipe = new InterprocessPipe($masterPipe);
         $this->serverStatus = new ServerStatus($this->workerPool->getWorkers(), true);
-        $this->serverStatus->subscribeToWorkerMessages($this->interprocess);
+        $this->serverStatus->subscribeToWorkerMessages($this->pipe);
 
         $stopCallback = fn() => $this->stop();
         foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT] as $signo) {
@@ -192,13 +197,14 @@ final class MasterProcess
     // Runs in forked process
     private function runWorker(WorkerProcess $worker): int
     {
+        $this->pipe->free();
         $this->eventLoop->queue(fn() => $this->eventLoop->stop());
         $this->eventLoop->run();
-        unset($this->suspension, $this->eventLoop, $this->workerPool);
+        unset($this->suspension, $this->pipe, $this->serverStatus, $this->workerPool);
         \gc_collect_cycles();
         \gc_mem_caches();
 
-        return $worker->run($this->logger, $this->interprocess->createPublisherForWorkerProcess());
+        return $worker->run($this->logger, $this->workerPipeResource);
     }
 
     private function monitorWorkerStatus(): void

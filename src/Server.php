@@ -26,7 +26,11 @@ final class Server
     public const NAME = 'PHPStreamServer';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
 
-    private WorkerPool $workerPool;
+    /**
+     * @var \WeakReference<WorkerPool>
+     */
+    private \WeakReference $workerPool;
+
     private MasterProcess $masterProcess;
 
     public function __construct(
@@ -50,18 +54,19 @@ final class Server
          */
         LoggerInterface|null $logger = null,
     ) {
-        $this->workerPool = new WorkerPool();
+        $workerPool = new WorkerPool();
+        $this->workerPool = \WeakReference::create($workerPool);
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
             stopTimeout: $this->stopTimeout,
-            workerPool: $this->workerPool,
+            workerPool: $workerPool,
             logger: $logger ?? new Logger($logFile),
         );
     }
 
     public function addWorkers(WorkerProcess ...$workers): self
     {
-        \array_walk($workers, $this->workerPool->addWorker(...));
+        \array_walk($workers, $this->workerPool->get()->addWorker(...));
 
         return $this;
     }

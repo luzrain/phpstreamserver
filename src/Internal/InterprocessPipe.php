@@ -2,23 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\InterprocessPipe;
+namespace Luzrain\PHPStreamServer\Internal;
 
 use Revolt\EventLoop;
 
-final class Interprocess
+final class InterprocessPipe
 {
     private const READ_BUFFER = 65536;
-
-    /**
-     * @var resource
-     */
-    private mixed $readerResource;
-
-    /**
-     * @var resource
-     */
-    private mixed $writerResource;
 
     /**
      * @var array<\Closure>
@@ -26,22 +16,21 @@ final class Interprocess
     private array $subscribers = [];
 
     private string $readBuffer = '';
-
     private string $writeBuffer = '';
+    private string $onReadableCallbackId;
+    private string $onWritableCallbackId = '';
 
-    private string $callbackId;
-
-    public function __construct()
+    /**
+     * @param resource $pipe
+     */
+    public function __construct(private readonly mixed $pipe, bool $read = true)
     {
-        [$this->readerResource, $this->writerResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        \stream_set_blocking($this->pipe, false);
+        \stream_set_read_buffer($this->pipe, 0);
+        \stream_set_write_buffer($this->pipe, 0);
 
-        \stream_set_blocking($this->readerResource, false);
-        \stream_set_blocking($this->writerResource, false);
-        \stream_set_read_buffer($this->readerResource, 0);
-        \stream_set_write_buffer($this->writerResource, 0);
-
-        EventLoop::onReadable($this->readerResource, function () {
-            foreach ($this->read() as $payload) {
+        $this->onReadableCallbackId = EventLoop::onReadable($this->pipe, function () {
+            foreach ($this->read() ?? [] as $payload) {
                 /** @var object $message */
                 $message = \unserialize($payload);
                 foreach ($this->subscribers[$message::class] ?? [] as $subscriber) {
@@ -56,7 +45,7 @@ final class Interprocess
      */
     private function read(): \Generator
     {
-        while (false !== $chunk = \stream_get_line($this->readerResource, self::READ_BUFFER, "\r\n")) {
+        while (false !== $chunk = \stream_get_line($this->pipe, self::READ_BUFFER, "\r\n")) {
             if (\str_ends_with($chunk, 'END')) {
                 yield \substr($this->readBuffer . $chunk, 0, -3);
                 $this->readBuffer = '';
@@ -67,7 +56,7 @@ final class Interprocess
     }
 
     /**
-     * @param non-empty-string $bytes
+     * @param string $bytes
      */
     private function write(string $bytes): void
     {
@@ -78,16 +67,16 @@ final class Interprocess
         }
 
         $length = \strlen($bytes);
-        $written = (int) \fwrite($this->writerResource, $bytes);
+        $written = (int) \fwrite($this->pipe, $bytes);
 
         if ($length === $written) {
             return;
         }
 
-        if (!isset($this->callbackId)) {
+        if ($this->onWritableCallbackId === '') {
             $writeBuffer = &$this->writeBuffer;
-            $this->callbackId = EventLoop::disable(EventLoop::onWritable(
-                $this->writerResource,
+            $this->onWritableCallbackId = EventLoop::disable(EventLoop::onWritable(
+                $this->pipe,
                 static function ($callbackId, $writeResource) use (&$writeBuffer) {
                     $written = (int) \fwrite($writeResource, $writeBuffer);
                     $writeBuffer = \substr($writeBuffer, $written);
@@ -99,19 +88,7 @@ final class Interprocess
         }
 
         $this->writeBuffer = \substr($bytes, $written);
-        EventLoop::enable($this->callbackId);
-    }
-
-    /**
-     * @return \Closure(object): void
-     */
-    public function createPublisherForWorkerProcess(): \Closure
-    {
-        $this->subscribers = [];
-
-        return function (object $message): void {
-            $this->write(\serialize($message) . "END\r\n");
-        };
+        EventLoop::enable($this->onWritableCallbackId);
     }
 
     /**
@@ -122,5 +99,16 @@ final class Interprocess
     public function subscribe(string $class, \Closure $closure): void
     {
         $this->subscribers[$class][] = $closure;
+    }
+
+    public function publish(object $message): void
+    {
+        $this->write(\serialize($message) . "END\r\n");
+    }
+
+    public function free(): void
+    {
+        EventLoop::cancel($this->onReadableCallbackId);
+        EventLoop::cancel($this->onWritableCallbackId);
     }
 }
