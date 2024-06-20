@@ -25,6 +25,9 @@ class WorkerProcess
     private const GC_PERIOD = 180;
     public const HEARTBEAT_PERIOD = 3;
 
+    public readonly int $id;
+    public readonly int $pid;
+
     private LoggerInterface $logger;
     private Driver $eventLoop;
     private int $exitCode = 0;
@@ -47,6 +50,8 @@ class WorkerProcess
         private \Closure|null $onStop = null,
         private \Closure|null $onReload = null,
     ) {
+        static $nextId = 0;
+        $this->id = ++$nextId;
     }
 
     /**
@@ -136,6 +141,8 @@ class WorkerProcess
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->getName()));
         }
 
+        $this->pid = \posix_getpid();
+
         /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
         EventLoop::setDriver($this->eventLoop);
@@ -159,14 +166,14 @@ class WorkerProcess
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
         ($this->masterPublisher)(new Spawn(
-            pid: \posix_getpid(),
+            pid: $this->pid,
             user: $this->getUser(),
             name: $this->getName(),
             startedAt: new \DateTimeImmutable('now'),
         ));
 
-        ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage(), \hrtime(true)));
-        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => ($this->masterPublisher)(new Heartbeat(\posix_getpid(), \memory_get_usage(), \hrtime(true))));
+        ($this->masterPublisher)(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true)));
+        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => ($this->masterPublisher)(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true))));
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -199,7 +206,7 @@ class WorkerProcess
         \array_walk($identifiers, $this->getEventLoop()->cancel(...));
         $this->eventLoop->stop();
 
-        ($this->masterPublisher)(new Detach(\posix_getpid()));
+        ($this->masterPublisher)(new Detach($this->pid));
 
         unset(
             $this->eventLoop,

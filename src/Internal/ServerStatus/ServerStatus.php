@@ -32,7 +32,7 @@ final class ServerStatus
     public readonly bool $isRunning;
 
     /**
-     * @var list<Worker>
+     * @var list<positive-int, Worker>
      */
     private array $workers = [];
 
@@ -59,7 +59,11 @@ final class ServerStatus
         $this->isRunning = $isRunning;
 
         foreach ($workers as $worker) {
-            $this->workers[] = new Worker($worker->getUser(), $worker->getName(), $worker->getCount());
+            $this->workers[$worker->id] = new Worker(
+                user: $worker->getUser(),
+                name: $worker->getName(),
+                count: $worker->getCount(),
+            );
         }
     }
 
@@ -140,7 +144,7 @@ final class ServerStatus
      */
     public function getWorkers(): array
     {
-        return $this->workers;
+        return \array_values($this->workers);
     }
 
     public function getProcessesCount(): int
