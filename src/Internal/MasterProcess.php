@@ -347,24 +347,31 @@ final class MasterProcess
 
     private function requestServerStatus(): void
     {
-        // rewrite async
-        $fd = \fopen($this->pipeFile, 'w');
-        \fwrite($fd, serialize($this->serverStatus));
-        \fclose($fd);
+        $pipe = new InterprocessPipe(\fopen($this->pipeFile, 'w'));
+        $pipe->publish($this->serverStatus);
     }
 
     public function getServerStatus(): ServerStatus
     {
-        if ($this->isRunning() && \file_exists($this->pipeFile)) {
-            \posix_kill($this->getPid(), SIGUSR1);
-            $fd = \fopen($this->pipeFile, 'r');
-            \stream_set_blocking($fd, true);
-            /** @var ServerStatus $status */
-            $status = \unserialize((string) \stream_get_contents($fd));
-        } else {
+        if ($this->status === self::STATUS_RUNNING) {
+            return $this->serverStatus;
+        }
+
+        if (!$this->isRunning() || !\file_exists($this->pipeFile)) {
             return new ServerStatus($this->workerPool->getWorkers(), false);
         }
 
-        return $status;
+        $suspension = EventLoop::getSuspension();
+        $pipe = new InterprocessPipe(\fopen($this->pipeFile, 'r+'));
+        $pipe->subscribe(ServerStatus::class, static function (ServerStatus $serverStatus) use ($suspension) {
+            $suspension->resume($serverStatus);
+        });
+
+        \posix_kill($this->getPid(), SIGUSR1);
+
+        /** @var ServerStatus $serverStatus */
+        $serverStatus = $suspension->suspend();
+
+        return $serverStatus;
     }
 }

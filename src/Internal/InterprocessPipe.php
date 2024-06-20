@@ -23,21 +23,25 @@ final class InterprocessPipe
     /**
      * @param resource $pipe
      */
-    public function __construct(private readonly mixed $pipe, bool $read = true)
+    public function __construct(private readonly mixed $pipe)
     {
         \stream_set_blocking($this->pipe, false);
         \stream_set_read_buffer($this->pipe, 0);
         \stream_set_write_buffer($this->pipe, 0);
+        $meta = \stream_get_meta_data($pipe);
+        $isReadable = \str_contains($meta['mode'], 'r') || \str_contains($meta['mode'], '+');
 
-        $this->onReadableCallbackId = EventLoop::onReadable($this->pipe, function () {
-            foreach ($this->read() ?? [] as $payload) {
-                /** @var object $message */
-                $message = \unserialize($payload);
-                foreach ($this->subscribers[$message::class] ?? [] as $subscriber) {
-                    $subscriber($message);
+        if ($isReadable) {
+            $this->onReadableCallbackId = EventLoop::onReadable($this->pipe, function () {
+                foreach ($this->read() ?? [] as $payload) {
+                    /** @var object $message */
+                    $message = \unserialize($payload);
+                    foreach ($this->subscribers[$message::class] ?? [] as $subscriber) {
+                        $subscriber($message);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     /**
