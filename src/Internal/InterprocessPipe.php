@@ -10,11 +10,7 @@ final class InterprocessPipe
 {
     private const READ_BUFFER = 65536;
 
-    /**
-     * @var array<\Closure>
-     */
     private array $subscribers = [];
-
     private string $readBuffer = '';
     private string $writeBuffer = '';
     private string $onReadableCallbackId;
@@ -101,7 +97,17 @@ final class InterprocessPipe
      */
     public function subscribe(string $class, \Closure $closure): void
     {
-        $this->subscribers[$class][] = $closure;
+        $this->subscribers[$class][\spl_object_id($closure)] = $closure;
+    }
+
+    /**
+     * @template T of object
+     * @param class-string<T> $class
+     * @param \Closure(T): void $closure
+     */
+    public function unsubscribe(string $class, \Closure $closure): void
+    {
+        unset($this->subscribers[$class][\spl_object_id($closure)]);
     }
 
     public function publish(object $message): void

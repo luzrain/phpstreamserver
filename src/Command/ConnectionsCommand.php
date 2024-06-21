@@ -29,7 +29,7 @@ final class ConnectionsCommand implements Command
 
     public function run(array $arguments): int
     {
-        $connections = $this->masterProcess->getServerStatus()->connections;
+        $connections = $this->masterProcess->getServerConnections();
 
         echo "❯ Connections\n";
 

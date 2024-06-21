@@ -12,7 +12,6 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
-use Luzrain\PHPStreamServer\Server\Connection;
 
 /**
  * @readonly
@@ -51,6 +50,8 @@ final class TrafficStatus
         \assert($remoteAddress instanceof InternetAddress);
 
         $connection = new Connection(
+            pid: \posix_getpid(),
+            connectedAt: new \DateTimeImmutable('now'),
             localIp: $localAddress->getAddress(),
             localPort: (string) $localAddress->getPort(),
             remoteIp: $remoteAddress->getAddress(),

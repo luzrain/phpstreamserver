@@ -9,6 +9,7 @@ use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\InterprocessPipe;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
@@ -102,6 +103,7 @@ class WorkerProcess
 
         $this->eventLoop->onSignal(SIGTERM, fn () => $this->stop());
         $this->eventLoop->onSignal(SIGUSR1, fn () => $this->reload());
+        $this->eventLoop->onSignal(SIGUSR2, fn () => $this->pipe->publish(new Connections($this->trafficStatisticStore->getConnections())));
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {

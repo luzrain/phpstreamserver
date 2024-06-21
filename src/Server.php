@@ -15,6 +15,7 @@ use Luzrain\PHPStreamServer\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\Console\App;
 use Luzrain\PHPStreamServer\Internal\Logger;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\WorkerPool;
 use Psr\Log\LoggerInterface;
@@ -26,7 +27,9 @@ final class Server
     public const NAME = 'PHPStreamServer';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
 
-    /** @var \WeakReference<WorkerPool> */
+    /**
+     * @var \WeakReference<WorkerPool>
+     */
     private \WeakReference $workerPool;
     private MasterProcess $masterProcess;
 
@@ -94,5 +97,13 @@ final class Server
     public function getServerStatus(): ServerStatus
     {
         return $this->masterProcess->getServerStatus();
+    }
+
+    /**
+     * @return list<Connection>
+     */
+    public function getServerConnections(): array
+    {
+        return $this->masterProcess->getServerConnections();
     }
 }
