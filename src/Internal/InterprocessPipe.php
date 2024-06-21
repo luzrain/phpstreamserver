@@ -21,27 +21,26 @@ final class InterprocessPipe
     private string $onWritableCallbackId = '';
 
     /**
-     * @param resource $pipe
+     * @param resource $rxPipe
+     * @param resource $txPipe
      */
-    public function __construct(private readonly mixed $pipe)
+    public function __construct(private mixed $rxPipe, private mixed $txPipe = null)
     {
-        \stream_set_blocking($this->pipe, false);
-        \stream_set_read_buffer($this->pipe, 0);
-        \stream_set_write_buffer($this->pipe, 0);
-        $meta = \stream_get_meta_data($pipe);
-        $isReadable = \str_contains($meta['mode'], 'r') || \str_contains($meta['mode'], '+');
+        $this->txPipe ??= $this->rxPipe;
+        \stream_set_blocking($this->rxPipe, false);
+        \stream_set_blocking($this->txPipe, false);
+        \stream_set_read_buffer($this->rxPipe, 0);
+        \stream_set_write_buffer($this->txPipe, 0);
 
-        if ($isReadable) {
-            $this->onReadableCallbackId = EventLoop::onReadable($this->pipe, function () {
-                foreach ($this->read() ?? [] as $payload) {
-                    /** @var object $message */
-                    $message = \unserialize($payload);
-                    foreach ($this->subscribers[$message::class] ?? [] as $subscriber) {
-                        $subscriber($message);
-                    }
+        $this->onReadableCallbackId = EventLoop::onReadable($this->rxPipe, function () {
+            foreach ($this->read() ?? [] as $payload) {
+                /** @var object $message */
+                $message = \unserialize($payload);
+                foreach ($this->subscribers[$message::class] ?? [] as $subscriber) {
+                    $subscriber($message);
                 }
-            });
-        }
+            }
+        });
     }
 
     /**
@@ -49,7 +48,7 @@ final class InterprocessPipe
      */
     private function read(): \Generator
     {
-        while (false !== $chunk = \stream_get_line($this->pipe, self::READ_BUFFER, "\r\n")) {
+        while (false !== $chunk = \stream_get_line($this->rxPipe, self::READ_BUFFER, "\r\n")) {
             if (\str_ends_with($chunk, 'END')) {
                 yield \substr($this->readBuffer . $chunk, 0, -3);
                 $this->readBuffer = '';
@@ -71,7 +70,7 @@ final class InterprocessPipe
         }
 
         $length = \strlen($bytes);
-        $written = (int) \fwrite($this->pipe, $bytes);
+        $written = (int) \fwrite($this->txPipe, $bytes);
 
         if ($length === $written) {
             return;
@@ -80,7 +79,7 @@ final class InterprocessPipe
         if ($this->onWritableCallbackId === '') {
             $writeBuffer = &$this->writeBuffer;
             $this->onWritableCallbackId = EventLoop::disable(EventLoop::onWritable(
-                $this->pipe,
+                $this->txPipe,
                 static function ($callbackId, $writeResource) use (&$writeBuffer) {
                     $written = (int) \fwrite($writeResource, $writeBuffer);
                     $writeBuffer = \substr($writeBuffer, $written);

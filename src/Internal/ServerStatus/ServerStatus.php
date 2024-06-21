@@ -61,8 +61,8 @@ final class ServerStatus
         foreach ($workers as $worker) {
             $this->workers[$worker->id] = new Worker(
                 user: $worker->getUser(),
-                name: $worker->getName(),
-                count: $worker->getCount(),
+                name: $worker->name,
+                count: $worker->count,
             );
         }
     }

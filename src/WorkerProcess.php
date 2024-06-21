@@ -28,10 +28,9 @@ class WorkerProcess
 
     public readonly int $id;
     public readonly int $pid;
-
-    private LoggerInterface $logger;
-    private Driver $eventLoop;
     private int $exitCode = 0;
+    public LoggerInterface $logger;
+    private Driver $eventLoop;
     private TrafficStatus $trafficStatisticStore;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
     private InterprocessPipe $pipe;
@@ -42,9 +41,9 @@ class WorkerProcess
      * @param null|\Closure(self):void $onReload
      */
     public function __construct(
-        private string $name = 'none',
-        private int $count = 1,
-        private bool $reloadable = true,
+        public readonly string $name = 'none',
+        public readonly int $count = 1,
+        private readonly bool $reloadable = true,
         private string|null $user = null,
         private string|null $group = null,
         private \Closure|null $onStart = null,
@@ -69,68 +68,12 @@ class WorkerProcess
         return $this->exitCode;
     }
 
-    final public function startHttpServer(HttpServer $server): void
-    {
-        $server->start($this->logger, $this->trafficStatisticStore, $this->reloadStrategyTrigger);
-    }
-
-    final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
-    {
-        $this->reloadStrategyTrigger->addReloadStrategies(...$reloadStrategies);
-    }
-
-    final public function setLogger(LoggerInterface $logger): void
-    {
-        $this->logger = $logger;
-    }
-
-    final public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
-    }
-
-    final public function getEventLoop(): Driver
-    {
-        return $this->eventLoop;
-    }
-
-    final public function getName(): string
-    {
-        return $this->name;
-    }
-
-    final public function getCount(): int
-    {
-        return $this->count;
-    }
-
-    final public function getUser(): string
-    {
-        return $this->user ?? Functions::getCurrentUser();
-    }
-
-    final public function getGroup(): string
-    {
-        return $this->group ?? Functions::getCurrentGroup();
-    }
-
-    /**
-     * @param \Closure(\Throwable):void $errorHandler
-     */
-    final public function setErrorHandler(\Closure $errorHandler): void
-    {
-        $this->eventLoop->setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
-            $errorHandler($exception);
-            $this->reloadStrategyTrigger->emitException($exception);
-        });
-    }
-
     private function setUserAndGroup(): void
     {
         try {
             Functions::setUserAndGroup($this->user, $this->group);
         } catch (UserChangeException $e) {
-            $this->getLogger()->warning($e->getMessage(), ['worker' => $this->getName()]);
+            $this->logger->warning($e->getMessage(), ['worker' => $this->name]);
             $this->user = Functions::getCurrentUser();
         }
     }
@@ -142,7 +85,7 @@ class WorkerProcess
     {
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
-            \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->getName()));
+            \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->name));
         }
 
         /** @psalm-suppress InaccessibleProperty */
@@ -158,7 +101,7 @@ class WorkerProcess
         });
 
         $this->eventLoop->onSignal(SIGTERM, fn () => $this->stop());
-        $this->eventLoop->onSignal(SIGUSR2, fn () => $this->reload());
+        $this->eventLoop->onSignal(SIGUSR1, fn () => $this->reload());
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
@@ -172,7 +115,7 @@ class WorkerProcess
         $this->pipe->publish(new Spawn(
             pid: $this->pid,
             user: $this->getUser(),
-            name: $this->getName(),
+            name: $this->name,
             startedAt: new \DateTimeImmutable('now'),
         ));
 
@@ -206,8 +149,8 @@ class WorkerProcess
 
     public function detach(): void
     {
-        $identifiers = $this->getEventLoop()->getIdentifiers();
-        \array_walk($identifiers, $this->getEventLoop()->cancel(...));
+        $identifiers = $this->eventLoop->getIdentifiers();
+        \array_walk($identifiers, $this->eventLoop->cancel(...));
         $this->eventLoop->stop();
         $this->pipe->publish(new Detach($this->pid));
         unset($this->trafficStatisticStore, $this->reloadStrategyTrigger, $this->pipe);
@@ -231,5 +174,41 @@ class WorkerProcess
         $envVars = [...\getenv(), ...$_ENV];
         \pcntl_exec($path, $args, $envVars);
         exit(0);
+    }
+
+    final public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * @param \Closure(\Throwable):void $errorHandler
+     */
+    final public function setErrorHandler(\Closure $errorHandler): void
+    {
+        $this->eventLoop->setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
+            $errorHandler($exception);
+            $this->reloadStrategyTrigger->emitException($exception);
+        });
+    }
+
+    final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
+    {
+        $this->reloadStrategyTrigger->addReloadStrategies(...$reloadStrategies);
+    }
+
+    final public function startHttpServer(HttpServer $server): void
+    {
+        $server->start($this->logger, $this->trafficStatisticStore, $this->reloadStrategyTrigger);
+    }
+
+    final public function getUser(): string
+    {
+        return $this->user ?? Functions::getCurrentUser();
+    }
+
+    final public function getGroup(): string
+    {
+        return $this->group ?? Functions::getCurrentGroup();
     }
 }

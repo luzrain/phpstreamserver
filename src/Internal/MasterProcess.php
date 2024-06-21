@@ -27,12 +27,14 @@ final class MasterProcess
     private static bool $registered = false;
     private readonly string $startFile;
     private readonly string $pidFile;
-    private readonly string $pipeFile;
+    private readonly string $rxPipeFile;
+    private readonly string $txPipeFile;
     private Driver $eventLoop;
     private Suspension $suspension;
     private int $status = self::STATUS_STARTING;
     private int $exitCode = 0;
-    private InterprocessPipe $pipe;
+    private InterprocessPipe $workerPipe;
+    private InterprocessPipe $statusPipe;
     private ServerStatus $serverStatus;
 
     /**
@@ -60,13 +62,13 @@ final class MasterProcess
         self::$registered = true;
         $this->startFile = Functions::getStartFile();
 
-        $runDirectory = \posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir();
-        $this->pidFile = $pidFile ?? \sprintf('%s/phpss.%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
-        $this->pipeFile = \sprintf('%s/%s.pipe', \pathinfo($this->pidFile, PATHINFO_DIRNAME), \pathinfo($this->pidFile, PATHINFO_FILENAME));
-
-        if (!\is_dir($pidFileDir = \dirname($this->pidFile))) {
-            \mkdir(directory: $pidFileDir, recursive: true);
-        }
+        $runDirectory = $pidFile === null
+            ? (\posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir())
+            : \pathinfo($pidFile, PATHINFO_DIRNAME)
+        ;
+        $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
+        $this->rxPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory , \hash('xxh32', $this->startFile . 'rx'));
+        $this->txPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory , \hash('xxh32', $this->startFile . 'tx'));
     }
 
     public function run(bool $daemonize = false): int
@@ -84,8 +86,8 @@ final class MasterProcess
             StdoutHandler::disableStdout();
         }
 
-        $this->initServer();
         $this->saveMasterPid();
+        $this->initServer();
         $this->spawnWorkers();
         $this->status = self::STATUS_RUNNING;
         $this->logger->info(Server::NAME . ' has started');
@@ -114,16 +116,19 @@ final class MasterProcess
         $this->suspension = $this->eventLoop->getSuspension();
 
         [$masterPipe, $this->workerPipeResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        $this->pipe = new InterprocessPipe($masterPipe);
+        $this->workerPipe = new InterprocessPipe($masterPipe);
+
+        $this->statusPipe = new InterprocessPipe(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
+        $this->statusPipe->subscribe(ServerStatusRequest::class, fn () => $this->statusPipe->publish($this->serverStatus));
+
         $this->serverStatus = new ServerStatus($this->workerPool->getWorkers(), true);
-        $this->serverStatus->subscribeToWorkerMessages($this->pipe);
+        $this->serverStatus->subscribeToWorkerMessages($this->workerPipe);
 
         $stopCallback = fn() => $this->stop();
         foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT] as $signo) {
             $this->eventLoop->onSignal($signo, $stopCallback);
         }
-        $this->eventLoop->onSignal(SIGUSR1, fn() => $this->requestServerStatus());
-        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->reload());
+        $this->eventLoop->onSignal(SIGUSR1, fn() => $this->reload());
         $this->eventLoop->onChildProcessExit($this->onChildStop(...));
         $this->eventLoop->repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
 
@@ -156,12 +161,20 @@ final class MasterProcess
 
     private function saveMasterPid(): void
     {
+        if (!\is_dir($pidFileDir = \dirname($this->pidFile))) {
+            \mkdir(directory: $pidFileDir, recursive: true);
+        }
+
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
             throw new PHPStreamServerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
 
-        if(!\file_exists($this->pipeFile)) {
-            \posix_mkfifo($this->pipeFile, 0644);
+        if(!\file_exists($this->rxPipeFile)) {
+            \posix_mkfifo($this->rxPipeFile, 0644);
+        }
+
+        if(!\file_exists($this->txPipeFile)) {
+            \posix_mkfifo($this->txPipeFile, 0644);
         }
     }
 
@@ -169,7 +182,7 @@ final class MasterProcess
     {
         $this->eventLoop->defer(function (): void {
             foreach ($this->workerPool->getWorkers() as $worker) {
-                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->getCount()) {
+                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->count) {
                     if ($this->spawnWorker($worker)) {
                         return;
                     }
@@ -197,10 +210,10 @@ final class MasterProcess
     // Runs in forked process
     private function runWorker(WorkerProcess $worker): int
     {
-        $this->pipe->free();
+        $this->workerPipe->free();
         $this->eventLoop->queue(fn() => $this->eventLoop->stop());
         $this->eventLoop->run();
-        unset($this->suspension, $this->pipe, $this->serverStatus, $this->workerPool);
+        unset($this->suspension, $this->workerPipe, $this->serverStatus, $this->workerPool);
         \gc_collect_cycles();
         \gc_mem_caches();
 
@@ -215,7 +228,7 @@ final class MasterProcess
                 $this->serverStatus->markProcessAsBlocked($process->pid);
                 $this->logger->warning(\sprintf(
                     'Worker %s[pid:%d] blocked event loop for more than %s seconds',
-                    $this->workerPool->getWorkerByPid($process->pid)->getName(),
+                    $this->workerPool->getWorkerByPid($process->pid)->name,
                     $process->pid,
                     $blockTime,
                 ));
@@ -232,9 +245,9 @@ final class MasterProcess
         switch ($this->status) {
             case self::STATUS_RUNNING:
                 match ($exitCode) {
-                    0 => $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
-                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->getName(), $pid)),
-                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
+                    0 => $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
+                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
+                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
                 };
                 // Restart worker
                 $this->spawnWorker($worker);
@@ -254,8 +267,12 @@ final class MasterProcess
             \unlink($this->pidFile);
         }
 
-        if (\file_exists($this->pipeFile)) {
-            \unlink($this->pipeFile);
+        if (\file_exists($this->rxPipeFile)) {
+            \unlink($this->rxPipeFile);
+        }
+
+        if (\file_exists($this->txPipeFile)) {
+            \unlink($this->txPipeFile);
         }
     }
 
@@ -294,7 +311,7 @@ final class MasterProcess
                 foreach ($this->workerPool->getAlivePids() as $pid) {
                     \posix_kill($pid, SIGKILL);
                     $worker = $this->workerPool->getWorkerByPid($pid);
-                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->getName(), $pid, $this->stopTimeout));
+                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
                 }
                 $this->doStopProcess();
             });
@@ -322,12 +339,12 @@ final class MasterProcess
 
         // If it called from outside working process
         if ($masterPid !== \posix_getpid()) {
-            \posix_kill($masterPid, SIGUSR2);
+            \posix_kill($masterPid, SIGUSR1);
             return;
         }
 
         foreach ($this->workerPool->getAlivePids() as $pid) {
-            \posix_kill($pid, $this->serverStatus->isDetached($pid) ? SIGTERM : SIGUSR2);
+            \posix_kill($pid, $this->serverStatus->isDetached($pid) ? SIGTERM : SIGUSR1);
         }
     }
 
@@ -345,33 +362,22 @@ final class MasterProcess
         return !empty($this->getPid()) && \posix_kill($this->getPid(), 0);
     }
 
-    private function requestServerStatus(): void
-    {
-        $pipe = new InterprocessPipe(\fopen($this->pipeFile, 'w'));
-        $pipe->publish($this->serverStatus);
-    }
-
     public function getServerStatus(): ServerStatus
     {
         if ($this->status === self::STATUS_RUNNING) {
             return $this->serverStatus;
         }
 
-        if (!$this->isRunning() || !\file_exists($this->pipeFile)) {
+        if (!$this->isRunning() || !\file_exists($this->rxPipeFile)) {
             return new ServerStatus($this->workerPool->getWorkers(), false);
         }
 
         $suspension = EventLoop::getSuspension();
-        $pipe = new InterprocessPipe(\fopen($this->pipeFile, 'r+'));
-        $pipe->subscribe(ServerStatus::class, static function (ServerStatus $serverStatus) use ($suspension) {
-            $suspension->resume($serverStatus);
-        });
+        $pipe = new InterprocessPipe(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
+        $pipe->subscribe(ServerStatus::class, static fn (ServerStatus $serverStatus): null => $suspension->resume($serverStatus));
+        $pipe->publish(new ServerStatusRequest());
 
-        \posix_kill($this->getPid(), SIGUSR1);
-
-        /** @var ServerStatus $serverStatus */
-        $serverStatus = $suspension->suspend();
-
-        return $serverStatus;
+        /** @var ServerStatus */
+        return $suspension->suspend();
     }
 }
