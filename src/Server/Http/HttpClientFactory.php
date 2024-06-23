@@ -38,7 +38,7 @@ final readonly class HttpClientFactory implements ClientFactory
 
         if ($client !== null) {
             $this->onConnect($socket, $client);
-            $client->onClose(fn () => $this->onClose($socket, $client));
+            $client->onClose(fn() => $this->onClose($socket, $client));
         }
 
         return $client;

@@ -54,9 +54,6 @@ final class InterprocessPipe
         }
     }
 
-    /**
-     * @param string $bytes
-     */
     private function write(string $bytes): void
     {
         if ($this->writeBuffer !== '') {

@@ -28,7 +28,7 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
         $serverSocketFactory = new ResourceServerSocketFactory();
 
         if ($connectionLimit !== null) {
-            $semaphoreFactory = static fn (int $maxLocks): Semaphore => \extension_loaded('sysvmsg')
+            $semaphoreFactory = static fn(int $maxLocks): Semaphore => \extension_loaded('sysvmsg')
                 ? PosixSemaphore::create($maxLocks)
                 : new LocalSemaphore($maxLocks);
             $serverSocketFactory = new ConnectionLimitingServerSocketFactory($semaphoreFactory($connectionLimit), $serverSocketFactory);
@@ -41,8 +41,7 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
     {
         $serverSocket = $this->serverSocketFactory->listen($address, $bindContext);
 
-        return new class($serverSocket, $this->trafficStatisticStore) implements ServerSocket
-        {
+        return new class ($serverSocket, $this->trafficStatisticStore) implements ServerSocket {
             public function __construct(private readonly ServerSocket $serverSocket, private readonly TrafficStatus $trafficStatisticStore)
             {
             }

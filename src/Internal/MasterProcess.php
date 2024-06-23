@@ -69,8 +69,8 @@ final class MasterProcess
             : \pathinfo($pidFile, PATHINFO_DIRNAME)
         ;
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
-        $this->rxPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory , \hash('xxh32', $this->startFile . 'rx'));
-        $this->txPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory , \hash('xxh32', $this->startFile . 'tx'));
+        $this->rxPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
+        $this->txPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'tx'));
     }
 
     public function run(bool $daemonize = false): int
@@ -121,8 +121,8 @@ final class MasterProcess
         $this->workerPipe = new InterprocessPipe($masterPipe);
 
         $this->statusPipe = new InterprocessPipe(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
-        $this->statusPipe->subscribe(ServerStatusRequest::class, fn () => $this->statusPipe->publish($this->getServerStatus()));
-        $this->statusPipe->subscribe(ConnectionsRequest::class, fn () => $this->requestServerConnections());
+        $this->statusPipe->subscribe(ServerStatusRequest::class, fn() => $this->statusPipe->publish($this->getServerStatus()));
+        $this->statusPipe->subscribe(ConnectionsRequest::class, fn() => $this->requestServerConnections());
 
         $this->serverStatus = new ServerStatus($this->workerPool->getWorkers(), true);
         $this->serverStatus->subscribeToWorkerMessages($this->workerPipe);
@@ -368,19 +368,19 @@ final class MasterProcess
     private function requestServerConnections(): void
     {
         $pids = \iterator_to_array($this->workerPool->getAlivePids());
-        $pids = array_filter($pids, fn(int $pid) => !$this->serverStatus->isDetached($pid));
+        $pids = \array_filter($pids, fn(int $pid) => !$this->serverStatus->isDetached($pid));
         \array_walk($pids, static fn(int $pid) => \posix_kill($pid, SIGUSR2));
         $connections = [];
         $counter = 0;
         $this->workerPipe->subscribe(
             Connections::class,
-            $onReceive = function(Connections $message) use(&$onReceive, &$connections, &$counter, &$pids) {
+            $onReceive = function (Connections $message) use (&$onReceive, &$connections, &$counter, &$pids) {
                 \array_push($connections, ...$message->connections);
                 if (++$counter === \count($pids)) {
                     $this->workerPipe->unsubscribe(Connections::class, $onReceive);
                     $this->statusPipe->publish(new Connections($connections));
                 }
-            }
+            },
         );
     }
 
@@ -397,7 +397,7 @@ final class MasterProcess
         $suspension = EventLoop::getSuspension();
         $pipe = new InterprocessPipe(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
         $pipe->publish(new ServerStatusRequest());
-        $pipe->subscribe(ServerStatus::class, static fn (ServerStatus $message): null => $suspension->resume($message));
+        $pipe->subscribe(ServerStatus::class, static fn(ServerStatus $message): null => $suspension->resume($message));
 
         /** @var ServerStatus */
         return $suspension->suspend();
@@ -415,7 +415,7 @@ final class MasterProcess
         $suspension = EventLoop::getSuspension();
         $pipe = new InterprocessPipe(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
         $pipe->publish(new ConnectionsRequest());
-        $pipe->subscribe(Connections::class, static fn (Connections $message): null => $suspension->resume($message->connections));
+        $pipe->subscribe(Connections::class, static fn(Connections $message): null => $suspension->resume($message->connections));
 
         /** @var list<Connection> */
         return $suspension->suspend();

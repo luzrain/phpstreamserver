@@ -84,7 +84,7 @@ final readonly class HttpServer
             } else {
                 $logger->warning(
                     'The zlib extension is not loaded which prevents using compression. ' .
-                    'Either activate the zlib extension or set $enableCompression to false'
+                    'Either activate the zlib extension or set $enableCompression to false',
                 );
             }
         }
@@ -100,8 +100,8 @@ final readonly class HttpServer
         ;
 
         if ($this->tls) {
-            $context = $context->withTlsContext((new ServerTlsContext)
-                ->withDefaultCertificate(new Certificate($this->tlsCertificate, $this->tlsCertificateKey))
+            $context = $context->withTlsContext(
+                (new ServerTlsContext())->withDefaultCertificate(new Certificate($this->tlsCertificate, $this->tlsCertificateKey)),
             );
         }
 

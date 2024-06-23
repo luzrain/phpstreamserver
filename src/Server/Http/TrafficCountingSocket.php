@@ -118,6 +118,6 @@ final readonly class TrafficCountingSocket implements Socket, ResourceStream, \I
      */
     public function getResource(): mixed
     {
-       return $this->socket->getResource();
+        return $this->socket->getResource();
     }
 }

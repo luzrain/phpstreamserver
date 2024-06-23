@@ -101,9 +101,9 @@ class WorkerProcess
             $this->onStart !== null && ($this->onStart)($this);
         });
 
-        $this->eventLoop->onSignal(SIGTERM, fn () => $this->stop());
-        $this->eventLoop->onSignal(SIGUSR1, fn () => $this->reload());
-        $this->eventLoop->onSignal(SIGUSR2, fn () => $this->pipe->publish(new Connections($this->trafficStatisticStore->getConnections())));
+        $this->eventLoop->onSignal(SIGTERM, fn() => $this->stop());
+        $this->eventLoop->onSignal(SIGUSR1, fn() => $this->reload());
+        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->pipe->publish(new Connections($this->trafficStatisticStore->getConnections())));
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
