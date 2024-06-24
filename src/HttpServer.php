@@ -67,11 +67,11 @@ final readonly class HttpServer
 
     public function start(
         LoggerInterface $logger,
-        TrafficStatus $trafficStatisticStore,
+        TrafficStatus $trafficStatus,
         ReloadStrategyTrigger $reloadStrategyTrigger,
     ): void {
-        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $trafficStatisticStore);
-        $clientFactory = new HttpClientFactory($logger, $this->connectionLimitPerIp, $trafficStatisticStore, $this->onConnect, $this->onClose);
+        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $trafficStatus);
+        $clientFactory = new HttpClientFactory($logger, $this->connectionLimitPerIp, $trafficStatus, $this->onConnect, $this->onClose);
         $middleware = [];
 
         if ($this->concurrencyLimit !== null) {
@@ -90,7 +90,7 @@ final readonly class HttpServer
         }
 
         $middleware[] = new AddServerHeadersMiddleware();
-        $middleware[] = new RequestsCounterMiddleware($trafficStatisticStore);
+        $middleware[] = new RequestsCounterMiddleware($trafficStatus);
         $middleware[] = new ClientExceptionHandleMiddleware();
         $middleware[] = new ReloadStrategyTriggerMiddleware($reloadStrategyTrigger);
 
