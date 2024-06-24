@@ -69,7 +69,7 @@ final class App
             ['<color;fg=green>-d, --daemon</>', 'Run in daemon mode'],
         ]);
         echo "<color;fg=yellow>Commands:</>\n";
-        echo (new Table(indent: 1))->addRows(\array_map(array: $this->commands, callback: function (Command $command) {
+        echo (new Table(indent: 1))->addRows(\array_map(array: $this->commands, callback: static function (Command $command) {
             return ["<color;fg=green>{$command->getCommand()}</>", $command->getHelp()];
         }));
 

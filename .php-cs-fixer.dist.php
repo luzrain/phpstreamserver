@@ -79,6 +79,9 @@ $rules = [
         'scope' => 'all',
         'strict' => true,
     ],
+
+    // Lambdas not (indirectly) referencing $this must be declared static.
+    'static_lambda' => true,
 ];
 
 return (new PhpCsFixer\Config())

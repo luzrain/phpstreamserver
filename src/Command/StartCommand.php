@@ -51,7 +51,7 @@ final class StartCommand implements Command
                     'Worker',
                     'Count',
                 ])
-                ->addRows(\array_map(function (Worker $w) {
+                ->addRows(\array_map(static function (Worker $w) {
                     return [
                         $w->user,
                         $w->name,

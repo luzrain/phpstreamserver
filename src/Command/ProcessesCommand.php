@@ -45,7 +45,7 @@ final class ProcessesCommand implements Command
                     'Bytes (RX / TX)',
                     'Status',
                 ])
-                ->addRows(\array_map(array: $status->getProcesses(), callback: function (Process $w) {
+                ->addRows(\array_map(array: $status->getProcesses(), callback: static function (Process $w) {
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",

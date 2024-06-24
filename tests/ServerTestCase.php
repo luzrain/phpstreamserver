@@ -47,8 +47,8 @@ abstract class ServerTestCase extends TestCase
     {
         $eventLoop = new StreamSelectDriver();
         $suspension = $eventLoop->getSuspension();
-        $eventLoop->onReadable($fd, fn() => $suspension->resume(\stream_get_contents($fd)));
-        $eventLoop->delay($timeout, fn() => $suspension->resume(false));
+        $eventLoop->onReadable($fd, static fn() => $suspension->resume(\stream_get_contents($fd)));
+        $eventLoop->delay($timeout, static fn() => $suspension->resume(false));
 
         if ($data = $suspension->suspend()) {
             return $data;
