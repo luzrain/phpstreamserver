@@ -34,7 +34,7 @@ jobs:
         run: vendor/bin/php-cs-fixer fix -v --dry-run
 
       - name: Static analyze
-        run: vendor/bin/psalm
+        run: vendor/bin/psalm.phar
 
       - name: Tests
         run: vendor/bin/phpunit
