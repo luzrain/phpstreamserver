@@ -93,6 +93,7 @@ class WorkerProcess
         $this->eventLoop = (new DriverFactory())->create();
         EventLoop::setDriver($this->eventLoop);
         $this->setErrorHandler(ErrorHandler::handleException(...));
+        /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
         $this->pipe = new InterprocessPipe($workerPipeResource);
 

@@ -21,6 +21,9 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
 {
     private ServerSocketFactory $serverSocketFactory;
 
+    /**
+     * @param int<1, max>|null $connectionLimit
+     */
     public function __construct(
         int|null $connectionLimit,
         private TrafficStatus $trafficStatisticStore,
@@ -28,9 +31,13 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
         $serverSocketFactory = new ResourceServerSocketFactory();
 
         if ($connectionLimit !== null) {
-            $semaphoreFactory = static fn(int $maxLocks): Semaphore => \extension_loaded('sysvmsg')
+            $semaphoreFactory =
+                /** @param int<1, max> $maxLocks */
+                static fn(int $maxLocks): Semaphore => \extension_loaded('sysvmsg')
                 ? PosixSemaphore::create($maxLocks)
-                : new LocalSemaphore($maxLocks);
+                : new LocalSemaphore($maxLocks)
+            ;
+
             $serverSocketFactory = new ConnectionLimitingServerSocketFactory($semaphoreFactory($connectionLimit), $serverSocketFactory);
         }
 
@@ -63,7 +70,11 @@ final readonly class HttpServerSocketFactory implements ServerSocketFactory
 
             public function accept(?Cancellation $cancellation = null): ?Socket
             {
-                return new TrafficCountingSocket($this->serverSocket->accept($cancellation), $this->trafficStatisticStore);
+                if (null === $socket = $this->serverSocket->accept($cancellation)) {
+                    return null;
+                }
+
+                return new TrafficCountingSocket($socket, $this->trafficStatisticStore);
             }
 
             public function getAddress(): SocketAddress

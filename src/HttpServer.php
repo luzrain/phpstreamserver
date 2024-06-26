@@ -31,6 +31,7 @@ final readonly class HttpServer
 
     private string $scheme;
     private string $host;
+    /** @var int<0, 65535> */
     private int $port;
     private bool $tls;
 
@@ -40,8 +41,11 @@ final readonly class HttpServer
         private string|null $tlsCertificate = null,
         private string|null $tlsCertificateKey = null,
         private bool $enableCompression = true,
+        /** @var positive-int|null */
         private int|null $connectionLimit = null,
+        /** @var positive-int|null */
         private int|null $connectionLimitPerIp = null,
+        /** @var positive-int|null */
         private int|null $concurrencyLimit = null,
         private bool $http2Enabled = true,
         private int $connectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
@@ -50,6 +54,7 @@ final readonly class HttpServer
         private \Closure|null $onConnect = null,
         private \Closure|null $onClose = null,
     ) {
+        /** @var array{scheme: string, host: string|null, path: string|null, port: int<0, 65535>|null} $parts */
         $parts = \parse_url($listen);
         $this->scheme = $parts['scheme'] ?? 'http';
         $this->tls = $this->scheme === 'https';
@@ -100,6 +105,7 @@ final readonly class HttpServer
         ;
 
         if ($this->tls) {
+            \assert($this->tlsCertificate !== null);
             $context = $context->withTlsContext(
                 (new ServerTlsContext())->withDefaultCertificate(new Certificate($this->tlsCertificate, $this->tlsCertificateKey)),
             );

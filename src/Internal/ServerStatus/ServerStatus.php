@@ -32,17 +32,17 @@ final class ServerStatus
     public readonly bool $isRunning;
 
     /**
-     * @var list<positive-int, Worker>
+     * @var array<int, Worker>
      */
     private array $workers = [];
 
     /**
-     * @var array<positive-int, Process>
+     * @var array<int, Process>
      */
     private array $processes = [];
 
     /**
-     * @var array<positive-int, true>
+     * @var array<int, true>
      */
     private array $blockedProcesses = [];
 

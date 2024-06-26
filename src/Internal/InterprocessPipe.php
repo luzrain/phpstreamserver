@@ -17,19 +17,30 @@ final class InterprocessPipe
     private string $onWritableCallbackId = '';
 
     /**
-     * @param resource $rxPipe
-     * @param resource $txPipe
+     * @var resource
      */
-    public function __construct(private mixed $rxPipe, private mixed $txPipe = null)
+    private mixed $rxPipe;
+
+    /**
+     * @var resource
+     */
+    private mixed $txPipe;
+
+    /**
+     * @param resource $rxPipe
+     * @param resource|null $txPipe
+     */
+    public function __construct(mixed $rxPipe, mixed $txPipe = null)
     {
-        $this->txPipe ??= $this->rxPipe;
+        $this->rxPipe = $rxPipe;
+        $this->txPipe = $txPipe ?? $rxPipe;
         \stream_set_blocking($this->rxPipe, false);
         \stream_set_blocking($this->txPipe, false);
         \stream_set_read_buffer($this->rxPipe, 0);
         \stream_set_write_buffer($this->txPipe, 0);
 
         $this->onReadableCallbackId = EventLoop::onReadable($this->rxPipe, function () {
-            foreach ($this->read() ?? [] as $payload) {
+            foreach ($this->read() as $payload) {
                 /** @var object $message */
                 $message = \unserialize($payload);
                 foreach ($this->subscribers[$message::class] ?? [] as $subscriber) {
@@ -40,7 +51,7 @@ final class InterprocessPipe
     }
 
     /**
-     * @return \Generator<object>
+     * @return \Generator<int, string>
      */
     private function read(): \Generator
     {
@@ -70,6 +81,7 @@ final class InterprocessPipe
         }
 
         if ($this->onWritableCallbackId === '') {
+            /** @psalm-suppress UnsupportedPropertyReferenceUsage */
             $writeBuffer = &$this->writeBuffer;
             $this->onWritableCallbackId = EventLoop::disable(EventLoop::onWritable(
                 $this->txPipe,

@@ -127,7 +127,9 @@ final class MasterProcess
         $this->serverStatus = new ServerStatus($this->workerPool->getWorkers(), true);
         $this->serverStatus->subscribeToWorkerMessages($this->workerPipe);
 
-        $stopCallback = fn() => $this->stop();
+        $stopCallback = function (): void {
+            $this->stop();
+        };
         foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT] as $signo) {
             $this->eventLoop->onSignal($signo, $stopCallback);
         }

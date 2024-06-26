@@ -41,7 +41,7 @@ final class App
     }
 
     /**
-     * @return array{string, list<string>}
+     * @return array{string, array<string>}
      */
     private function parseCommand(string $cmd): array
     {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Server\Http;
 
 use Amp\ByteStream\ReadableStreamIteratorAggregate;
-use Amp\ByteStream\ResourceStream;
 use Amp\Cancellation;
 use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
@@ -13,7 +12,10 @@ use Amp\Socket\TlsInfo;
 use Amp\Socket\TlsState;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 
-final readonly class TrafficCountingSocket implements Socket, ResourceStream, \IteratorAggregate
+/**
+ * @implements \IteratorAggregate<int, string>
+ */
+final readonly class TrafficCountingSocket implements Socket, \IteratorAggregate
 {
     use ReadableStreamIteratorAggregate;
 
@@ -101,23 +103,5 @@ final readonly class TrafficCountingSocket implements Socket, ResourceStream, \I
     public function isWritable(): bool
     {
         return $this->socket->isWritable();
-    }
-
-    public function reference(): void
-    {
-        $this->socket->reference();
-    }
-
-    public function unreference(): void
-    {
-        $this->socket->unreference();
-    }
-
-    /**
-     * @return resource|object|null Stream resource (or object if PHP switches to object-based streams).
-     */
-    public function getResource(): mixed
-    {
-        return $this->socket->getResource();
     }
 }

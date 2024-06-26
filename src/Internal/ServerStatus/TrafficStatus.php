@@ -31,6 +31,9 @@ final class TrafficStatus
 
     public function __construct(private readonly InterprocessPipe $pipe)
     {
+        /**
+         * @var \WeakMap<Socket, Connection>
+         */
         $this->connectionMap = new \WeakMap();
     }
 
@@ -83,7 +86,7 @@ final class TrafficStatus
     }
 
     /**
-     * @param positive-int $val
+     * @param int<0, max> $val
      */
     public function incRx(Socket $socket, int $val): void
     {
@@ -98,7 +101,7 @@ final class TrafficStatus
     }
 
     /**
-     * @param positive-int $val
+     * @param int<0, max> $val
      */
     public function incTx(Socket $socket, int $val): void
     {
@@ -112,6 +115,9 @@ final class TrafficStatus
         ));
     }
 
+    /**
+     * @param int<0, max> $val
+     */
     public function incRequests(int $val = 1): void
     {
         $this->requests += $val;

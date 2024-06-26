@@ -18,7 +18,7 @@ final readonly class ErrorPage implements \Stringable
         $this->version = Server::VERSION_STRING;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->exception !== null ? $this->getTemplateWithException($this->exception) : $this->getTemplateWithoutException();
     }

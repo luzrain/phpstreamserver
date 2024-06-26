@@ -65,6 +65,7 @@ final class Server
 
     public function addWorkers(WorkerProcess ...$workers): self
     {
+        /** @psalm-suppress PossiblyNullReference */
         \array_walk($workers, $this->workerPool->get()->addWorker(...));
 
         return $this;

@@ -12,7 +12,11 @@ use Revolt\EventLoop\Suspension;
 final class SupervisorDriver implements Driver
 {
     private Driver $innerDriver;
-    private $callbacks = [];
+
+    /**
+     * @var list<\Closure>
+     */
+    private array $callbacks = [];
 
     public function __construct()
     {
