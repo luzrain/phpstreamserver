@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Http;
+namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
 use Amp\Cancellation;
 use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
