@@ -4,14 +4,7 @@ declare(strict_types=1);
 
 include __DIR__ . '/../../vendor/autoload.php';
 
-use Luzrain\PHPStreamServer\Exception\HttpException;
-use Luzrain\PHPStreamServer\Listener;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
-use Luzrain\PHPStreamServer\Server\Http\Psr7\Response;
-use Luzrain\PHPStreamServer\Server\Protocols\Http;
-use Luzrain\PHPStreamServer\Server\Protocols\Raw;
-use Luzrain\PHPStreamServer\Server\Protocols\Text;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
@@ -105,58 +98,6 @@ $server->addWorkers(
                         body: 'ok-answer-tls',
                         headers: ['Content-Type' => 'text/plain'],
                     ));
-                },
-            ));
-        },
-    ),
-    new WorkerProcess(
-        name: 'TCP TEXT Server',
-        count: 1,
-        onStart: static function (WorkerProcess $worker) {
-            $worker->startListener(new Listener(
-                listen: 'tcp://127.0.0.1:9082',
-                protocol: new Text(),
-                onMessage: static function (ConnectionInterface $connection, string $data): void {
-                    $connection->send('echo:' . $data);
-                },
-            ));
-        },
-    ),
-    new WorkerProcess(
-        name: 'UDP TEXT Server',
-        count: 1,
-        onStart: static function (WorkerProcess $worker) {
-            $worker->startListener(new Listener(
-                listen: 'udp://127.0.0.1:9083',
-                protocol: new Text(),
-                onMessage: static function (ConnectionInterface $connection, string $data): void {
-                    $connection->send('echo:' . $data);
-                },
-            ));
-        },
-    ),
-    new WorkerProcess(
-        name: 'TCP RAW Server',
-        count: 1,
-        onStart: static function (WorkerProcess $worker) {
-            $worker->startListener(new Listener(
-                listen: 'tcp://127.0.0.1:9084',
-                protocol: new Raw(),
-                onMessage: static function (ConnectionInterface $connection, string $data): void {
-                    $connection->send('echo:' . $data);
-                },
-            ));
-        },
-    ),
-    new WorkerProcess(
-        name: 'UDP RAW Server',
-        count: 1,
-        onStart: static function (WorkerProcess $worker) {
-            $worker->startListener(new Listener(
-                listen: 'udp://127.0.0.1:9085',
-                protocol: new Raw(),
-                onMessage: static function (ConnectionInterface $connection, string $data): void {
-                    $connection->send('echo:' . $data);
                 },
             ));
         },

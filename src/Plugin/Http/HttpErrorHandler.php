@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Server\Http;
+namespace Luzrain\PHPStreamServer\Plugin\Http;
 
 use Amp\Http\HttpStatus;
 use Amp\Http\Server\Driver\Internal\AbstractHttpDriver;

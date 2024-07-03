@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-use Amp\Http\Server\Request;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
 use Revolt\EventLoop\Driver;
@@ -33,7 +32,7 @@ final class ReloadStrategyTrigger
         }
     }
 
-    public function emitRequest(Request $request): void
+    public function emitRequest(mixed $request): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy->shouldReload(ReloadStrategyInterface::EVENT_CODE_REQUEST, $request)) {

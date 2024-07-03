@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Server\Http;
+namespace Luzrain\PHPStreamServer\Plugin\Http;
 
 use Amp\Http\Server\ClientException;
 use Amp\Http\Server\HttpErrorException;

@@ -16,13 +16,13 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ServerTlsContext;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Luzrain\PHPStreamServer\Server\Http\AddServerHeadersMiddleware;
-use Luzrain\PHPStreamServer\Server\Http\ClientExceptionHandleMiddleware;
-use Luzrain\PHPStreamServer\Server\Http\HttpClientFactory;
-use Luzrain\PHPStreamServer\Server\Http\HttpErrorHandler;
-use Luzrain\PHPStreamServer\Server\Http\HttpServerSocketFactory;
-use Luzrain\PHPStreamServer\Server\Http\ReloadStrategyTriggerMiddleware;
-use Luzrain\PHPStreamServer\Server\Http\RequestsCounterMiddleware;
+use Luzrain\PHPStreamServer\Plugin\Http\AddServerHeadersMiddleware;
+use Luzrain\PHPStreamServer\Plugin\Http\ClientExceptionHandleMiddleware;
+use Luzrain\PHPStreamServer\Plugin\Http\HttpClientFactory;
+use Luzrain\PHPStreamServer\Plugin\Http\HttpErrorHandler;
+use Luzrain\PHPStreamServer\Plugin\Http\HttpServerSocketFactory;
+use Luzrain\PHPStreamServer\Plugin\Http\ReloadStrategyTriggerMiddleware;
+use Luzrain\PHPStreamServer\Plugin\Http\RequestsCounterMiddleware;
 use Psr\Log\LoggerInterface;
 
 final readonly class HttpServer
