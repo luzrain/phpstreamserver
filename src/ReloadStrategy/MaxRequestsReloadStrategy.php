@@ -9,7 +9,7 @@ namespace Luzrain\PHPStreamServer\ReloadStrategy;
  * To prevent simultaneous restart of all workers $dispersionPercentage can be set.
  * 1000 $maxRequests and 20% $dispersionPercentage will restart between 800 and 1000
  */
-class MaxRequestsReloadStrategy implements ReloadStrategyInterface
+class MaxRequestsReloadStrategy implements ReloadStrategy
 {
     private int $requestsCount = 0;
     private readonly int $maxRequests;

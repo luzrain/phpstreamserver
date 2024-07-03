@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\ReloadStrategy;
 /**
  * Reload worker after $ttl working time
  */
-class TTLReloadStrategy implements TimerReloadStrategyInterface
+class TTLReloadStrategy implements TimerReloadStrategy
 {
     /**
      * @param int $ttl TTL in seconds

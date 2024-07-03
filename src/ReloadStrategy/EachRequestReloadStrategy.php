@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\ReloadStrategy;
 /**
  * Reload worker after each request.
  */
-class EachRequestReloadStrategy implements ReloadStrategyInterface
+class EachRequestReloadStrategy implements ReloadStrategy
 {
     public function shouldReload(int $eventCode, mixed $eventObject = null): bool
     {

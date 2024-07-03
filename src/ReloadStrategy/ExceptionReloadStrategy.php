@@ -10,7 +10,7 @@ use Amp\Http\Server\HttpErrorException;
 /**
  * Reload worker each time after exception occurs
  */
-class ExceptionReloadStrategy implements ReloadStrategyInterface
+class ExceptionReloadStrategy implements ReloadStrategy
 {
     /** @var array<class-string<\Throwable>> */
     private array $allowedExceptions = [

@@ -14,7 +14,8 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
@@ -195,14 +196,14 @@ class WorkerProcess
         });
     }
 
-    final public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
+    final public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
     {
         $this->reloadStrategyTrigger->addReloadStrategies(...$reloadStrategies);
     }
 
-    final public function startHttpServer(HttpServer $server): void
+    final public function startPlugin(Plugin $plugin): void
     {
-        $server->start($this->logger, $this->trafficStatisticStore, $this->reloadStrategyTrigger);
+        $plugin->start($this->logger, $this->trafficStatisticStore, $this->reloadStrategyTrigger);
     }
 
     final public function getUser(): string

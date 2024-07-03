@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
-interface ReloadStrategyInterface
+interface ReloadStrategy
 {
     /**
      * @var int Periodic timer tick

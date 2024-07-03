@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
+use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategy;
 use Revolt\EventLoop\Driver;
 
 final class ReloadStrategyTrigger
 {
-    /** @var array<ReloadStrategyInterface> */
+    /** @var array<ReloadStrategy> */
     private array $reloadStrategies = [];
 
     public function __construct(
@@ -19,12 +19,12 @@ final class ReloadStrategyTrigger
     ) {
     }
 
-    public function addReloadStrategies(ReloadStrategyInterface ...$reloadStrategies): void
+    public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
     {
         \array_push($this->reloadStrategies, ...$reloadStrategies);
 
         foreach ($reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy instanceof TimerReloadStrategyInterface) {
+            if ($reloadStrategy instanceof TimerReloadStrategy) {
                 $this->eventLoop->repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
                     $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload();
                 });
@@ -35,7 +35,7 @@ final class ReloadStrategyTrigger
     public function emitRequest(mixed $request): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy->shouldReload(ReloadStrategyInterface::EVENT_CODE_REQUEST, $request)) {
+            if ($reloadStrategy->shouldReload(ReloadStrategy::EVENT_CODE_REQUEST, $request)) {
                 $this->reload();
                 break;
             }
@@ -45,7 +45,7 @@ final class ReloadStrategyTrigger
     public function emitException(\Throwable $throwable): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy->shouldReload(ReloadStrategyInterface::EVENT_CODE_EXCEPTION, $throwable)) {
+            if ($reloadStrategy->shouldReload(ReloadStrategy::EVENT_CODE_EXCEPTION, $throwable)) {
                 $this->reload();
                 break;
             }

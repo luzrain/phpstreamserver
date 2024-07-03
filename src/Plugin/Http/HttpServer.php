@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace Luzrain\PHPStreamServer\Plugin\Http;
 
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
 use Amp\Http\Server\Driver\HttpDriver;
@@ -16,16 +16,10 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ServerTlsContext;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Luzrain\PHPStreamServer\Plugin\Http\AddServerHeadersMiddleware;
-use Luzrain\PHPStreamServer\Plugin\Http\ClientExceptionHandleMiddleware;
-use Luzrain\PHPStreamServer\Plugin\Http\HttpClientFactory;
-use Luzrain\PHPStreamServer\Plugin\Http\HttpErrorHandler;
-use Luzrain\PHPStreamServer\Plugin\Http\HttpServerSocketFactory;
-use Luzrain\PHPStreamServer\Plugin\Http\ReloadStrategyTriggerMiddleware;
-use Luzrain\PHPStreamServer\Plugin\Http\RequestsCounterMiddleware;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Psr\Log\LoggerInterface;
 
-final readonly class HttpServer
+final readonly class HttpServer implements Plugin
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 

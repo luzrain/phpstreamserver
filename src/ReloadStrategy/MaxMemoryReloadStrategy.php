@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\ReloadStrategy;
 /**
  * Reload worker if worker memory usage has increased $maxMemory value
  */
-class MaxMemoryReloadStrategy implements TimerReloadStrategyInterface
+class MaxMemoryReloadStrategy implements TimerReloadStrategy
 {
     private const TIMER_INTERVAL = 30;
 

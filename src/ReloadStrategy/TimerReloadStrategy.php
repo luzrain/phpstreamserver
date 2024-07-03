@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
-interface TimerReloadStrategyInterface extends ReloadStrategyInterface
+interface TimerReloadStrategy extends ReloadStrategy
 {
     /**
      * Strategy will be triggered repeatedly every N seconds.
