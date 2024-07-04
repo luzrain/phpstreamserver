@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
 use Amp\Http\Server\Driver\HttpDriver;
-use Amp\Http\Server\Middleware\CompressionMiddleware;
+use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Middleware\ConcurrencyLimitingMiddleware;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\SocketHttpServer;
@@ -16,6 +16,14 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ServerTlsContext;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpClientFactory;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpErrorHandler;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpServerSocketFactory;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\AddServerHeadersMiddleware;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ClientExceptionHandleMiddleware;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategyTriggerMiddleware;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Psr\Log\LoggerInterface;
 
@@ -32,9 +40,10 @@ final readonly class HttpServer implements Plugin
     public function __construct(
         string $listen,
         private RequestHandler $requestHandler,
+        /** @var array<Middleware> $middleware */
+        private array $middleware = [],
         private string|null $tlsCertificate = null,
         private string|null $tlsCertificateKey = null,
-        private bool $enableCompression = true,
         /** @var positive-int|null */
         private int|null $connectionLimit = null,
         /** @var positive-int|null */
@@ -77,21 +86,14 @@ final readonly class HttpServer implements Plugin
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        if ($this->enableCompression) {
-            if (\extension_loaded('zlib')) {
-                $middleware[] = new CompressionMiddleware();
-            } else {
-                $logger->warning(
-                    'The zlib extension is not loaded which prevents using compression. ' .
-                    'Either activate the zlib extension or set $enableCompression to false',
-                );
-            }
-        }
-
-        $middleware[] = new AddServerHeadersMiddleware();
         $middleware[] = new RequestsCounterMiddleware($trafficStatus);
         $middleware[] = new ClientExceptionHandleMiddleware();
         $middleware[] = new ReloadStrategyTriggerMiddleware($reloadStrategyTrigger);
+        $middleware[] = new AddServerHeadersMiddleware();
+        \array_push($middleware, ...$this->middleware);
+
+        // Force move StaticMiddleware to the end of the chain
+        \usort($middleware, fn (mixed $a): int => $a instanceof StaticMiddleware ? 1 : -1);
 
         $context = (new BindContext())
             ->withReusePort()

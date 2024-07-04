@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
+namespace Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware;
 
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;

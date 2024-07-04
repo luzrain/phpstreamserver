@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
+namespace Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware;
 
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
@@ -15,7 +15,9 @@ final class AddServerHeadersMiddleware implements Middleware
     public function handleRequest(Request $request, RequestHandler $requestHandler): Response
     {
         $response = $requestHandler->handleRequest($request);
-        $response->setHeader('server', Server::VERSION_STRING);
+        if (!$response->hasHeader('server')) {
+            $response->setHeader('server', Server::VERSION_STRING);
+        }
 
         return $response;
     }
