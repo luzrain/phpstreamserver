@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\InterprocessPipe;
+use Luzrain\PHPStreamServer\Internal\Relay\Relay;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
@@ -67,7 +67,7 @@ final class ServerStatus
         }
     }
 
-    public function subscribeToWorkerMessages(InterprocessPipe $pipe): void
+    public function subscribeToWorkerMessages(Relay $pipe): void
     {
         $pipe->subscribe(Spawn::class, function (Spawn $message) {
             $this->processes[$message->pid] = new Process(

@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin;
 
-use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Psr\Log\LoggerInterface;
+use Luzrain\PHPStreamServer\WorkerProcess;
 
 interface Plugin
 {
-    public function start(LoggerInterface $logger, TrafficStatus $trafficStatus, ReloadStrategyTrigger $reloadStrategyTrigger): void;
+    public function start(WorkerProcess $workerProcess): void;
 }

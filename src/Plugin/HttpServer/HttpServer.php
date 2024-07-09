@@ -25,23 +25,27 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategy
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
 
 final readonly class HttpServer implements Plugin
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 
+    /**
+     * @param Listen|array<Listen> $listen
+     * @param RequestHandler $requestHandler
+     * @param array<Middleware> $middleware
+     * @param positive-int|null $connectionLimit
+     * @param positive-int|null $connectionLimitPerIp
+     * @param positive-int|null $concurrencyLimit
+     */
     public function __construct(
-        /** @var Listen|array<Listen> $listen */
         private Listen|array $listen,
         private RequestHandler $requestHandler,
-        /** @var array<Middleware> $middleware */
         private array $middleware = [],
-        /** @var positive-int|null */
         private int|null $connectionLimit = null,
-        /** @var positive-int|null */
         private int|null $connectionLimitPerIp = null,
-        /** @var positive-int|null */
         private int|null $concurrencyLimit = null,
         private bool $http2Enabled = true,
         private int $connectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
@@ -52,11 +56,8 @@ final readonly class HttpServer implements Plugin
     ) {
     }
 
-    public function start(
-        LoggerInterface $logger,
-        TrafficStatus $trafficStatus,
-        ReloadStrategyTrigger $reloadStrategyTrigger,
-    ): void {
+    public function start(WorkerProcess $workerProcess): void
+    {
         $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $trafficStatus);
         $clientFactory = new HttpClientFactory($logger, $this->connectionLimitPerIp, $trafficStatus, $this->onConnect, $this->onClose);
         $middleware = [];

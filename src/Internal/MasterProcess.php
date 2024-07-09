@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\Relay\Relay;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
@@ -35,8 +36,8 @@ final class MasterProcess
     private Suspension $suspension;
     private int $status = self::STATUS_STARTING;
     private int $exitCode = 0;
-    private InterprocessPipe $workerPipe;
-    private InterprocessPipe $statusPipe;
+    private Relay $workerPipe;
+    private Relay $statusPipe;
     private ServerStatus $serverStatus;
 
     /**
@@ -118,9 +119,9 @@ final class MasterProcess
         $this->suspension = $this->eventLoop->getSuspension();
 
         [$masterPipe, $this->workerPipeResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        $this->workerPipe = new InterprocessPipe($masterPipe);
+        $this->workerPipe = new Relay($masterPipe);
 
-        $this->statusPipe = new InterprocessPipe(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
+        $this->statusPipe = new Relay(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
         $this->statusPipe->subscribe(ServerStatusRequest::class, fn() => $this->statusPipe->publish($this->getServerStatus()));
         $this->statusPipe->subscribe(ConnectionsRequest::class, fn() => $this->requestServerConnections());
 
@@ -397,7 +398,7 @@ final class MasterProcess
         }
 
         $suspension = EventLoop::getSuspension();
-        $pipe = new InterprocessPipe(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
+        $pipe = new Relay(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
         $pipe->publish(new ServerStatusRequest());
         $pipe->subscribe(ServerStatus::class, static fn(ServerStatus $message): null => $suspension->resume($message));
 
@@ -415,7 +416,7 @@ final class MasterProcess
         }
 
         $suspension = EventLoop::getSuspension();
-        $pipe = new InterprocessPipe(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
+        $pipe = new Relay(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
         $pipe->publish(new ConnectionsRequest());
         $pipe->subscribe(Connections::class, static fn(Connections $message): null => $suspension->resume($message->connections));
 

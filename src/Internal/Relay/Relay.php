@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace Luzrain\PHPStreamServer\Internal\Relay;
 
 use Revolt\EventLoop;
 
-final class InterprocessPipe
+final class Relay
 {
     private const READ_BUFFER = 65536;
 

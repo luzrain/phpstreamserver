@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\Internal\InterprocessPipe;
+use Luzrain\PHPStreamServer\Internal\Relay\Relay;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
@@ -29,7 +29,7 @@ final class TrafficStatus
     public int $connections = 0;
     public int $requests = 0;
 
-    public function __construct(private readonly InterprocessPipe $pipe)
+    public function __construct(private readonly Relay $pipe)
     {
         /**
          * @var \WeakMap<Socket, Connection>
