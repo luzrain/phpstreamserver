@@ -31,19 +31,12 @@ final readonly class HttpServer implements Plugin
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 
-    private string $scheme;
-    private string $host;
-    /** @var int<0, 65535> */
-    private int $port;
-    private bool $tls;
-
     public function __construct(
-        string $listen,
+        /** @var Listen|array<Listen> $listen */
+        private Listen|array $listen,
         private RequestHandler $requestHandler,
         /** @var array<Middleware> $middleware */
         private array $middleware = [],
-        private string|null $tlsCertificate = null,
-        private string|null $tlsCertificateKey = null,
         /** @var positive-int|null */
         private int|null $connectionLimit = null,
         /** @var positive-int|null */
@@ -57,20 +50,6 @@ final readonly class HttpServer implements Plugin
         private \Closure|null $onConnect = null,
         private \Closure|null $onClose = null,
     ) {
-        /** @var array{scheme: string, host: string|null, path: string|null, port: int<0, 65535>|null} $parts */
-        $parts = \parse_url($listen);
-        $this->scheme = $parts['scheme'] ?? 'http';
-        $this->tls = $this->scheme === 'https';
-        $this->host = $parts['host'] ?? $parts['path'] ?? '';
-        $this->port = (int) ($parts['port'] ?? ($this->tls ? 443 : 80));
-
-        if (!\in_array($this->scheme, ['http', 'https'], true)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid scheme. Should be either "http" or "https", "%s" given.', $this->scheme));
-        }
-
-        if ($this->tls && $this->tlsCertificate === null) {
-            throw new \InvalidArgumentException('Certificate file must be provided');
-        }
     }
 
     public function start(
@@ -95,18 +74,6 @@ final readonly class HttpServer implements Plugin
         // Force move StaticMiddleware to the end of the chain
         \usort($middleware, fn (mixed $a): int => $a instanceof StaticMiddleware ? 1 : -1);
 
-        $context = (new BindContext())
-            ->withReusePort()
-            ->withBacklog(self::DEFAULT_TCP_BACKLOG)
-        ;
-
-        if ($this->tls) {
-            \assert($this->tlsCertificate !== null);
-            $context = $context->withTlsContext(
-                (new ServerTlsContext())->withDefaultCertificate(new Certificate($this->tlsCertificate, $this->tlsCertificateKey)),
-            );
-        }
-
         $socketHttpServer = new SocketHttpServer(
             logger: $logger,
             serverSocketFactory: $serverSocketFactory,
@@ -124,7 +91,32 @@ final readonly class HttpServer implements Plugin
             ),
         );
 
-        $socketHttpServer->expose(new InternetAddress($this->host, $this->port), $context);
+        foreach (\is_array($this->listen) ? $this->listen : [$this->listen] as $listen) {
+            $socketHttpServer->expose(...$this->createInternetAddressAndContext($listen));
+        }
+
         $socketHttpServer->start($this->requestHandler, new HttpErrorHandler());
+    }
+
+    /**
+     * @return array{0: InternetAddress, 1: BindContext}
+     */
+    private function createInternetAddressAndContext(Listen $listen): array
+    {
+        $internetAddress = new InternetAddress($listen->host, $listen->port);
+
+        $context = (new BindContext())
+            ->withReusePort()
+            ->withBacklog(self::DEFAULT_TCP_BACKLOG)
+        ;
+
+        if ($listen->tls) {
+            \assert($listen->tlsCertificate !== null);
+            $context = $context->withTlsContext(
+                (new ServerTlsContext())->withDefaultCertificate(new Certificate($listen->tlsCertificate, $listen->tlsCertificateKey)),
+            );
+        }
+
+        return [$internetAddress, $context];
     }
 }
