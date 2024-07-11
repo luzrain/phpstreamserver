@@ -58,17 +58,17 @@ final readonly class HttpServer implements Plugin
 
     public function start(WorkerProcess $workerProcess): void
     {
-        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $trafficStatus);
-        $clientFactory = new HttpClientFactory($logger, $this->connectionLimitPerIp, $trafficStatus, $this->onConnect, $this->onClose);
+        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $workerProcess->trafficStatus);
+        $clientFactory = new HttpClientFactory($workerProcess->logger, $this->connectionLimitPerIp, $workerProcess->trafficStatus, $this->onConnect, $this->onClose);
         $middleware = [];
 
         if ($this->concurrencyLimit !== null) {
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        $middleware[] = new RequestsCounterMiddleware($trafficStatus);
+        $middleware[] = new RequestsCounterMiddleware($workerProcess->trafficStatus);
         $middleware[] = new ClientExceptionHandleMiddleware();
-        $middleware[] = new ReloadStrategyTriggerMiddleware($reloadStrategyTrigger);
+        $middleware[] = new ReloadStrategyTriggerMiddleware($workerProcess->reloadStrategyTrigger);
         $middleware[] = new AddServerHeadersMiddleware();
         \array_push($middleware, ...$this->middleware);
 
@@ -76,13 +76,13 @@ final readonly class HttpServer implements Plugin
         \usort($middleware, fn (mixed $a): int => $a instanceof StaticMiddleware ? 1 : -1);
 
         $socketHttpServer = new SocketHttpServer(
-            logger: $logger,
+            logger: $workerProcess->logger,
             serverSocketFactory: $serverSocketFactory,
             clientFactory: $clientFactory,
             middleware: $middleware,
             allowedMethods: null,
             httpDriverFactory: new DefaultHttpDriverFactory(
-                logger: $logger,
+                logger: $workerProcess->logger,
                 streamTimeout: $this->connectionTimeout,
                 connectionTimeout: $this->connectionTimeout,
                 headerSizeLimit: $this->headerSizeLimit,

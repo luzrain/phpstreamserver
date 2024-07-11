@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\Relay;
 
 use Revolt\EventLoop;
+use function Amp\weakClosure;
 
 final class Relay
 {
@@ -39,7 +40,7 @@ final class Relay
         \stream_set_read_buffer($this->rxPipe, 0);
         \stream_set_write_buffer($this->txPipe, 0);
 
-        $this->onReadableCallbackId = EventLoop::onReadable($this->rxPipe, function () {
+        $this->onReadableCallbackId = EventLoop::onReadable($this->rxPipe, weakClosure(function () {
             foreach ($this->read() as $payload) {
                 /** @var object $message */
                 $message = \unserialize($payload);
@@ -47,7 +48,7 @@ final class Relay
                     $subscriber($message);
                 }
             }
-        });
+        }));
     }
 
     /**
@@ -124,7 +125,7 @@ final class Relay
         $this->write(\serialize($message) . "END\r\n");
     }
 
-    public function free(): void
+    public function __destruct()
     {
         EventLoop::cancel($this->onReadableCallbackId);
         EventLoop::cancel($this->onWritableCallbackId);

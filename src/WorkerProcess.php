@@ -26,16 +26,16 @@ class WorkerProcess
     final public const STOP_EXIT_CODE = 0;
     final public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
-    public const HEARTBEAT_PERIOD = 3;
+    public const HEARTBEAT_PERIOD = 2;
 
     public readonly int $id;
     public readonly int $pid;
     private int $exitCode = 0;
     public LoggerInterface $logger;
     private Driver $eventLoop;
-    private TrafficStatus $trafficStatisticStore;
-    private ReloadStrategyTrigger $reloadStrategyTrigger;
-    private Relay $relay;
+    public TrafficStatus $trafficStatus;
+    public ReloadStrategyTrigger $reloadStrategyTrigger;
+    public Relay $relay;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -57,14 +57,14 @@ class WorkerProcess
     }
 
     /**
-     * @param resource $workerPipeResource
      * @internal
      */
-    final public function run(LoggerInterface $logger, mixed $workerPipeResource): int
+    final public function run(LoggerInterface $logger, Relay $relay): int
     {
         $this->logger = $logger;
+        $this->relay = $relay;
         $this->setUserAndGroup();
-        $this->initWorker($workerPipeResource);
+        $this->initWorker();
         $this->eventLoop->run();
 
         return $this->exitCode;
@@ -80,10 +80,7 @@ class WorkerProcess
         }
     }
 
-    /**
-     * @param resource $workerPipeResource
-     */
-    private function initWorker(mixed $workerPipeResource): void
+    private function initWorker(): void
     {
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
@@ -96,7 +93,6 @@ class WorkerProcess
         $this->setErrorHandler(ErrorHandler::handleException(...));
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
-        $this->relay = new Relay($workerPipeResource);
 
         // onStart callback
         $this->eventLoop->defer(function (): void {
@@ -105,7 +101,7 @@ class WorkerProcess
 
         $this->eventLoop->onSignal(SIGTERM, fn() => $this->stop());
         $this->eventLoop->onSignal(SIGUSR1, fn() => $this->reload());
-        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->relay->publish(new Connections($this->trafficStatisticStore->getConnections())));
+        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->relay->publish(new Connections($this->trafficStatus->getConnections())));
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
@@ -113,7 +109,7 @@ class WorkerProcess
             \gc_mem_caches();
         });
 
-        $this->trafficStatisticStore = new TrafficStatus($this->relay);
+        $this->trafficStatus = new TrafficStatus($this->relay);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
         $this->relay->publish(new Spawn(
@@ -157,7 +153,7 @@ class WorkerProcess
         \array_walk($identifiers, $this->eventLoop->cancel(...));
         $this->eventLoop->stop();
         $this->relay->publish(new Detach($this->pid));
-        unset($this->trafficStatisticStore, $this->reloadStrategyTrigger, $this->relay);
+        unset($this->trafficStatus, $this->reloadStrategyTrigger, $this->relay);
         $this->onStart = null;
         $this->onStop = null;
         $this->onReload = null;

@@ -10,46 +10,43 @@ use Luzrain\PHPStreamServer\Internal\Relay\Relay;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
+use Luzrain\PHPStreamServer\Plugin\Module;
+use Luzrain\PHPStreamServer\Plugin\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
+use PHPUnit\Runner\ErrorException;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
-use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\Suspension;
+use function Amp\Future\awaitAll;
 
 /**
  * @internal
  */
 final class MasterProcess
 {
-    private const STATUS_STARTING = 1;
-    private const STATUS_RUNNING = 2;
-    private const STATUS_SHUTDOWN = 3;
     private const GC_PERIOD = 300;
 
     private static bool $registered = false;
-    private readonly string $startFile;
-    private readonly string $pidFile;
-    private readonly string $rxPipeFile;
-    private readonly string $txPipeFile;
-    private Driver $eventLoop;
+    private string $startFile;
+    private string $pidFile;
+    private string $rxPipeFile;
+    private string $txPipeFile;
     private Suspension $suspension;
-    private int $status = self::STATUS_STARTING;
-    private int $exitCode = 0;
-    private Relay $workerPipe;
-    private Relay $statusPipe;
+    private Status $status = Status::STARTING;
     private ServerStatus $serverStatus;
+    private Relay $serverStatusRelay;
+    private Supervisor $supervisor;
 
     /**
-     * @var resource $workerPipeResource
+     * @var array<class-string<Module>, Module>
      */
-    private mixed $workerPipeResource;
+    private array $modules = [];
 
     public function __construct(
         string|null $pidFile,
-        private readonly int $stopTimeout,
-        private WorkerPool $workerPool,
-        private readonly LoggerInterface $logger,
+        private int $stopTimeout,
+        public readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
             throw new \RuntimeException('Works in command line mode only');
@@ -72,6 +69,28 @@ final class MasterProcess
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->rxPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
         $this->txPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'tx'));
+
+        $this->serverStatus = new ServerStatus();
+        $this->supervisor = new Supervisor($this->stopTimeout);
+    }
+
+    public function addWorkers(WorkerProcess ...$workers): void
+    {
+        foreach ($workers as $worker) {
+            $this->supervisor->addWorker($worker);
+            $this->serverStatus->addWorker($worker);
+        }
+    }
+
+    public function addModules(Module ...$modules): void
+    {
+        foreach ($modules as $module) {
+            if (isset($this->modules[$module::class])) {
+                throw new ErrorException('Can not load more than one instance of module');
+            }
+
+            $this->modules[$module::class] = $module;
+        }
     }
 
     public function run(bool $daemonize = false): int
@@ -91,13 +110,38 @@ final class MasterProcess
 
         $this->saveMasterPid();
         $this->initServer();
-        $this->spawnWorkers();
-        $this->status = self::STATUS_RUNNING;
-        $this->logger->info(Server::NAME . ' has started');
-        $exitCode = ($worker = $this->suspension->suspend()) ? $this->runWorker($worker) : $this->exitCode;
-        isset($worker) ? exit($exitCode) : $this->onMasterShutdown();
+        $this->status = Status::RUNNING;
 
-        return $exitCode;
+        foreach ($this->modules as $module) {
+            $module->start($this);
+        }
+
+        $this->supervisor->start($this, $this->suspension);
+
+        $this->logger->info(Server::NAME . ' has started');
+
+        $exit = $this->suspension->suspend();
+
+        if ($exit instanceof WorkerProcess) {
+            $this->runWorkerProcess($exit);
+        }
+
+        $this->onMasterShutdown();
+
+        return $exit;
+    }
+
+    private function runWorkerProcess(WorkerProcess $worker): never
+    {
+        $supervisor = $this->supervisor;
+
+        foreach ($this->modules as $module) {
+            $module->free();
+        }
+
+        $this->free();
+
+        exit($supervisor->runWorker($worker));
     }
 
     /**
@@ -113,33 +157,31 @@ final class MasterProcess
         }
 
         // Init event loop.
-        $this->eventLoop = new SupervisorDriver();
-        EventLoop::setDriver($this->eventLoop);
-        $this->eventLoop->setErrorHandler(ErrorHandler::handleException(...));
-        $this->suspension = $this->eventLoop->getSuspension();
+        EventLoop::setDriver(new SupervisorDriver());
+        EventLoop::setErrorHandler(ErrorHandler::handleException(...));
+        $this->suspension = EventLoop::getDriver()->getSuspension();
 
-        [$masterPipe, $this->workerPipeResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        $this->workerPipe = new Relay($masterPipe);
-
-        $this->statusPipe = new Relay(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
-        $this->statusPipe->subscribe(ServerStatusRequest::class, fn() => $this->statusPipe->publish($this->getServerStatus()));
-        $this->statusPipe->subscribe(ConnectionsRequest::class, fn() => $this->requestServerConnections());
-
-        $this->serverStatus = new ServerStatus($this->workerPool->getWorkers(), true);
-        $this->serverStatus->subscribeToWorkerMessages($this->workerPipe);
+        $this->serverStatusRelay = new Relay(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
+        $this->serverStatusRelay->subscribe(
+            ServerStatusRequest::class,
+            fn() => $this->requestServerStatus($this->serverStatusRelay)
+        );
+        $this->serverStatusRelay->subscribe(
+            ConnectionsRequest::class,
+            fn() => $this->supervisor->requestServerConnections($this->serverStatusRelay)
+        );
+        $this->serverStatus->setRunning(true);
 
         $stopCallback = function (): void {
             $this->stop();
         };
         foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT] as $signo) {
-            $this->eventLoop->onSignal($signo, $stopCallback);
+            EventLoop::onSignal($signo, $stopCallback);
         }
-        $this->eventLoop->onSignal(SIGUSR1, fn() => $this->reload());
-        $this->eventLoop->onChildProcessExit($this->onChildStop(...));
-        $this->eventLoop->repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
+        EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
         // Force run garbage collection periodically
-        $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
+        EventLoop::repeat(self::GC_PERIOD, static function (): void {
             \gc_collect_cycles();
             \gc_mem_caches();
         });
@@ -184,89 +226,6 @@ final class MasterProcess
         }
     }
 
-    private function spawnWorkers(): void
-    {
-        $this->eventLoop->defer(function (): void {
-            foreach ($this->workerPool->getWorkers() as $worker) {
-                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->count) {
-                    if ($this->spawnWorker($worker)) {
-                        return;
-                    }
-                }
-            }
-        });
-    }
-
-    private function spawnWorker(WorkerProcess $worker): bool
-    {
-        $pid = \pcntl_fork();
-        if ($pid > 0) {
-            // Master process
-            $this->workerPool->addChild($worker, $pid);
-            return false;
-        } elseif ($pid === 0) {
-            // Child process
-            $this->suspension->resume($worker);
-            return true;
-        } else {
-            throw new PHPStreamServerException('fork fail');
-        }
-    }
-
-    // Runs in forked process
-    private function runWorker(WorkerProcess $worker): int
-    {
-        $this->workerPipe->free();
-        $this->eventLoop->queue(fn() => $this->eventLoop->stop());
-        $this->eventLoop->run();
-        unset($this->suspension, $this->workerPipe, $this->serverStatus, $this->workerPool);
-        \gc_collect_cycles();
-        \gc_mem_caches();
-
-        return $worker->run($this->logger, $this->workerPipeResource);
-    }
-
-    private function monitorWorkerStatus(): void
-    {
-        foreach ($this->serverStatus->getProcesses() as $process) {
-            $blockTime = $process->detached ? 0 : (int) \round((\hrtime(true) - $process->time) / 1000000000);
-            if ($process->blocked === false && $blockTime > $this->serverStatus::BLOCK_WARNING_TRESHOLD) {
-                $this->serverStatus->markProcessAsBlocked($process->pid);
-                $this->logger->warning(\sprintf(
-                    'Worker %s[pid:%d] blocked event loop for more than %s seconds',
-                    $this->workerPool->getWorkerByPid($process->pid)->name,
-                    $process->pid,
-                    $blockTime,
-                ));
-            }
-        }
-    }
-
-    private function onChildStop(int $pid, int $exitCode): void
-    {
-        $worker = $this->workerPool->getWorkerByPid($pid);
-        $this->workerPool->deleteChild($pid);
-        $this->serverStatus->deleteProcess($pid);
-
-        switch ($this->status) {
-            case self::STATUS_RUNNING:
-                match ($exitCode) {
-                    0 => $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
-                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid)),
-                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode)),
-                };
-                // Restart worker
-                $this->spawnWorker($worker);
-                break;
-            case self::STATUS_SHUTDOWN:
-                if ($this->workerPool->getProcessesCount() === 0) {
-                    // All processes are stopped now
-                    $this->doStopProcess();
-                }
-                break;
-        }
-    }
-
     private function onMasterShutdown(): void
     {
         if (\file_exists($this->pidFile)) {
@@ -297,37 +256,24 @@ final class MasterProcess
             return;
         }
 
-        if ($this->status === self::STATUS_SHUTDOWN) {
+        if ($this->status === Status::SHUTDOWN) {
             return;
         }
 
-        $this->status = self::STATUS_SHUTDOWN;
-        $this->exitCode = $code;
+        $this->status = Status::SHUTDOWN;
 
-        // Send SIGTERM signal to all child processes
-        foreach ($this->workerPool->getAlivePids() as $pid) {
-            \posix_kill($pid, SIGTERM);
+        $stopFutures = [];
+        $stopFutures[] = $this->supervisor->stop();
+        foreach ($this->modules as $module) {
+            if (null !== $future = $module->stop()) {
+                $stopFutures[] = $future;
+            }
         }
 
-        if ($this->workerPool->getWorkerCount() === 0) {
-            $this->doStopProcess();
-        } else {
-            $this->eventLoop->delay($this->stopTimeout, function (): void {
-                // Send SIGKILL signal to all child processes ater timeout
-                foreach ($this->workerPool->getAlivePids() as $pid) {
-                    \posix_kill($pid, SIGKILL);
-                    $worker = $this->workerPool->getWorkerByPid($pid);
-                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
-                }
-                $this->doStopProcess();
-            });
-        }
-    }
+        awaitAll($stopFutures);
 
-    private function doStopProcess(): void
-    {
         $this->logger->info(Server::NAME . ' stopped');
-        $this->suspension->resume();
+        $this->suspension->resume($code);
     }
 
     public function reload(): void
@@ -349,9 +295,7 @@ final class MasterProcess
             return;
         }
 
-        foreach ($this->workerPool->getAlivePids() as $pid) {
-            \posix_kill($pid, $this->serverStatus->isDetached($pid) ? SIGTERM : SIGUSR1);
-        }
+        $this->supervisor->reload();
     }
 
     private function getPid(): int
@@ -361,40 +305,42 @@ final class MasterProcess
 
     private function isRunning(): bool
     {
-        if ($this->status === self::STATUS_RUNNING) {
+        if ($this->status === Status::RUNNING) {
             return true;
         }
 
         return $this->getPid() !== 0 && \posix_kill($this->getPid(), 0);
     }
 
-    private function requestServerConnections(): void
+    public function getStatus(): Status
     {
-        $pids = \iterator_to_array($this->workerPool->getAlivePids());
-        $pids = \array_filter($pids, fn(int $pid) => !$this->serverStatus->isDetached($pid));
-        \array_walk($pids, static fn(int $pid) => \posix_kill($pid, SIGUSR2));
-        $connections = [];
-        $counter = 0;
-        $this->workerPipe->subscribe(
-            Connections::class,
-            $onReceive = function (Connections $message) use (&$onReceive, &$connections, &$counter, &$pids) {
-                \array_push($connections, ...$message->connections);
-                if (++$counter === \count($pids)) {
-                    $this->workerPipe->unsubscribe(Connections::class, $onReceive);
-                    $this->statusPipe->publish(new Connections($connections));
-                }
-            },
-        );
+        return $this->status;
+    }
+
+    private function free(): void
+    {
+        EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
+        EventLoop::getDriver()->run();
+
+        // Delete all references
+        foreach ($this as $prop => $val) {
+            try {
+                unset($this->$prop);
+            } catch (\Error) {
+                // Ignore
+            }
+        }
+    }
+
+    private function requestServerStatus(Relay $relay): void
+    {
+        $relay->publish($this->serverStatus);
     }
 
     public function getServerStatus(): ServerStatus
     {
-        if ($this->status === self::STATUS_RUNNING) {
+        if ($this->status === Status::RUNNING || !$this->isRunning() || !\file_exists($this->rxPipeFile) || !\file_exists($this->txPipeFile)) {
             return $this->serverStatus;
-        }
-
-        if (!$this->isRunning() || !\file_exists($this->rxPipeFile) || !\file_exists($this->txPipeFile)) {
-            return new ServerStatus($this->workerPool->getWorkers(), false);
         }
 
         $suspension = EventLoop::getSuspension();

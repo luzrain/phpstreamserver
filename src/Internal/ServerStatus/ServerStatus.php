@@ -18,6 +18,7 @@ use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
+use function Amp\weakClosure;
 
 final class ServerStatus
 {
@@ -28,8 +29,8 @@ final class ServerStatus
     public readonly string $phpVersion;
     public readonly string $eventLoop;
     public readonly string $startFile;
-    public readonly \DateTimeImmutable|null $startedAt;
-    public readonly bool $isRunning;
+    public \DateTimeImmutable|null $startedAt;
+    public bool $isRunning;
 
     /**
      * @var array<int, Worker>
@@ -46,48 +47,37 @@ final class ServerStatus
      */
     private array $blockedProcesses = [];
 
-    /**
-     * @param iterable<WorkerProcess> $workers
-     */
-    public function __construct(iterable $workers, bool $isRunning)
+    public function __construct()
     {
         $this->version = Server::VERSION;
         $this->phpVersion = PHP_VERSION;
         $this->eventLoop = (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
         $this->startFile = Functions::getStartFile();
-        $this->startedAt = $isRunning ? new \DateTimeImmutable('now') : null;
-        $this->isRunning = $isRunning;
-
-        foreach ($workers as $worker) {
-            $this->workers[$worker->id] = new Worker(
-                user: $worker->getUser(),
-                name: $worker->name,
-                count: $worker->count,
-            );
-        }
+        $this->startedAt = null;
+        $this->isRunning = false;
     }
 
-    public function subscribeToWorkerMessages(Relay $pipe): void
+    public function subscribeToWorkerMessages(Relay $relay): void
     {
-        $pipe->subscribe(Spawn::class, function (Spawn $message) {
+        $relay->subscribe(Spawn::class, weakClosure(function (Spawn $message) {
             $this->processes[$message->pid] = new Process(
                 pid: $message->pid,
                 user: $message->user,
                 name: $message->name,
                 startedAt: $message->startedAt,
             );
-        });
+        }));
 
-        $pipe->subscribe(Heartbeat::class, function (Heartbeat $message) {
+        $relay->subscribe(Heartbeat::class, weakClosure(function (Heartbeat $message) {
             $this->processes[$message->pid]->memory = $message->memory;
             $this->processes[$message->pid]->time = $message->time;
 
             if (!isset($this->blockedProcesses[$message->pid])) {
                 $this->processes[$message->pid]->blocked = false;
             }
-        });
+        }));
 
-        $pipe->subscribe(Detach::class, function (Detach $message) {
+        $relay->subscribe(Detach::class, weakClosure(function (Detach $message) {
             $this->processes[$message->pid]->detached = true;
             $this->processes[$message->pid]->memory = 0;
             $this->processes[$message->pid]->requests = 0;
@@ -96,27 +86,42 @@ final class ServerStatus
             $this->processes[$message->pid]->connections = 0;
             $this->processes[$message->pid]->time = 0;
             $this->processes[$message->pid]->blocked = false;
-        });
+        }));
 
-        $pipe->subscribe(RxtInc::class, function (RxtInc $message) {
+        $relay->subscribe(RxtInc::class, weakClosure(function (RxtInc $message) {
             $this->processes[$message->pid]->rx += $message->rx;
-        });
+        }));
 
-        $pipe->subscribe(TxtInc::class, function (TxtInc $message) {
+        $relay->subscribe(TxtInc::class, weakClosure(function (TxtInc $message) {
             $this->processes[$message->pid]->tx += $message->tx;
-        });
+        }));
 
-        $pipe->subscribe(RequestInc::class, function (RequestInc $message) {
+        $relay->subscribe(RequestInc::class, weakClosure(function (RequestInc $message) {
             $this->processes[$message->pid]->requests += $message->requests;
-        });
+        }));
 
-        $pipe->subscribe(Connect::class, function (Connect $message) {
+        $relay->subscribe(Connect::class, weakClosure(function (Connect $message) {
             $this->processes[$message->pid]->connections++;
-        });
+        }));
 
-        $pipe->subscribe(Disconnect::class, function (Disconnect $message) {
+        $relay->subscribe(Disconnect::class, weakClosure(function (Disconnect $message) {
             $this->processes[$message->pid]->connections--;
-        });
+        }));
+    }
+
+    public function addWorker(WorkerProcess $worker): void
+    {
+        $this->workers[$worker->id] = new Worker(
+            user: $worker->getUser(),
+            name: $worker->name,
+            count: $worker->count,
+        );
+    }
+
+    public function setRunning(bool $isRunning): void
+    {
+        $this->startedAt = $isRunning ? new \DateTimeImmutable('now') : null;
+        $this->isRunning = $isRunning;
     }
 
     public function deleteProcess(int $pid): void

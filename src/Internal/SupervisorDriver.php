@@ -14,7 +14,7 @@ final class SupervisorDriver implements Driver
     private Driver $innerDriver;
 
     /**
-     * @var list<\Closure>
+     * @var list<\Closure(int, int): void>
      */
     private array $callbacks = [];
 

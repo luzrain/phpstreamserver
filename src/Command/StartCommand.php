@@ -7,6 +7,7 @@ namespace Luzrain\PHPStreamServer\Command;
 use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Worker;
 use Luzrain\PHPStreamServer\Server;
 
@@ -30,21 +31,22 @@ final class StartCommand implements Command
     public function run(array $arguments): int
     {
         $isDaemon = \in_array('-d', $arguments, true) || \in_array('--daemon', $arguments, true);
-        $status = $this->masterProcess->getServerStatus();
+        /** @var \WeakReference<ServerStatus> $status */
+        $status = \WeakReference::create($this->masterProcess->getServerStatus());
 
         echo "❯ " . Server::TITLE . "\n";
         echo (new Table(indent: 1))
             ->addRows([
-                ['PHP version:', $status->phpVersion],
-                [Server::NAME . ' version:', $status->version],
-                ['Event loop driver:', $status->eventLoop],
-                ['Workers count:', $status->getWorkersCount()],
+                ['PHP version:', $status->get()->phpVersion],
+                [Server::NAME . ' version:', $status->get()->version],
+                ['Event loop driver:', $status->get()->eventLoop],
+                ['Workers count:', $status->get()->getWorkersCount()],
             ])
         ;
 
         echo "❯ Workers\n";
 
-        if ($status->getWorkersCount() > 0) {
+        if ($status->get()->getWorkersCount() > 0) {
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'User',
@@ -57,7 +59,7 @@ final class StartCommand implements Command
                         $w->name,
                         $w->count,
                     ];
-                }, $status->getWorkers()))
+                }, $status->get()->getWorkers()))
             ;
         } else {
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";
