@@ -17,6 +17,7 @@ use Luzrain\PHPStreamServer\WorkerProcess;
 use PHPUnit\Runner\ErrorException;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
+use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
 use function Amp\Future\awaitAll;
 
@@ -157,7 +158,7 @@ final class MasterProcess
         }
 
         // Init event loop.
-        EventLoop::setDriver(new SupervisorDriver());
+        EventLoop::setDriver(new StreamSelectDriver());
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = EventLoop::getDriver()->getSuspension();
 

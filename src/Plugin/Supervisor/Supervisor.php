@@ -55,35 +55,20 @@ final class Supervisor
         $this->workerRelay = new Relay($masterPipe);
         $this->serverStatus->subscribeToWorkerMessages($this->workerRelay);
 
-        EventLoop::getDriver()->onChildProcessExit($this->onChildStop(...));
-        EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
-
+        $this->watchChildProcesses();
         $this->spawnWorkers();
     }
 
-    public function stop(): Future
+    public function watchChildProcesses(): void
     {
-        $this->stopFuture = new DeferredFuture();
+        EventLoop::onSignal(SIGCHLD, function () {
+            while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
+                $exitCode = \pcntl_wexitstatus($status) ?: 0;
+                $this->onChildStop($pid, $exitCode);
+            }
+        });
 
-        foreach ($this->workerPool->getAlivePids() as $pid) {
-            \posix_kill($pid, SIGTERM);
-        }
-
-        if ($this->workerPool->getWorkerCount() === 0) {
-            $this->stopFuture->complete();
-        } else {
-            EventLoop::delay($this->stopTimeout, function (): void {
-                // Send SIGKILL signal to all child processes ater timeout
-                foreach ($this->workerPool->getAlivePids() as $pid) {
-                    \posix_kill($pid, SIGKILL);
-                    $worker = $this->workerPool->getWorkerByPid($pid);
-                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
-                }
-                $this->stopFuture->complete();
-            });
-        }
-
-        return $this->stopFuture->getFuture();
+        EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
     }
 
     private function spawnWorkers(): void
@@ -154,6 +139,31 @@ final class Supervisor
                 }
                 break;
         }
+    }
+
+    public function stop(): Future
+    {
+        $this->stopFuture = new DeferredFuture();
+
+        foreach ($this->workerPool->getAlivePids() as $pid) {
+            \posix_kill($pid, SIGTERM);
+        }
+
+        if ($this->workerPool->getWorkerCount() === 0) {
+            $this->stopFuture->complete();
+        } else {
+            EventLoop::delay($this->stopTimeout, function (): void {
+                // Send SIGKILL signal to all child processes ater timeout
+                foreach ($this->workerPool->getAlivePids() as $pid) {
+                    \posix_kill($pid, SIGKILL);
+                    $worker = $this->workerPool->getWorkerByPid($pid);
+                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $pid, $this->stopTimeout));
+                }
+                $this->stopFuture->complete();
+            });
+        }
+
+        return $this->stopFuture->getFuture();
     }
 
     public function reload(): void
