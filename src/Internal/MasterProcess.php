@@ -7,11 +7,13 @@ namespace Luzrain\PHPStreamServer\Internal;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\Relay\Relay;
+use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
+use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\Plugin\Module;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Supervisor;
+use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use PHPUnit\Runner\ErrorException;
@@ -38,6 +40,7 @@ final class MasterProcess
     private ServerStatus $serverStatus;
     private Relay $serverStatusRelay;
     private Supervisor $supervisor;
+    private Scheduler $scheduler;
 
     /**
      * @var array<class-string<Module>, Module>
@@ -73,6 +76,7 @@ final class MasterProcess
 
         $this->serverStatus = new ServerStatus();
         $this->supervisor = new Supervisor($this->stopTimeout);
+        $this->scheduler = new Scheduler();
     }
 
     public function addWorkers(WorkerProcess ...$workers): void
@@ -80,6 +84,14 @@ final class MasterProcess
         foreach ($workers as $worker) {
             $this->supervisor->addWorker($worker);
             $this->serverStatus->addWorker($worker);
+        }
+    }
+
+    public function addPeriodicTasks(PeriodicProcess ...$workers): void
+    {
+        foreach ($workers as $worker) {
+            $this->scheduler->addWorker($worker);
+            $this->serverStatus->addPeriodicTask($worker);
         }
     }
 
@@ -112,13 +124,8 @@ final class MasterProcess
         $this->saveMasterPid();
         $this->initServer();
         $this->status = Status::RUNNING;
-
-        foreach ($this->modules as $module) {
-            $module->start($this);
-        }
-
         $this->supervisor->start($this, $this->suspension);
-
+        $this->scheduler->start($this, $this->suspension);
         $this->logger->info(Server::NAME . ' has started');
 
         $exit = $this->suspension->suspend();
@@ -127,6 +134,11 @@ final class MasterProcess
             $this->runWorkerProcess($exit);
         }
 
+        if ($exit instanceof PeriodicProcess) {
+            $this->runPeriodicProcess($exit);
+        }
+
+        \assert(\is_int($exit));
         $this->onMasterShutdown();
 
         return $exit;
@@ -135,14 +147,15 @@ final class MasterProcess
     private function runWorkerProcess(WorkerProcess $worker): never
     {
         $supervisor = $this->supervisor;
-
-        foreach ($this->modules as $module) {
-            $module->free();
-        }
-
         $this->free();
-
         exit($supervisor->runWorker($worker));
+    }
+
+    private function runPeriodicProcess(PeriodicProcess $worker): never
+    {
+        $scheduler = $this->scheduler;
+        $this->free();
+        exit($scheduler->runWorker($worker));
     }
 
     /**
@@ -186,6 +199,10 @@ final class MasterProcess
             \gc_collect_cycles();
             \gc_mem_caches();
         });
+
+        foreach ($this->modules as $module) {
+            $module->start($this);
+        }
     }
 
     /**
@@ -265,6 +282,7 @@ final class MasterProcess
 
         $stopFutures = [];
         $stopFutures[] = $this->supervisor->stop();
+        $stopFutures[] = $this->scheduler->stop();
         foreach ($this->modules as $module) {
             if (null !== $future = $module->stop()) {
                 $stopFutures[] = $future;
@@ -322,6 +340,10 @@ final class MasterProcess
     {
         EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
         EventLoop::getDriver()->run();
+
+        foreach ($this->modules as $module) {
+            $module->free();
+        }
 
         // Delete all references
         foreach ($this as $prop => $val) {

@@ -14,6 +14,7 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
+use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Revolt\EventLoop;
@@ -36,6 +37,11 @@ final class ServerStatus
      * @var array<int, Worker>
      */
     private array $workers = [];
+
+    /**
+     * @var array<int, PeriodicTask>
+     */
+    private array $periodicTasks = [];
 
     /**
      * @var array<int, Process>
@@ -118,6 +124,14 @@ final class ServerStatus
         );
     }
 
+    public function addPeriodicTask(PeriodicProcess $worker): void
+    {
+        $this->periodicTasks[$worker->id] = new PeriodicTask(
+            user: $worker->getUser(),
+            name: $worker->name,
+        );
+    }
+
     public function setRunning(bool $isRunning): void
     {
         $this->startedAt = $isRunning ? new \DateTimeImmutable('now') : null;
@@ -150,6 +164,19 @@ final class ServerStatus
     public function getWorkers(): array
     {
         return \array_values($this->workers);
+    }
+
+    public function getPeriodicTasksCount(): int
+    {
+        return \count($this->periodicTasks);
+    }
+
+    /**
+     * @return list<PeriodicTask>
+     */
+    public function getPeriodicTasks(): array
+    {
+        return \array_values($this->periodicTasks);
     }
 
     public function getProcessesCount(): int

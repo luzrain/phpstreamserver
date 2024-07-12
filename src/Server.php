@@ -14,12 +14,7 @@ use Luzrain\PHPStreamServer\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\Console\App;
 use Luzrain\PHPStreamServer\Internal\Logger;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
-use Luzrain\PHPStreamServer\Internal\WorkerPool;
 use Luzrain\PHPStreamServer\Plugin\Module;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Supervisor;
-use Psr\Log\LoggerInterface;
 
 final class Server
 {
@@ -51,6 +46,13 @@ final class Server
     public function addWorkers(WorkerProcess ...$workers): self
     {
         $this->masterProcess->addWorkers(...$workers);
+
+        return $this;
+    }
+
+    public function addPeriodicTasks(PeriodicProcess ...$workers): self
+    {
+        $this->masterProcess->addPeriodicTasks(...$workers);
 
         return $this;
     }

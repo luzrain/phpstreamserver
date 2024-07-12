@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\WorkerProcess;
@@ -44,18 +44,16 @@ final class WorkerPool
         $this->pidMap[$worker][] = $pid;
     }
 
-    /**
-     * @psalm-suppress PossiblyNullArgument
-     */
     public function deleteChild(int $pid): void
     {
-        $worker = $this->getWorkerByPid($pid);
-        $pids = $this->pidMap[$worker] ?? [];
-        unset($pids[\array_search($pid, $pids, true)]);
-        $this->pidMap[$worker] = \array_values($pids);
+        if (null !== $worker = $this->getWorkerByPid($pid)) {
+            $pids = $this->pidMap[$worker] ?? [];
+            unset($pids[\array_search($pid, $pids, true)]);
+            $this->pidMap[$worker] = \array_values($pids);
+        }
     }
 
-    public function getWorkerByPid(int $pid): WorkerProcess
+    public function getWorkerByPid(int $pid): WorkerProcess|null
     {
         foreach ($this->pidMap as $worker => $pids) {
             if (\in_array($pid, $pids, true)) {
@@ -63,7 +61,7 @@ final class WorkerPool
             }
         }
 
-        throw new PHPStreamServerException(\sprintf('No workers found associated with %d pid', $pid));
+        return null;
     }
 
     /**

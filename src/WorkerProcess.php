@@ -87,7 +87,6 @@ class WorkerProcess
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->name));
         }
 
-        /** @psalm-suppress InaccessibleProperty */
         $this->eventLoop = (new DriverFactory())->create();
         EventLoop::setDriver($this->eventLoop);
         $this->setErrorHandler(ErrorHandler::handleException(...));

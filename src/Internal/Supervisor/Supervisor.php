@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
+namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
 use Amp\DeferredFuture;
 use Amp\Future;
@@ -11,8 +11,8 @@ use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\Relay\Relay;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
+use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\Internal\WorkerPool;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
@@ -55,20 +55,10 @@ final class Supervisor
         $this->workerRelay = new Relay($masterPipe);
         $this->serverStatus->subscribeToWorkerMessages($this->workerRelay);
 
-        $this->watchChildProcesses();
-        $this->spawnWorkers();
-    }
-
-    public function watchChildProcesses(): void
-    {
-        EventLoop::onSignal(SIGCHLD, function () {
-            while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
-                $exitCode = \pcntl_wexitstatus($status) ?: 0;
-                $this->onChildStop($pid, $exitCode);
-            }
-        });
-
+        SIGCHLDHandler::onChildProcessExit($this->onChildStop(...));
         EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
+
+        $this->spawnWorkers();
     }
 
     private function spawnWorkers(): void
@@ -118,7 +108,10 @@ final class Supervisor
 
     private function onChildStop(int $pid, int $exitCode): void
     {
-        $worker = $this->workerPool->getWorkerByPid($pid);
+        if (null === $worker = $this->workerPool->getWorkerByPid($pid)) {
+            return;
+        }
+
         $this->workerPool->deleteChild($pid);
         $this->serverStatus->deleteProcess($pid);
 
@@ -153,6 +146,10 @@ final class Supervisor
             $this->stopFuture->complete();
         } else {
             EventLoop::delay($this->stopTimeout, function (): void {
+                if ($this->stopFuture->isComplete()) {
+                    return;
+                }
+
                 // Send SIGKILL signal to all child processes ater timeout
                 foreach ($this->workerPool->getAlivePids() as $pid) {
                     \posix_kill($pid, SIGKILL);
