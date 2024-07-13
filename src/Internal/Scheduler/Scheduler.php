@@ -8,6 +8,8 @@ use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
+use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Psr\Log\LoggerInterface;
@@ -38,27 +40,56 @@ final class Scheduler
 
         SIGCHLDHandler::onChildProcessExit($this->onChildStop(...));
 
-
-
-        EventLoop::delay(1, function () {
-            foreach ($this->pool->getWorkers() as $worker) {
-                $this->spawnWorker($worker);
+        foreach ($this->pool->getWorkers() as $worker) {
+            try {
+                $trigger = TriggerFactory::create($worker->schedule, $worker->jitter);
+            } catch (\InvalidArgumentException) {
+                $this->logger->warning(\sprintf('Periodic task "%s" skipped. Schedule "%s" is not in valid format', $worker->name, $worker->schedule));
+                continue;
             }
-        });
+
+            $this->scheduleWorker($worker, $trigger);
+        }
     }
 
-    private function spawnWorker(PeriodicProcess $worker): bool
+    private function scheduleWorker(PeriodicProcess $worker, TriggerInterface $trigger): void
+    {
+        $currentDate = new \DateTimeImmutable();
+        $nextRunDate = $trigger->getNextRunDate($currentDate);
+        if ($nextRunDate !== null) {
+            $delay = $nextRunDate->getTimestamp() - $currentDate->getTimestamp();
+            EventLoop::delay($delay, fn() => $this->startWorker($worker, $trigger));
+        }
+    }
+
+    private function startWorker(PeriodicProcess $worker, TriggerInterface $trigger): void
+    {
+        // Reschedule a task without running it if the previous task is still running
+        if ($this->pool->isWorkerRun($worker)) {
+            $this->logger->info(\sprintf('Periodic task "%s" is already running. Rescheduled', $worker->name));
+            $this->scheduleWorker($worker, $trigger);
+            return;
+        }
+
+        if (0 === $pid = $this->spawnWorker($worker)) {
+            return;
+        }
+
+        $this->logger->info(\sprintf('Periodic task "%s" [pid:%s] started', $worker->name, $pid));
+        $this->scheduleWorker($worker, $trigger);
+    }
+
+    private function spawnWorker(PeriodicProcess $worker): int
     {
         $pid = \pcntl_fork();
         if ($pid > 0) {
             // Master process
             $this->pool->addChild($worker, $pid);
-            $this->logger->info(\sprintf('Periodic task "%s" [pid:%s] started', $worker->name, $pid));
-            return false;
+            return $pid;
         } elseif ($pid === 0) {
             // Child process
             $this->suspension->resume($worker);
-            return true;
+            return 0;
         } else {
             throw new PHPStreamServerException('fork fail');
         }
@@ -71,7 +102,7 @@ final class Scheduler
         }
 
         $this->pool->deleteChild($worker);
-        $this->logger->info(\sprintf('Periodic task "%s" [pid:%s] stopped', $worker->name, $pid));
+        $this->logger->info(\sprintf('Periodic task "%s" [pid:%s] exit with code %s', $worker->name, $pid, $exitCode));
 
         if ($this->stopFuture !== null && !$this->stopFuture->isComplete() && $this->pool->getProcessesCount() === 0) {
             $this->stopFuture->complete();
@@ -103,6 +134,6 @@ final class Scheduler
     {
         $this->free();
 
-        return $worker->run();
+        return $worker->run($this->logger);
     }
 }

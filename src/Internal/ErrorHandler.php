@@ -38,11 +38,9 @@ final class ErrorHandler
 
     public static function register(LoggerInterface $logger): void
     {
-        if (!isset(self::$logger)) {
-            \set_error_handler(self::handleError(...));
-            \set_exception_handler(self::handleException(...));
-        }
         self::$logger = $logger;
+        \set_error_handler(self::handleError(...));
+        \set_exception_handler(self::handleException(...));
     }
 
     /**

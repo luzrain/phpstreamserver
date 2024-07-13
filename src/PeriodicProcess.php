@@ -26,14 +26,25 @@ class PeriodicProcess
 {
     public readonly int $id;
     public readonly int $pid;
-    public LoggerInterface $logger;
+    public readonly LoggerInterface $logger;
     public Relay $relay;
 
     /**
+     * $schedule can be one of the following formats:
+     *  - Number of seconds
+     *  - An ISO8601 datetime format
+     *  - An ISO8601 duration format
+     *  - A relative date format as supported by \DateInterval
+     *  - A cron expression
+     *
+     * @param string $schedule Schedule in one of the formats described above
+     * @param int $jitter Jitter in seconds that adds a random time offset to the schedule
      * @param null|\Closure(self):void $onStart
      * @param null|\Closure(self):void $onStop
      */
     public function __construct(
+        public readonly string $schedule,
+        public readonly int $jitter = 0,
         public readonly string $name = 'none',
         private string|null $user = null,
         private string|null $group = null,
@@ -47,14 +58,20 @@ class PeriodicProcess
     /**
      * @internal
      */
-    final public function run(LoggerInterface $logger = null, Relay $relay = null): int
+    final public function run(LoggerInterface $logger, Relay $relay = null): int
     {
-        //$this->logger = $logger;
+        $this->logger = $logger;
         //$this->relay = $relay;
         $this->setUserAndGroup();
         $this->initWorker();
 
-        return 1;
+        // onStart callback
+        $this->onStart !== null && ($this->onStart)($this);
+
+        // onStop callback
+        $this->onStop !== null && ($this->onStop)($this);
+
+        return 0;
     }
 
     private function setUserAndGroup(): void
@@ -62,7 +79,7 @@ class PeriodicProcess
         try {
             Functions::setUserAndGroup($this->user, $this->group);
         } catch (UserChangeException $e) {
-            $this->logger->warning($e->getMessage(), ['scheduler' => $this->name]);
+            $this->logger->warning($e->getMessage(), ['periodicProcess' => $this->name]);
             $this->user = Functions::getCurrentUser();
         }
     }
@@ -79,22 +96,15 @@ class PeriodicProcess
 
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
-
-        // onStart callback
-        $this->onStart !== null && ($this->onStart)($this);
-
-        $suspension = EventLoop::getSuspension();
-        EventLoop::delay(5, function () use ($suspension) {
-            $suspension->resume();
-        });
-        $suspension->suspend();
     }
 
     public function detach(): void
     {
-//        $identifiers = $this->eventLoop->getIdentifiers();
-//        \array_walk($identifiers, $this->eventLoop->cancel(...));
-//        $this->eventLoop->stop();
+        EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
+        if (!EventLoop::getDriver()->isRunning()) {
+            EventLoop::run();
+        }
+
         $this->onStart = null;
         $this->onStop = null;
         \gc_collect_cycles();

@@ -39,8 +39,6 @@ final class WorkerPool
         }
 
         $this->pidMap[$worker] = $pid;
-
-        dump($this->pidMap->count());
     }
 
     public function deleteChild(PeriodicProcess $worker): void
@@ -57,6 +55,11 @@ final class WorkerPool
         }
 
         return null;
+    }
+
+    public function isWorkerRun(PeriodicProcess $worker): bool
+    {
+        return isset($this->pidMap[$worker]);
     }
 
     /**
