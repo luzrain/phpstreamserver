@@ -28,7 +28,7 @@ final class WorkerPool
         $this->pidMap = new \WeakMap();
     }
 
-    public function addWorker(WorkerProcess $worker): void
+    public function addWorkerProcess(WorkerProcess $worker): void
     {
         $this->pool[\spl_object_id($worker)] = $worker;
         $this->pidMap[$worker] = [];

@@ -89,12 +89,19 @@ final class Scheduler
         return $this->stopFuture->getFuture();
     }
 
+    private function free(): void
+    {
+        unset($this->suspension, $this->pool, $this->stopFuture);
+        \gc_collect_cycles();
+        \gc_mem_caches();
+    }
+
     /**
      * Runs in forked process
      */
     public function runWorker(PeriodicProcess $worker): int
     {
-        //$this->free();
+        $this->free();
 
         return $worker->run();
     }

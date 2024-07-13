@@ -13,7 +13,7 @@ $tempFiles = [];
 $streamResponse = \fopen('php://temp', 'rw');
 \fwrite($streamResponse, 'ok-answer from stream');
 $server = new Server();
-$server->addWorkers(
+$server->addWorkersProcess(
     new WorkerProcess(
         name: 'Worker 1',
         count: 1,

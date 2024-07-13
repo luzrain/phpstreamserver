@@ -33,6 +33,7 @@ $ composer require luzrain/phpstreamserver
 
 ### Configure server
 Here is example of simple http server.
+
 ```php
 // server.php
 
@@ -46,7 +47,7 @@ use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 
 $server = new Server();
-$server->addWorkers(new WorkerProcess(
+$server->addWorkersProcess(new WorkerProcess(
     name: 'HTTP Server',
     onStart: function (WorkerProcess $worker) {
         $worker->startListener(new Listener(

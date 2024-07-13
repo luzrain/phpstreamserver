@@ -51,7 +51,7 @@ final class Colorizer
     }
 
     /**
-     * Colorize string in terminal. Usage: <color;fg=green>green text</>
+     * Colorize string in terminal. Usage: <color;fg=green;bg=black>green text</>
      */
     public static function colorize(string $string): string
     {

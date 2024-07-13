@@ -8,7 +8,7 @@ use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Worker;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\WorkerProcessInfo;
 use Luzrain\PHPStreamServer\Server;
 
 final class StartCommand implements Command
@@ -53,13 +53,13 @@ final class StartCommand implements Command
                     'Worker',
                     'Count',
                 ])
-                ->addRows(\array_map(static function (Worker $w) {
+                ->addRows(\array_map(static function (WorkerProcessInfo $w) {
                     return [
                         $w->user,
                         $w->name,
                         $w->count,
                     ];
-                }, $status->get()->getWorkers()))
+                }, $status->get()->getWorkerProcesses()))
             ;
         } else {
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";

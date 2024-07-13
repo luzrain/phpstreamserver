@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\Command;
 use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Worker;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\WorkerProcessInfo;
 
 final class WorkersCommand implements Command
 {
@@ -39,7 +39,7 @@ final class WorkersCommand implements Command
                     'Worker',
                     'Count',
                 ])
-                ->addRows(\array_map(array: $status->getWorkers(), callback: static fn(Worker $w) => [
+                ->addRows(\array_map(array: $status->getWorkerProcesses(), callback: static fn(WorkerProcessInfo $w) => [
                     $w->user,
                     $w->name,
                     $w->count,

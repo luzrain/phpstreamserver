@@ -16,7 +16,6 @@ use Luzrain\PHPStreamServer\Plugin\Module;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
-use PHPUnit\Runner\ErrorException;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -49,7 +48,7 @@ final class MasterProcess
 
     public function __construct(
         string|null $pidFile,
-        private int $stopTimeout,
+        int $stopTimeout,
         public readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
@@ -70,39 +69,40 @@ final class MasterProcess
             ? (\posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir())
             : \pathinfo($pidFile, PATHINFO_DIRNAME)
         ;
+
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->rxPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
         $this->txPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'tx'));
 
         $this->serverStatus = new ServerStatus();
-        $this->supervisor = new Supervisor($this->stopTimeout);
+        $this->supervisor = new Supervisor($stopTimeout);
         $this->scheduler = new Scheduler();
     }
 
-    public function addWorkers(WorkerProcess ...$workers): void
+    public function addWorkerProcess(WorkerProcess ...$workers): void
     {
         foreach ($workers as $worker) {
-            $this->supervisor->addWorker($worker);
-            $this->serverStatus->addWorker($worker);
+            $this->supervisor->addWorkerProcess($worker);
+            $this->serverStatus->addWorkerProcess($worker);
         }
     }
 
-    public function addPeriodicTasks(PeriodicProcess ...$workers): void
+    public function addPeriodicProcess(PeriodicProcess ...$workers): void
     {
         foreach ($workers as $worker) {
             $this->scheduler->addWorker($worker);
-            $this->serverStatus->addPeriodicTask($worker);
+            $this->serverStatus->addPeriodicProcess($worker);
         }
     }
 
     public function addModules(Module ...$modules): void
     {
         foreach ($modules as $module) {
-            if (isset($this->modules[$module::class])) {
-                throw new ErrorException('Can not load more than one instance of module');
+            $hash = \hash('xxh128', $module::class);
+            if (isset($this->modules[$hash])) {
+                throw new PHPStreamServerException('Can not load more than one instance of the same module');
             }
-
-            $this->modules[$module::class] = $module;
+            $this->modules[$hash] = $module;
         }
     }
 
@@ -131,11 +131,15 @@ final class MasterProcess
         $exit = $this->suspension->suspend();
 
         if ($exit instanceof WorkerProcess) {
-            $this->runWorkerProcess($exit);
+            $supervisor = $this->supervisor;
+            $this->free();
+            exit($supervisor->runWorker($exit));
         }
 
         if ($exit instanceof PeriodicProcess) {
-            $this->runPeriodicProcess($exit);
+            $scheduler = $this->scheduler;
+            $this->free();
+            exit($scheduler->runWorker($exit));
         }
 
         \assert(\is_int($exit));
@@ -144,24 +148,8 @@ final class MasterProcess
         return $exit;
     }
 
-    private function runWorkerProcess(WorkerProcess $worker): never
-    {
-        $supervisor = $this->supervisor;
-        $this->free();
-        exit($supervisor->runWorker($worker));
-    }
-
-    private function runPeriodicProcess(PeriodicProcess $worker): never
-    {
-        $scheduler = $this->scheduler;
-        $this->free();
-        exit($scheduler->runWorker($worker));
-    }
-
     /**
      * Runs in master process
-     *
-     * @psalm-suppress InternalMethod false-positive
      */
     private function initServer(): void
     {
@@ -201,12 +189,12 @@ final class MasterProcess
         });
 
         foreach ($this->modules as $module) {
-            $module->start($this);
+            $module->init($this);
         }
     }
 
     /**
-     * Fork process
+     * Fork process for Daemonize
      *
      * @return bool return true in master process and false in child
      */
@@ -266,10 +254,9 @@ final class MasterProcess
             return;
         }
 
-        $this->logger->info(Server::NAME . ' stopping ...');
-
+        // If it called from outside working process
         if (($masterPid = $this->getPid()) !== \posix_getpid()) {
-            // If it called from outside working process
+            echo Server::NAME ." stopping ...\n";
             \posix_kill($masterPid, SIGTERM);
             return;
         }
@@ -279,6 +266,7 @@ final class MasterProcess
         }
 
         $this->status = Status::SHUTDOWN;
+        $this->logger->info(Server::NAME . ' stopping ...');
 
         $stopFutures = [];
         $stopFutures[] = $this->supervisor->stop();
@@ -302,18 +290,14 @@ final class MasterProcess
             return;
         }
 
-        $masterPid = $this->getPid();
-
-        if ($masterPid !== \posix_getppid()) {
-            $this->logger->info(Server::NAME . ' reloading ...');
-        }
-
         // If it called from outside working process
-        if ($masterPid !== \posix_getpid()) {
+        if (($masterPid = $this->getPid()) !== \posix_getpid()) {
+            echo Server::NAME . " reloading ...\n";
             \posix_kill($masterPid, SIGUSR1);
             return;
         }
 
+        $this->logger->info(Server::NAME . ' reloading ...');
         $this->supervisor->reload();
     }
 

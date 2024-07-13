@@ -39,9 +39,9 @@ final class Supervisor
         $this->workerPool = new WorkerPool();
     }
 
-    public function addWorker(WorkerProcess $worker): void
+    public function addWorkerProcess(WorkerProcess $worker): void
     {
-        $this->workerPool->addWorker($worker);
+        $this->workerPool->addWorkerProcess($worker);
     }
 
     public function start(MasterProcess $masterProcess, Suspension $suspension): void

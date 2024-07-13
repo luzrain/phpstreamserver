@@ -21,6 +21,10 @@ use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Amp\weakClosure;
 
+/**
+ * @readonly
+ * @psalm-allow-private-mutation
+ */
 final class ServerStatus
 {
     private const BLOCKED_LABEL_PERSISTENCE = 30;
@@ -34,14 +38,14 @@ final class ServerStatus
     public bool $isRunning;
 
     /**
-     * @var array<int, Worker>
+     * @var array<int, WorkerProcessInfo>
      */
-    private array $workers = [];
+    private array $workerProcesses = [];
 
     /**
-     * @var array<int, PeriodicTask>
+     * @var array<int, PeriodicProcessInfo>
      */
-    private array $periodicTasks = [];
+    private array $periodicProcesses = [];
 
     /**
      * @var array<int, Process>
@@ -65,6 +69,10 @@ final class ServerStatus
 
     public function subscribeToWorkerMessages(Relay $relay): void
     {
+        /**
+         * @TODO ass scheduler Process to processes array
+         */
+
         $relay->subscribe(Spawn::class, weakClosure(function (Spawn $message) {
             $this->processes[$message->pid] = new Process(
                 pid: $message->pid,
@@ -115,18 +123,18 @@ final class ServerStatus
         }));
     }
 
-    public function addWorker(WorkerProcess $worker): void
+    public function addWorkerProcess(WorkerProcess $worker): void
     {
-        $this->workers[$worker->id] = new Worker(
+        $this->workerProcesses[$worker->id] = new WorkerProcessInfo(
             user: $worker->getUser(),
             name: $worker->name,
             count: $worker->count,
         );
     }
 
-    public function addPeriodicTask(PeriodicProcess $worker): void
+    public function addPeriodicProcess(PeriodicProcess $worker): void
     {
-        $this->periodicTasks[$worker->id] = new PeriodicTask(
+        $this->periodicProcesses[$worker->id] = new PeriodicProcessInfo(
             user: $worker->getUser(),
             name: $worker->name,
         );
@@ -155,28 +163,28 @@ final class ServerStatus
 
     public function getWorkersCount(): int
     {
-        return \count($this->workers);
+        return \count($this->workerProcesses);
     }
 
     /**
-     * @return list<Worker>
+     * @return list<WorkerProcessInfo>
      */
-    public function getWorkers(): array
+    public function getWorkerProcesses(): array
     {
-        return \array_values($this->workers);
+        return \array_values($this->workerProcesses);
     }
 
     public function getPeriodicTasksCount(): int
     {
-        return \count($this->periodicTasks);
+        return \count($this->periodicProcesses);
     }
 
     /**
-     * @return list<PeriodicTask>
+     * @return list<PeriodicProcessInfo>
      */
-    public function getPeriodicTasks(): array
+    public function getPeriodicProcesses(): array
     {
-        return \array_values($this->periodicTasks);
+        return \array_values($this->periodicProcesses);
     }
 
     public function getProcessesCount(): int

@@ -34,7 +34,7 @@ final class Server
         /**
          * Timeout in seconds that master process will be waiting before force kill child processes after sending stop command.
          */
-        public int $stopTimeout = 3,
+        public int $stopTimeout = 6,
     ) {
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
@@ -43,16 +43,16 @@ final class Server
         );
     }
 
-    public function addWorkers(WorkerProcess ...$workers): self
+    public function addWorkersProcess(WorkerProcess ...$workers): self
     {
-        $this->masterProcess->addWorkers(...$workers);
+        $this->masterProcess->addWorkerProcess(...$workers);
 
         return $this;
     }
 
-    public function addPeriodicTasks(PeriodicProcess ...$workers): self
+    public function addPeriodicProcess(PeriodicProcess ...$workers): self
     {
-        $this->masterProcess->addPeriodicTasks(...$workers);
+        $this->masterProcess->addPeriodicProcess(...$workers);
 
         return $this;
     }
