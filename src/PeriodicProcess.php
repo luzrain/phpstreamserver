@@ -7,7 +7,6 @@ namespace Luzrain\PHPStreamServer;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\Relay\Relay;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
@@ -27,7 +26,6 @@ class PeriodicProcess
     public readonly int $id;
     public readonly int $pid;
     public readonly LoggerInterface $logger;
-    public Relay $relay;
 
     /**
      * $schedule can be one of the following formats:
@@ -58,7 +56,7 @@ class PeriodicProcess
     /**
      * @internal
      */
-    final public function run(LoggerInterface $logger, Relay $relay = null): int
+    final public function run(LoggerInterface $logger): int
     {
         $this->logger = $logger;
         //$this->relay = $relay;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-final readonly class ServerStatusRequest
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
+
+final readonly class ServerStatusRequest implements Message
 {
 }

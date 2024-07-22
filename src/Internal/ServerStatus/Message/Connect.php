@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
 
-final readonly class Connect
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
+
+final readonly class Connect implements Message
 {
     public function __construct(
         public int $pid,

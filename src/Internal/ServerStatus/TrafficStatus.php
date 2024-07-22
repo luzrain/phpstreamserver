@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\Internal\Relay\Relay;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
@@ -29,7 +29,7 @@ final class TrafficStatus
     public int $connections = 0;
     public int $requests = 0;
 
-    public function __construct(private readonly Relay $pipe)
+    public function __construct(private readonly MessageBus $bus)
     {
         /**
          * @var \WeakMap<Socket, Connection>
@@ -64,7 +64,7 @@ final class TrafficStatus
         $this->connections++;
         $this->connectionMap[$socket] = $connection;
 
-        $this->pipe->publish(new Connect(
+        $this->bus->dispatch(new Connect(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             connectedAt: $connection->connectedAt,
@@ -79,7 +79,7 @@ final class TrafficStatus
     {
         unset($this->connectionMap[$socket]);
 
-        $this->pipe->publish(new Disconnect(
+        $this->bus->dispatch(new Disconnect(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
         ));
@@ -93,7 +93,7 @@ final class TrafficStatus
         $this->connectionMap[$socket]->rx += $val;
         $this->rx += $val;
 
-        $this->pipe->publish(new RxtInc(
+        $this->bus->dispatch(new RxtInc(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             rx: $val,
@@ -108,7 +108,7 @@ final class TrafficStatus
         $this->connectionMap[$socket]->tx += $val;
         $this->tx += $val;
 
-        $this->pipe->publish(new TxtInc(
+        $this->bus->dispatch(new TxtInc(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             tx: $val,
@@ -122,7 +122,7 @@ final class TrafficStatus
     {
         $this->requests += $val;
 
-        $this->pipe->publish(new RequestInc(
+        $this->bus->dispatch(new RequestInc(
             pid: \posix_getpid(),
             requests: $val,
         ));

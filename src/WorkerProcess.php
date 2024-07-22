@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\Relay\Relay;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
@@ -35,7 +35,7 @@ class WorkerProcess
     private Driver $eventLoop;
     public TrafficStatus $trafficStatus;
     public ReloadStrategyTrigger $reloadStrategyTrigger;
-    public Relay $relay;
+    public MessageBus $bus;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -59,10 +59,10 @@ class WorkerProcess
     /**
      * @internal
      */
-    final public function run(LoggerInterface $logger, Relay $relay): int
+    final public function run(LoggerInterface $logger, MessageBus $bus): int
     {
         $this->logger = $logger;
-        $this->relay = $relay;
+        $this->bus = $bus;
         $this->setUserAndGroup();
         $this->initWorker();
         $this->eventLoop->run();
@@ -100,7 +100,7 @@ class WorkerProcess
 
         $this->eventLoop->onSignal(SIGTERM, fn() => $this->stop());
         $this->eventLoop->onSignal(SIGUSR1, fn() => $this->reload());
-        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->relay->publish(new Connections($this->trafficStatus->getConnections())));
+        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->bus->dispatch(new Connections($this->trafficStatus->getConnections())));
 
         // Force run garbage collection periodically
         $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
@@ -108,18 +108,22 @@ class WorkerProcess
             \gc_mem_caches();
         });
 
-        $this->trafficStatus = new TrafficStatus($this->relay);
+        $this->trafficStatus = new TrafficStatus($this->bus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
 
-        $this->relay->publish(new Spawn(
+        $this->bus->dispatch(new Spawn(
             pid: $this->pid,
             user: $this->getUser(),
             name: $this->name,
             startedAt: new \DateTimeImmutable('now'),
         ));
 
-        $this->relay->publish(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true)));
-        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, fn() => $this->relay->publish(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true))));
+        $heartbeat = function (): void {
+            $this->bus->dispatch(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true)));
+        };
+
+        $heartbeat();
+        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, $heartbeat);
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -148,10 +152,10 @@ class WorkerProcess
 
     public function detach(): void
     {
+        $this->bus->dispatch(new Detach($this->pid))->await();
         $identifiers = $this->eventLoop->getIdentifiers();
         \array_walk($identifiers, $this->eventLoop->cancel(...));
         $this->eventLoop->stop();
-        $this->relay->publish(new Detach($this->pid));
         unset($this->trafficStatus, $this->reloadStrategyTrigger, $this->relay);
         $this->onStart = null;
         $this->onStop = null;

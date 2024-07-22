@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
+use Amp\Future;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\Relay\Relay;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
@@ -20,7 +24,7 @@ use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
-use function Amp\Future\awaitAll;
+use function Amp\Future\await;
 
 /**
  * @internal
@@ -32,12 +36,11 @@ final class MasterProcess
     private static bool $registered = false;
     private string $startFile;
     private string $pidFile;
-    private string $rxPipeFile;
-    private string $txPipeFile;
+    private string $socketFile;
     private Suspension $suspension;
     private Status $status = Status::STARTING;
     private ServerStatus $serverStatus;
-    private Relay $serverStatusRelay;
+    private MessageHandler $serverStatusHandler;
     private Supervisor $supervisor;
     private Scheduler $scheduler;
 
@@ -71,8 +74,7 @@ final class MasterProcess
         ;
 
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
-        $this->rxPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
-        $this->txPipeFile = \sprintf('%s/phpss%s.pipe', $runDirectory, \hash('xxh32', $this->startFile . 'tx'));
+        $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
         $this->serverStatus = new ServerStatus();
         $this->supervisor = new Supervisor($stopTimeout);
@@ -163,16 +165,10 @@ final class MasterProcess
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
-        $this->serverStatusRelay = new Relay(\fopen($this->rxPipeFile, 'r+'), \fopen($this->txPipeFile, 'w+'));
-        $this->serverStatusRelay->subscribe(
-            ServerStatusRequest::class,
-            fn() => $this->requestServerStatus($this->serverStatusRelay)
-        );
-        $this->serverStatusRelay->subscribe(
-            ConnectionsRequest::class,
-            fn() => $this->supervisor->requestServerConnections($this->serverStatusRelay)
-        );
         $this->serverStatus->setRunning(true);
+        $this->serverStatusHandler = new SocketFileMessageHandler($this->socketFile);
+        $this->serverStatusHandler->subscribe(ServerStatusRequest::class, $this->getServerStatus(...));
+        $this->serverStatusHandler->subscribe(ConnectionsRequest::class, $this->supervisor->requestServerConnections(...));
 
         $stopCallback = function (): void {
             $this->stop();
@@ -222,14 +218,6 @@ final class MasterProcess
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
             throw new PHPStreamServerException(\sprintf('Can\'t save pid to %s', $this->pidFile));
         }
-
-        if(!\file_exists($this->rxPipeFile)) {
-            \posix_mkfifo($this->rxPipeFile, 0644);
-        }
-
-        if(!\file_exists($this->txPipeFile)) {
-            \posix_mkfifo($this->txPipeFile, 0644);
-        }
     }
 
     private function onMasterShutdown(): void
@@ -238,12 +226,8 @@ final class MasterProcess
             \unlink($this->pidFile);
         }
 
-        if (\file_exists($this->rxPipeFile)) {
-            \unlink($this->rxPipeFile);
-        }
-
-        if (\file_exists($this->txPipeFile)) {
-            \unlink($this->txPipeFile);
+        if (\file_exists($this->socketFile)) {
+            \unlink($this->socketFile);
         }
     }
 
@@ -277,7 +261,7 @@ final class MasterProcess
             }
         }
 
-        awaitAll($stopFutures);
+        await($stopFutures);
 
         $this->logger->info(Server::NAME . ' stopped');
         $this->suspension->resume($code);
@@ -339,24 +323,17 @@ final class MasterProcess
         }
     }
 
-    private function requestServerStatus(Relay $relay): void
-    {
-        $relay->publish($this->serverStatus);
-    }
-
     public function getServerStatus(): ServerStatus
     {
-        if ($this->status === Status::RUNNING || !$this->isRunning() || !\file_exists($this->rxPipeFile) || !\file_exists($this->txPipeFile)) {
+        if ($this->status === Status::RUNNING || !$this->isRunning()) {
             return $this->serverStatus;
         }
 
-        $suspension = EventLoop::getSuspension();
-        $pipe = new Relay(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
-        $pipe->publish(new ServerStatusRequest());
-        $pipe->subscribe(ServerStatus::class, static fn(ServerStatus $message): null => $suspension->resume($message));
+        $bus = new SocketFileMessageBus($this->socketFile);
+        $result = $bus->dispatch(new ServerStatusRequest());
 
         /** @var ServerStatus */
-        return $suspension->suspend();
+        return $result->await();
     }
 
     /**
@@ -364,16 +341,15 @@ final class MasterProcess
      */
     public function getServerConnections(): array
     {
-        if (!$this->isRunning() || !\file_exists($this->rxPipeFile) || !\file_exists($this->txPipeFile)) {
+        if (!$this->isRunning()) {
             return [];
         }
 
-        $suspension = EventLoop::getSuspension();
-        $pipe = new Relay(\fopen($this->txPipeFile, 'r+'), \fopen($this->rxPipeFile, 'w+'));
-        $pipe->publish(new ConnectionsRequest());
-        $pipe->subscribe(Connections::class, static fn(Connections $message): null => $suspension->resume($message->connections));
+        $bus = new SocketFileMessageBus($this->socketFile);
 
-        /** @var list<Connection> */
-        return $suspension->suspend();
+        /** @var Future<Connections> $connections */
+        $connections = $bus->dispatch(new ConnectionsRequest());
+
+        return $connections->await()->connections;
     }
 }

@@ -8,7 +8,9 @@ use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\Relay\Relay;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketPairMessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketPairMessageHandler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
@@ -32,7 +34,7 @@ final class Supervisor
     private DeferredFuture $stopFuture;
     /** @var resource $workerPipeResource */
     private mixed $workerPipeResource;
-    private Relay $workerRelay;
+    private MessageHandler $workerHandler;
 
     public function __construct(private readonly int $stopTimeout)
     {
@@ -52,8 +54,8 @@ final class Supervisor
         $this->status = $masterProcess->getStatus(...);
 
         [$masterPipe, $this->workerPipeResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        $this->workerRelay = new Relay($masterPipe);
-        $this->serverStatus->subscribeToWorkerMessages($this->workerRelay);
+        $this->workerHandler = new SocketPairMessageHandler($masterPipe);
+        $this->serverStatus->subscribeToWorkerMessages($this->workerHandler);
 
         SIGCHLDHandler::onChildProcessExit($this->onChildStop(...));
         EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
@@ -177,33 +179,39 @@ final class Supervisor
     {
         $this->free();
 
-        return $worker->run($this->logger, new Relay($this->workerPipeResource));
+        return $worker->run($this->logger, new SocketPairMessageBus($this->workerPipeResource));
     }
 
     private function free(): void
     {
-        unset($this->workerPool, $this->suspension, $this->serverStatus, $this->workerRelay);
+        unset($this->workerPool, $this->suspension, $this->serverStatus, $this->workerHandler);
         \gc_collect_cycles();
         \gc_mem_caches();
     }
 
-    public function requestServerConnections(Relay $masterRelay): void
+    public function requestServerConnections(): Connections
     {
+        $deferredFuture = new DeferredFuture();
+
         $pids = \iterator_to_array($this->workerPool->getAlivePids());
         $pids = \array_filter($pids, fn(int $pid) => !$this->serverStatus->isDetached($pid));
         \array_walk($pids, static fn(int $pid) => \posix_kill($pid, SIGUSR2));
         $connections = [];
         $counter = 0;
-        $workerRelay = $this->workerRelay;
-        $this->workerRelay->subscribe(
+        $workerRelay = $this->workerHandler;
+        $this->workerHandler->subscribe(
             Connections::class,
-            $onReceive = static function (Connections $message) use (&$onReceive, &$connections, &$counter, &$pids, $masterRelay, $workerRelay) {
+            $onReceive = static function (Connections $message) use (&$onReceive, &$connections, &$counter, &$pids, $workerRelay, &$deferredFuture) {
                 \array_push($connections, ...$message->connections);
                 if (++$counter === \count($pids)) {
                     $workerRelay->unsubscribe(Connections::class, $onReceive);
-                    $masterRelay->publish(new Connections($connections));
+                    $deferredFuture->complete();
                 }
             },
         );
+
+        $deferredFuture->getFuture()->await();
+
+        return new Connections($connections);
     }
 }

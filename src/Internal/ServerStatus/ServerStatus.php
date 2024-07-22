@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\Relay\Relay;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
@@ -67,13 +67,9 @@ final class ServerStatus
         $this->isRunning = false;
     }
 
-    public function subscribeToWorkerMessages(Relay $relay): void
+    public function subscribeToWorkerMessages(MessageHandler $handler): void
     {
-        /**
-         * @TODO ass scheduler Process to processes array
-         */
-
-        $relay->subscribe(Spawn::class, weakClosure(function (Spawn $message) {
+        $handler->subscribe(Spawn::class, weakClosure(function (Spawn $message) {
             $this->processes[$message->pid] = new Process(
                 pid: $message->pid,
                 user: $message->user,
@@ -82,7 +78,7 @@ final class ServerStatus
             );
         }));
 
-        $relay->subscribe(Heartbeat::class, weakClosure(function (Heartbeat $message) {
+        $handler->subscribe(Heartbeat::class, weakClosure(function (Heartbeat $message) {
             $this->processes[$message->pid]->memory = $message->memory;
             $this->processes[$message->pid]->time = $message->time;
 
@@ -91,7 +87,7 @@ final class ServerStatus
             }
         }));
 
-        $relay->subscribe(Detach::class, weakClosure(function (Detach $message) {
+        $handler->subscribe(Detach::class, weakClosure(function (Detach $message) {
             $this->processes[$message->pid]->detached = true;
             $this->processes[$message->pid]->memory = 0;
             $this->processes[$message->pid]->requests = 0;
@@ -102,23 +98,23 @@ final class ServerStatus
             $this->processes[$message->pid]->blocked = false;
         }));
 
-        $relay->subscribe(RxtInc::class, weakClosure(function (RxtInc $message) {
+        $handler->subscribe(RxtInc::class, weakClosure(function (RxtInc $message) {
             $this->processes[$message->pid]->rx += $message->rx;
         }));
 
-        $relay->subscribe(TxtInc::class, weakClosure(function (TxtInc $message) {
+        $handler->subscribe(TxtInc::class, weakClosure(function (TxtInc $message) {
             $this->processes[$message->pid]->tx += $message->tx;
         }));
 
-        $relay->subscribe(RequestInc::class, weakClosure(function (RequestInc $message) {
+        $handler->subscribe(RequestInc::class, weakClosure(function (RequestInc $message) {
             $this->processes[$message->pid]->requests += $message->requests;
         }));
 
-        $relay->subscribe(Connect::class, weakClosure(function (Connect $message) {
+        $handler->subscribe(Connect::class, weakClosure(function (Connect $message) {
             $this->processes[$message->pid]->connections++;
         }));
 
-        $relay->subscribe(Disconnect::class, weakClosure(function (Disconnect $message) {
+        $handler->subscribe(Disconnect::class, weakClosure(function (Disconnect $message) {
             $this->processes[$message->pid]->connections--;
         }));
     }

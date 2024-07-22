@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
 
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 
-final readonly class Connections
+final readonly class Connections implements Message
 {
     /**
      * @param list<Connection> $connections
