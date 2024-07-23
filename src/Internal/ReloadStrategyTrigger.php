@@ -6,17 +6,15 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategy;
-use Revolt\EventLoop\Driver;
+use Revolt\EventLoop;
 
 final class ReloadStrategyTrigger
 {
     /** @var array<ReloadStrategy> */
     private array $reloadStrategies = [];
 
-    public function __construct(
-        private readonly Driver $eventLoop,
-        private readonly \Closure $reloadCallback,
-    ) {
+    public function __construct(private readonly \Closure $reloadCallback)
+    {
     }
 
     public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
@@ -25,7 +23,7 @@ final class ReloadStrategyTrigger
 
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TimerReloadStrategy) {
-                $this->eventLoop->repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
+                EventLoop::repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
                     $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload();
                 });
             }
@@ -54,7 +52,7 @@ final class ReloadStrategyTrigger
 
     private function reload(): void
     {
-        $this->eventLoop->defer(function (): void {
+        EventLoop::defer(function (): void {
             ($this->reloadCallback)();
         });
     }

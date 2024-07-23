@@ -18,7 +18,6 @@ use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
-use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;
 
 class WorkerProcess
@@ -32,7 +31,6 @@ class WorkerProcess
     public readonly int $pid;
     private int $exitCode = 0;
     public LoggerInterface $logger;
-    private Driver $eventLoop;
     public TrafficStatus $trafficStatus;
     public ReloadStrategyTrigger $reloadStrategyTrigger;
     public MessageBus $bus;
@@ -65,7 +63,7 @@ class WorkerProcess
         $this->bus = $bus;
         $this->setUserAndGroup();
         $this->initWorker();
-        $this->eventLoop->run();
+        EventLoop::getDriver()->run();
 
         return $this->exitCode;
     }
@@ -87,29 +85,30 @@ class WorkerProcess
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->name));
         }
 
-        $this->eventLoop = (new DriverFactory())->create();
-        EventLoop::setDriver($this->eventLoop);
-        $this->setErrorHandler(ErrorHandler::handleException(...));
+        EventLoop::setDriver((new DriverFactory())->create());
+        EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
         // onStart callback
-        $this->eventLoop->defer(function (): void {
+        EventLoop::defer(function (): void {
             $this->onStart !== null && ($this->onStart)($this);
         });
 
-        $this->eventLoop->onSignal(SIGTERM, fn() => $this->stop());
-        $this->eventLoop->onSignal(SIGUSR1, fn() => $this->reload());
-        $this->eventLoop->onSignal(SIGUSR2, fn() => $this->bus->dispatch(new Connections($this->trafficStatus->getConnections())));
+        EventLoop::onSignal(SIGTERM, fn() => $this->stop());
+        EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
+        EventLoop::onSignal(SIGUSR2, function () {
+            $this->bus->dispatch(new Connections($this->trafficStatus->getConnections()));
+        });
 
         // Force run garbage collection periodically
-        $this->eventLoop->repeat(self::GC_PERIOD, static function (): void {
+        EventLoop::repeat(self::GC_PERIOD, static function (): void {
             \gc_collect_cycles();
             \gc_mem_caches();
         });
 
         $this->trafficStatus = new TrafficStatus($this->bus);
-        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->eventLoop, $this->reload(...));
+        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 
         $this->bus->dispatch(new Spawn(
             pid: $this->pid,
@@ -123,7 +122,7 @@ class WorkerProcess
         };
 
         $heartbeat();
-        $this->eventLoop->repeat(self::HEARTBEAT_PERIOD, $heartbeat);
+        EventLoop::repeat(self::HEARTBEAT_PERIOD, $heartbeat);
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -132,7 +131,7 @@ class WorkerProcess
         try {
             $this->onStop !== null && ($this->onStop)($this);
         } finally {
-            $this->eventLoop->stop();
+            EventLoop::getDriver()->stop();
         }
     }
 
@@ -146,16 +145,16 @@ class WorkerProcess
         try {
             $this->onReload !== null && ($this->onReload)($this);
         } finally {
-            $this->eventLoop->stop();
+            EventLoop::getDriver()->stop();
         }
     }
 
     public function detach(): void
     {
         $this->bus->dispatch(new Detach($this->pid))->await();
-        $identifiers = $this->eventLoop->getIdentifiers();
-        \array_walk($identifiers, $this->eventLoop->cancel(...));
-        $this->eventLoop->stop();
+        $identifiers = EventLoop::getDriver()->getIdentifiers();
+        \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
+        EventLoop::getDriver()->stop();
         unset($this->trafficStatus, $this->reloadStrategyTrigger, $this->relay);
         $this->onStart = null;
         $this->onStop = null;
@@ -189,7 +188,7 @@ class WorkerProcess
      */
     final public function setErrorHandler(\Closure $errorHandler): void
     {
-        $this->eventLoop->setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
+        EventLoop::setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
             $errorHandler($exception);
             $this->reloadStrategyTrigger->emitException($exception);
         });
