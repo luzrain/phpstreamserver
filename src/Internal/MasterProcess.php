@@ -7,7 +7,6 @@ namespace Luzrain\PHPStreamServer\Internal;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
@@ -213,6 +212,10 @@ final class MasterProcess
     {
         if (!\is_dir($pidFileDir = \dirname($this->pidFile))) {
             \mkdir(directory: $pidFileDir, recursive: true);
+        }
+
+        if (\file_exists($this->socketFile)) {
+            unlink($this->socketFile);
         }
 
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
