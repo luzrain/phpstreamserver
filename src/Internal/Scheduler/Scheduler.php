@@ -71,6 +71,7 @@ final class Scheduler
             return;
         }
 
+        // Spawn process
         if (0 === $pid = $this->spawnWorker($worker)) {
             return;
         }
@@ -122,7 +123,9 @@ final class Scheduler
 
     private function free(): void
     {
-        unset($this->suspension, $this->pool, $this->stopFuture);
+        unset($this->suspension);
+        unset($this->pool);
+        unset($this->stopFuture);
         \gc_collect_cycles();
         \gc_mem_caches();
     }

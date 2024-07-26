@@ -22,7 +22,7 @@ final class TrafficStatus
     /**
      * @var \WeakMap<Socket, Connection>
      */
-    private \WeakMap $connectionMap;
+    private \WeakMap $activeConnections;
 
     public int $rx = 0;
     public int $tx = 0;
@@ -31,10 +31,7 @@ final class TrafficStatus
 
     public function __construct(private readonly MessageBus $bus)
     {
-        /**
-         * @var \WeakMap<Socket, Connection>
-         */
-        $this->connectionMap = new \WeakMap();
+        $this->activeConnections = new \WeakMap();
     }
 
     /**
@@ -42,7 +39,7 @@ final class TrafficStatus
      */
     public function getConnections(): array
     {
-        return \iterator_to_array($this->connectionMap, false);
+        return \iterator_to_array($this->activeConnections, false);
     }
 
     public function addConnection(Socket $socket): void
@@ -62,22 +59,18 @@ final class TrafficStatus
         );
 
         $this->connections++;
-        $this->connectionMap[$socket] = $connection;
+        $this->activeConnections[$socket] = $connection;
 
         $this->bus->dispatch(new Connect(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
-            connectedAt: $connection->connectedAt,
-            localIp: $connection->localIp,
-            localPort: $connection->localPort,
-            remoteIp: $connection->remoteIp,
-            remotePort: $connection->remotePort,
+            connection: $connection,
         ));
     }
 
     public function removeConnection(Socket $socket): void
     {
-        unset($this->connectionMap[$socket]);
+        unset($this->activeConnections[$socket]);
 
         $this->bus->dispatch(new Disconnect(
             pid: \posix_getpid(),
@@ -90,7 +83,11 @@ final class TrafficStatus
      */
     public function incRx(Socket $socket, int $val): void
     {
-        $this->connectionMap[$socket]->rx += $val;
+        /**
+         * @TODO! dispatch only once by the end of request!
+         */
+
+        $this->activeConnections[$socket]->rx += $val;
         $this->rx += $val;
 
         $this->bus->dispatch(new RxtInc(
@@ -105,7 +102,7 @@ final class TrafficStatus
      */
     public function incTx(Socket $socket, int $val): void
     {
-        $this->connectionMap[$socket]->tx += $val;
+        $this->activeConnections[$socket]->tx += $val;
         $this->tx += $val;
 
         $this->bus->dispatch(new TxtInc(

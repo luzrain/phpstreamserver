@@ -5,36 +5,33 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\MessageBus;
 
 use Amp\Future;
-use Amp\Socket\Socket;
+use Amp\Socket\DnsSocketConnector;
+use Amp\Socket\RetrySocketConnector;
+use Amp\Socket\SocketConnector;
+use Amp\Socket\StaticSocketConnector;
 use function Amp\async;
-use function Amp\Socket\connect;
 
 final class SocketFileMessageBus implements MessageBus
 {
-    public const CHUNK_SIZE = 1048576;
+    private SocketConnector $connector;
 
-    private Socket|null $socket = null;
-
-    public function __construct(private readonly string $socketFile)
+    public function __construct(string $socketFile)
     {
+        $this->connector = new RetrySocketConnector(
+            delegate: new StaticSocketConnector("unix://{$socketFile}", new DnsSocketConnector()),
+            maxAttempts: 3,
+            exponentialBackoffBase: 1,
+        );
     }
 
     public function dispatch(Message $message): Future
     {
-        if ($this->socket === null && \file_exists($this->socketFile)) {
-            $this->socket = connect("unix://{$this->socketFile}");
-        }
+        $connector = &$this->connector;
 
-        if ($this->socket === null) {
-            return async(static fn () => null);
-        }
-
-        $payload = \serialize($message);
-        $socket = &$this->socket;
-
-        return async(static function () use ($payload, &$socket): mixed {
-            $socket->write($payload);
-            $buffer = $socket->read(null, self::CHUNK_SIZE);
+        return async(static function () use (&$connector, &$message): mixed {
+            $socket = $connector->connect('');
+            $socket->write(\serialize($message));
+            $buffer = $socket->read(limit: PHP_INT_MAX);
 
             return \unserialize($buffer);
         });

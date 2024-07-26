@@ -93,16 +93,18 @@ final class ServerStatus
             $this->processes[$message->pid]->requests = 0;
             $this->processes[$message->pid]->rx = 0;
             $this->processes[$message->pid]->tx = 0;
-            $this->processes[$message->pid]->connections = 0;
             $this->processes[$message->pid]->time = 0;
             $this->processes[$message->pid]->blocked = false;
+            $this->processes[$message->pid]->connections = [];
         }));
 
         $handler->subscribe(RxtInc::class, weakClosure(function (RxtInc $message) {
+            $this->processes[$message->pid]->connections[$message->connectionId]->rx += $message->rx;
             $this->processes[$message->pid]->rx += $message->rx;
         }));
 
         $handler->subscribe(TxtInc::class, weakClosure(function (TxtInc $message) {
+            $this->processes[$message->pid]->connections[$message->connectionId]->tx += $message->tx;
             $this->processes[$message->pid]->tx += $message->tx;
         }));
 
@@ -111,11 +113,11 @@ final class ServerStatus
         }));
 
         $handler->subscribe(Connect::class, weakClosure(function (Connect $message) {
-            $this->processes[$message->pid]->connections++;
+            $this->processes[$message->pid]->connections[$message->connectionId] = $message->connection;
         }));
 
         $handler->subscribe(Disconnect::class, weakClosure(function (Disconnect $message) {
-            $this->processes[$message->pid]->connections--;
+            unset($this->processes[$message->pid]->connections[$message->connectionId]);
         }));
     }
 

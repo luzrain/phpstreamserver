@@ -15,7 +15,7 @@ final class WorkerPool
     /**
      * @var array<int, WorkerProcess>
      */
-    private array $pool = [];
+    private array $workerPool = [];
 
     /**
      * @var \WeakMap<WorkerProcess, list<int>>
@@ -28,19 +28,18 @@ final class WorkerPool
         $this->pidMap = new \WeakMap();
     }
 
-    public function addWorkerProcess(WorkerProcess $worker): void
+    public function registerWorkerProcess(WorkerProcess $worker): void
     {
-        $this->pool[\spl_object_id($worker)] = $worker;
+        $this->workerPool[\spl_object_id($worker)] = $worker;
         $this->pidMap[$worker] = [];
     }
 
     public function addChild(WorkerProcess $worker, int $pid): void
     {
-        if (!isset($this->pool[\spl_object_id($worker)])) {
-            throw new PHPStreamServerException('Worker is not fount in pool');
+        if (!isset($this->workerPool[\spl_object_id($worker)])) {
+            throw new PHPStreamServerException('Worker is not found in pool');
         }
 
-        /** @psalm-suppress InvalidArgument */
         $this->pidMap[$worker][] = $pid;
     }
 
@@ -67,9 +66,9 @@ final class WorkerPool
     /**
      * @return \Iterator<WorkerProcess>
      */
-    public function getWorkers(): \Iterator
+    public function getRegisteredWorkers(): \Iterator
     {
-        return new \ArrayIterator($this->pool);
+        return new \ArrayIterator($this->workerPool);
     }
 
     /**
@@ -94,7 +93,7 @@ final class WorkerPool
 
     public function getWorkerCount(): int
     {
-        return \count($this->pool);
+        return \count($this->workerPool);
     }
 
     public function getProcessesCount(): int

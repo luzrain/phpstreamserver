@@ -6,8 +6,10 @@ namespace Luzrain\PHPStreamServer\Command;
 
 use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Table;
+use Luzrain\PHPStreamServer\Internal\ConnectionsRequest;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 
 final class ConnectionsCommand implements Command
@@ -29,7 +31,17 @@ final class ConnectionsCommand implements Command
 
     public function run(array $arguments): int
     {
-        $connections = $this->masterProcess->getServerConnections();
+
+
+
+
+        $status = $this->masterProcess->getServerStatus();
+        $connections = [];
+
+        foreach ($status->getProcesses() as $process) {
+            \array_push($connections, ...$process->connections);
+        }
+
 
         echo "❯ Connections\n";
 

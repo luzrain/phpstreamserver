@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
+use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
@@ -33,7 +35,9 @@ class WorkerProcess
     public LoggerInterface $logger;
     public TrafficStatus $trafficStatus;
     public ReloadStrategyTrigger $reloadStrategyTrigger;
-    public MessageBus $bus;
+
+    private string $socketFile;
+    private MessageBus $messageBus;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -57,10 +61,9 @@ class WorkerProcess
     /**
      * @internal
      */
-    final public function run(LoggerInterface $logger, MessageBus $bus): int
+    final public function run(LoggerInterface $logger): int
     {
         $this->logger = $logger;
-        $this->bus = $bus;
         $this->setUserAndGroup();
         $this->initWorker();
         EventLoop::getDriver()->run();
@@ -90,6 +93,10 @@ class WorkerProcess
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
+        $this->messageBus = new SocketFileMessageBus($this->socketFile);
+        $this->trafficStatus = new TrafficStatus($this->messageBus);
+        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
+
         // onStart callback
         EventLoop::defer(function (): void {
             $this->onStart !== null && ($this->onStart)($this);
@@ -97,32 +104,31 @@ class WorkerProcess
 
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
-        EventLoop::onSignal(SIGUSR2, function () {
-            $this->bus->dispatch(new Connections($this->trafficStatus->getConnections()));
+
+        EventLoop::queue(function () {
+            $this->messageBus->dispatch(new Spawn(
+                pid: $this->pid,
+                user: $this->getUser(),
+                name: $this->name,
+                startedAt: new \DateTimeImmutable('now'),
+            ));
         });
+
+        EventLoop::queue($heartbeat = function (): void {
+            $this->messageBus->dispatch(new Heartbeat(
+                pid: $this->pid,
+                memory: \memory_get_usage(),
+                time: \hrtime(true),
+            ));
+        });
+
+        EventLoop::repeat(self::HEARTBEAT_PERIOD, $heartbeat);
 
         // Force run garbage collection periodically
         EventLoop::repeat(self::GC_PERIOD, static function (): void {
             \gc_collect_cycles();
             \gc_mem_caches();
         });
-
-        $this->trafficStatus = new TrafficStatus($this->bus);
-        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
-
-        $this->bus->dispatch(new Spawn(
-            pid: $this->pid,
-            user: $this->getUser(),
-            name: $this->name,
-            startedAt: new \DateTimeImmutable('now'),
-        ));
-
-        $heartbeat = function (): void {
-            $this->bus->dispatch(new Heartbeat($this->pid, \memory_get_usage(), \hrtime(true)));
-        };
-
-        $heartbeat();
-        EventLoop::repeat(self::HEARTBEAT_PERIOD, $heartbeat);
     }
 
     final public function stop(int $code = self::STOP_EXIT_CODE): void
@@ -151,7 +157,7 @@ class WorkerProcess
 
     public function detach(): void
     {
-        $this->bus->dispatch(new Detach($this->pid))->await();
+        $this->messageBus->dispatch(new Detach($this->pid))->await();
         $identifiers = EventLoop::getDriver()->getIdentifiers();
         \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
         EventLoop::getDriver()->stop();
@@ -212,5 +218,31 @@ class WorkerProcess
     final public function getGroup(): string
     {
         return $this->group ?? Functions::getCurrentGroup();
+    }
+
+
+
+
+    public function setPipe(string $socketFile): self
+    {
+        $this->socketFile = $socketFile;
+
+        return $this;
+    }
+
+
+
+
+
+
+
+    /**
+     * @template T
+     * @param Message<T> $message
+     * @return Future<T>
+     */
+    public function dispatch(Message $message): Future
+    {
+        return $this->messageBus->dispatch($message);
     }
 }

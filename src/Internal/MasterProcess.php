@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-use Amp\Future;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
@@ -12,11 +11,10 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
-use Luzrain\PHPStreamServer\Plugin\Module;
 use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\Plugin\Module;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
@@ -39,7 +37,7 @@ final class MasterProcess
     private Suspension $suspension;
     private Status $status = Status::STARTING;
     private ServerStatus $serverStatus;
-    private MessageHandler $serverStatusHandler;
+    private MessageHandler $messageHandler;
     private Supervisor $supervisor;
     private Scheduler $scheduler;
 
@@ -50,7 +48,7 @@ final class MasterProcess
 
     public function __construct(
         string|null $pidFile,
-        int $stopTimeout,
+        private readonly int $stopTimeout,
         public readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
@@ -75,9 +73,9 @@ final class MasterProcess
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
-        $this->serverStatus = new ServerStatus();
-        $this->supervisor = new Supervisor($stopTimeout);
+        $this->supervisor = new Supervisor($this->stopTimeout);
         $this->scheduler = new Scheduler();
+        $this->serverStatus = new ServerStatus();
     }
 
     public function addWorkerProcess(WorkerProcess ...$workers): void
@@ -164,18 +162,21 @@ final class MasterProcess
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
-        $this->serverStatus->setRunning(true);
-        $this->serverStatusHandler = new SocketFileMessageHandler($this->socketFile);
-        $this->serverStatusHandler->subscribe(ServerStatusRequest::class, $this->getServerStatus(...));
-        $this->serverStatusHandler->subscribe(ConnectionsRequest::class, $this->supervisor->requestServerConnections(...));
+        $this->messageHandler = new SocketFileMessageHandler($this->socketFile);
+        $this->supervisor->setHandler($this->messageHandler, $this->socketFile);
 
-        $stopCallback = function (): void {
-            $this->stop();
-        };
-        foreach ([SIGINT, SIGTERM, SIGHUP, SIGTSTP, SIGQUIT] as $signo) {
-            EventLoop::onSignal($signo, $stopCallback);
-        }
-        EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
+        $this->serverStatus->setRunning(true);
+
+        $this->messageHandler->subscribe(ServerStatusRequest::class, $this->getServerStatus(...));
+
+        $stopCallback = function (): void { $this->stop(); };
+        $reloadCallback = function (): void { $this->reload(); };
+        EventLoop::onSignal(SIGINT, $stopCallback);
+        EventLoop::onSignal(SIGTERM, $stopCallback);
+        EventLoop::onSignal(SIGHUP, $stopCallback);
+        EventLoop::onSignal(SIGTSTP, $stopCallback);
+        EventLoop::onSignal(SIGQUIT, $stopCallback);
+        EventLoop::onSignal(SIGUSR1, $reloadCallback);
 
         // Force run garbage collection periodically
         EventLoop::repeat(self::GC_PERIOD, static function (): void {
@@ -337,22 +338,5 @@ final class MasterProcess
 
         /** @var ServerStatus */
         return $result->await();
-    }
-
-    /**
-     * @return list<Connection>
-     */
-    public function getServerConnections(): array
-    {
-        if (!$this->isRunning()) {
-            return [];
-        }
-
-        $bus = new SocketFileMessageBus($this->socketFile);
-
-        /** @var Future<Connections> $connections */
-        $connections = $bus->dispatch(new ConnectionsRequest());
-
-        return $connections->await()->connections;
     }
 }

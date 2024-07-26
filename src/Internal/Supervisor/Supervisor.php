@@ -9,9 +9,6 @@ use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketPairMessageBus;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketPairMessageHandler;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
@@ -32,18 +29,19 @@ final class Supervisor
     /** @var \Closure(): Status */
     private \Closure $status;
     private DeferredFuture $stopFuture;
-    /** @var resource $workerPipeResource */
-    private mixed $workerPipeResource;
-    private MessageHandler $workerHandler;
 
-    public function __construct(private readonly int $stopTimeout)
-    {
+    private readonly MessageHandler $messageHandler;
+    private readonly string $socketFile;
+
+    public function __construct(
+        private readonly int $stopTimeout,
+    ) {
         $this->workerPool = new WorkerPool();
     }
 
     public function addWorkerProcess(WorkerProcess $worker): void
     {
-        $this->workerPool->addWorkerProcess($worker);
+        $this->workerPool->registerWorkerProcess($worker);
     }
 
     public function start(MasterProcess $masterProcess, Suspension $suspension): void
@@ -52,10 +50,7 @@ final class Supervisor
         $this->suspension = $suspension;
         $this->serverStatus = $masterProcess->getServerStatus();
         $this->status = $masterProcess->getStatus(...);
-
-        [$masterPipe, $this->workerPipeResource] = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        $this->workerHandler = new SocketPairMessageHandler($masterPipe);
-        $this->serverStatus->subscribeToWorkerMessages($this->workerHandler);
+        $this->serverStatus->subscribeToWorkerMessages($this->messageHandler);
 
         SIGCHLDHandler::onChildProcessExit($this->onChildStop(...));
         EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, fn() => $this->monitorWorkerStatus());
@@ -66,7 +61,7 @@ final class Supervisor
     private function spawnWorkers(): void
     {
         EventLoop::defer(function (): void {
-            foreach ($this->workerPool->getWorkers() as $worker) {
+            foreach ($this->workerPool->getRegisteredWorkers() as $worker) {
                 while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->count) {
                     if ($this->spawnWorker($worker)) {
                         return;
@@ -85,11 +80,21 @@ final class Supervisor
             return false;
         } elseif ($pid === 0) {
             // Child process
-            $this->suspension->resume($worker);
+            $this->suspension->resume($worker->setPipe($this->socketFile));
             return true;
         } else {
             throw new PHPStreamServerException('fork fail');
         }
+    }
+
+    /**
+     * Runs in forked process
+     */
+    public function runWorker(WorkerProcess $worker): int
+    {
+        $this->free();
+
+        return $worker->run($this->logger);
     }
 
     private function monitorWorkerStatus(): void
@@ -172,46 +177,18 @@ final class Supervisor
         }
     }
 
-    /**
-     * Runs in forked process
-     */
-    public function runWorker(WorkerProcess $worker): int
-    {
-        $this->free();
-
-        return $worker->run($this->logger, new SocketPairMessageBus($this->workerPipeResource));
-    }
-
     private function free(): void
     {
-        unset($this->workerPool, $this->suspension, $this->serverStatus, $this->workerHandler);
+        unset($this->workerPool);
+        unset($this->suspension);
+        unset($this->serverStatus);
         \gc_collect_cycles();
         \gc_mem_caches();
     }
 
-    public function requestServerConnections(): Connections
+    public function setHandler(MessageHandler $messageHandler, string $socketFile): void
     {
-        $deferredFuture = new DeferredFuture();
-
-        $pids = \iterator_to_array($this->workerPool->getAlivePids());
-        $pids = \array_filter($pids, fn(int $pid) => !$this->serverStatus->isDetached($pid));
-        \array_walk($pids, static fn(int $pid) => \posix_kill($pid, SIGUSR2));
-        $connections = [];
-        $counter = 0;
-        $workerRelay = $this->workerHandler;
-        $this->workerHandler->subscribe(
-            Connections::class,
-            $onReceive = static function (Connections $message) use (&$onReceive, &$connections, &$counter, &$pids, $workerRelay, &$deferredFuture) {
-                \array_push($connections, ...$message->connections);
-                if (++$counter === \count($pids)) {
-                    $workerRelay->unsubscribe(Connections::class, $onReceive);
-                    $deferredFuture->complete();
-                }
-            },
-        );
-
-        $deferredFuture->getFuture()->await();
-
-        return new Connections($connections);
+        $this->messageHandler = $messageHandler;
+        $this->socketFile = $socketFile;
     }
 }

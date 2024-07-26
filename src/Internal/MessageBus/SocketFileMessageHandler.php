@@ -4,35 +4,35 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\MessageBus;
 
-use function Amp\async;
-use function Amp\Socket\listen;
+use Amp\Socket\ResourceServerSocket;
+use Amp\Socket\ResourceServerSocketFactory;
+use Revolt\EventLoop;
 
 final class SocketFileMessageHandler implements MessageHandler
 {
-    public const CHUNK_SIZE = 1048576;
+    private ResourceServerSocket $socket;
 
     /**
-     * @var list<\Closure>
+     * @var array<class-string, array<int, \Closure>>
      */
     private array $subscribers = [];
 
     public function __construct(string $socketFile)
     {
-        $server = listen("unix://$socketFile");
+        $this->socket = (new ResourceServerSocketFactory())->listen("unix://$socketFile");
+        $server = &$this->socket;
         $subscribers = &$this->subscribers;
 
-        async(static function () use ($server, &$subscribers) {
+        EventLoop::queue(static function () use (&$server, &$subscribers) {
             while ($socket = $server->accept()) {
-                $data = $socket->read(null, self::CHUNK_SIZE);
-
+                $data = $socket->read(limit: PHP_INT_MAX);
                 $message = \unserialize($data);
                 \assert($message instanceof Message);
                 $return = null;
 
                 foreach ($subscribers[$message::class] ?? [] as $subscriber) {
-                    $subscriberAnswer = $subscriber($message);
-                    if ($subscriberAnswer !== null) {
-                        $return = $subscriberAnswer;
+                    if (null !== $subscriberReturn = $subscriber($message)) {
+                        $return = $subscriberReturn;
                         break;
                     }
                 }
@@ -43,10 +43,17 @@ final class SocketFileMessageHandler implements MessageHandler
         });
     }
 
+    public function __destruct()
+    {
+        $this->socket->close();
+        unset($this->socket);
+        unset($this->subscribers);
+    }
+
     /**
      * @template T of Message
      * @param class-string<T> $class
-     * @param \Closure(T): void $closure
+     * @param \Closure(T): mixed $closure
      */
     public function subscribe(string $class, \Closure $closure): void
     {
@@ -56,7 +63,7 @@ final class SocketFileMessageHandler implements MessageHandler
     /**
      * @template T of Message
      * @param class-string<T> $class
-     * @param \Closure(T): void $closure
+     * @param \Closure(T): mixed $closure
      */
     public function unsubscribe(string $class, \Closure $closure): void
     {

@@ -6,6 +6,9 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 final class Process
 {
+    /**
+     * @param array<int, Connection> $connections
+     */
     public function __construct(
         public int $pid,
         public string $user,
@@ -17,8 +20,8 @@ final class Process
         public int $requests = 0,
         public int $rx = 0,
         public int $tx = 0,
-        public int $connections = 0,
         public bool $blocked = false,
+        public array $connections = [],
     ) {
     }
 }

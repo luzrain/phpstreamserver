@@ -51,7 +51,7 @@ final class ProcessesCommand implements Command
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
                         $w->memory > 0 ? Functions::humanFileSize($w->memory) : '<color;fg=gray>??</>',
                         $w->name,
-                        $w->connections === 0 ? '<color;fg=gray>0</>' : $w->connections,
+                        \count($w->connections) === 0 ? '<color;fg=gray>0</>' : \count($w->connections),
                         $w->requests === 0 ? '<color;fg=gray>0</>' : $w->requests,
                         $w->rx === 0 && $w->tx === 0
                             ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx))
