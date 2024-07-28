@@ -17,17 +17,21 @@
         "php": ">=8.2",
         "ext-pcntl": "*",
         "ext-posix": "*",
+        "amphp/amp": "^3.0.2",
+        "amphp/byte-stream": "^2.1.1",
         "amphp/http-server": "^3.3.1",
+        "amphp/socket": "^2.3.1",
         "psr/http-message": "^2.0",
         "psr/log": "^3.0",
         "revolt/event-loop": "^1.0.6"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.59.3",
-        "guzzlehttp/guzzle": "^7.8.1",
-        "phpunit/phpunit": "^10.5.24",
+        "dragonmantank/cron-expression": "^3.3.3",
+        "friendsofphp/php-cs-fixer": "^3.60.0",
+        "guzzlehttp/guzzle": "^7.9.2",
+        "phpunit/phpunit": "^10.5.28",
         "psalm/phar": "^5.25",
-        "symfony/var-dumper": "^6.4.8"
+        "symfony/var-dumper": "^6.4.10"
     },
     "autoload": {
         "psr-4": {
