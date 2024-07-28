@@ -12,7 +12,7 @@ use Luzrain\PHPStreamServer\Command\StatusCommand;
 use Luzrain\PHPStreamServer\Command\StopCommand;
 use Luzrain\PHPStreamServer\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\Console\App;
-use Luzrain\PHPStreamServer\Internal\Logger;
+use Luzrain\PHPStreamServer\Internal\Logger\Logger;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Module;
 

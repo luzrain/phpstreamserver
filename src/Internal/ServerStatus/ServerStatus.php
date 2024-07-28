@@ -138,7 +138,7 @@ final class ServerStatus
         );
     }
 
-    public function setRunning(bool $isRunning): void
+    public function setRunning(bool $isRunning = true): void
     {
         $this->startedAt = $isRunning ? new \DateTimeImmutable('now') : null;
         $this->isRunning = $isRunning;

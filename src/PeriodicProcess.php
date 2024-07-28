@@ -4,28 +4,26 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
+use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connections;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
-use PHPUnit\Event\Event;
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\Internal\RunnableProcess;
+use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
-use Revolt\EventLoop\Driver;
 use Revolt\EventLoop\DriverFactory;
 
-class PeriodicProcess
+class PeriodicProcess implements RunnableProcess
 {
     public readonly int $id;
     public readonly int $pid;
     public readonly LoggerInterface $logger;
+    private string $socketFile;
+    private MessageBus $messageBus;
 
     /**
      * $schedule can be one of the following formats:
@@ -56,18 +54,13 @@ class PeriodicProcess
     /**
      * @internal
      */
-    final public function run(LoggerInterface $logger): int
+    final public function run(WorkerContext $workerContext): int
     {
-        $this->logger = $logger;
-        //$this->relay = $relay;
+        $this->socketFile = $workerContext->socketFile;
+        $this->logger = $workerContext->logger;
         $this->setUserAndGroup();
         $this->initWorker();
-
-        // onStart callback
-        $this->onStart !== null && ($this->onStart)($this);
-
-        // onStop callback
-        $this->onStop !== null && ($this->onStop)($this);
+        EventLoop::run();
 
         return 0;
     }
@@ -94,15 +87,23 @@ class PeriodicProcess
 
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
+
+        $this->messageBus = new SocketFileMessageBus($this->socketFile);
+
+        EventLoop::defer(function (): void {
+            $this->onStart !== null && ($this->onStart)($this);
+            $this->onStop !== null && ($this->onStop)($this);
+        });
     }
 
     public function detach(): void
     {
-        EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
-        if (!EventLoop::getDriver()->isRunning()) {
-            EventLoop::run();
-        }
-
+        $identifiers = EventLoop::getDriver()->getIdentifiers();
+        \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
+        EventLoop::getDriver()->stop();
+        unset($this->logger);
+        unset($this->socketFile);
+        unset($this->messageBus);
         $this->onStart = null;
         $this->onStop = null;
         \gc_collect_cycles();
@@ -132,5 +133,15 @@ class PeriodicProcess
     final public function getGroup(): string
     {
         return $this->group ?? Functions::getCurrentGroup();
+    }
+
+    /**
+     * @template T
+     * @param Message<T> $message
+     * @return Future<T>
+     */
+    public function dispatch(Message $message): Future
+    {
+        return $this->messageBus->dispatch($message);
     }
 }

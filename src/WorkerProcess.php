@@ -12,17 +12,19 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
+use Luzrain\PHPStreamServer\Internal\RunnableProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-class WorkerProcess
+class WorkerProcess implements RunnableProcess
 {
     final public const STOP_EXIT_CODE = 0;
     final public const RELOAD_EXIT_CODE = 100;
@@ -61,12 +63,13 @@ class WorkerProcess
     /**
      * @internal
      */
-    final public function run(LoggerInterface $logger): int
+    final public function run(WorkerContext $workerContext): int
     {
-        $this->logger = $logger;
+        $this->socketFile = $workerContext->socketFile;
+        $this->logger = $workerContext->logger;
         $this->setUserAndGroup();
         $this->initWorker();
-        EventLoop::getDriver()->run();
+        EventLoop::run();
 
         return $this->exitCode;
     }
@@ -89,7 +92,12 @@ class WorkerProcess
         }
 
         EventLoop::setDriver((new DriverFactory())->create());
-        EventLoop::setErrorHandler(ErrorHandler::handleException(...));
+
+        EventLoop::setErrorHandler(function (\Throwable $exception) {
+            ErrorHandler::handleException($exception);
+            $this->reloadStrategyTrigger->emitException($exception);
+        });
+
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
@@ -161,7 +169,11 @@ class WorkerProcess
         $identifiers = EventLoop::getDriver()->getIdentifiers();
         \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
         EventLoop::getDriver()->stop();
-        unset($this->trafficStatus, $this->reloadStrategyTrigger, $this->relay);
+        unset($this->logger);
+        unset($this->trafficStatus);
+        unset($this->reloadStrategyTrigger);
+        unset($this->socketFile);
+        unset($this->messageBus);
         $this->onStart = null;
         $this->onStop = null;
         $this->onReload = null;
@@ -184,20 +196,14 @@ class WorkerProcess
         exit(0);
     }
 
-    final public function setLogger(LoggerInterface $logger): void
+    final public function getUser(): string
     {
-        $this->logger = $logger;
+        return $this->user ?? Functions::getCurrentUser();
     }
 
-    /**
-     * @param \Closure(\Throwable):void $errorHandler
-     */
-    final public function setErrorHandler(\Closure $errorHandler): void
+    final public function getGroup(): string
     {
-        EventLoop::setErrorHandler(function (\Throwable $exception) use ($errorHandler) {
-            $errorHandler($exception);
-            $this->reloadStrategyTrigger->emitException($exception);
-        });
+        return $this->group ?? Functions::getCurrentGroup();
     }
 
     final public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
@@ -209,32 +215,6 @@ class WorkerProcess
     {
         $plugin->start($this);
     }
-
-    final public function getUser(): string
-    {
-        return $this->user ?? Functions::getCurrentUser();
-    }
-
-    final public function getGroup(): string
-    {
-        return $this->group ?? Functions::getCurrentGroup();
-    }
-
-
-
-
-    public function setPipe(string $socketFile): self
-    {
-        $this->socketFile = $socketFile;
-
-        return $this;
-    }
-
-
-
-
-
-
 
     /**
      * @template T

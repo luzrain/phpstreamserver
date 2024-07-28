@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace Luzrain\PHPStreamServer\Internal\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;

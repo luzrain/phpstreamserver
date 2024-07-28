@@ -8,16 +8,18 @@ use Revolt\EventLoop;
 
 final class SIGCHLDHandler
 {
-    private static bool $isInit = false;
+    private static bool $isRegistered = false;
+    private static string $signalCallbackId = '';
     private static array $callbacks = [];
 
     private function __construct()
     {
     }
 
-    private static function init(): void
+    private static function register(): void
     {
-        EventLoop::onSignal(SIGCHLD, static function () {
+        self::$isRegistered = true;
+        self::$signalCallbackId = EventLoop::onSignal(SIGCHLD, static function () {
             while (($pid = \pcntl_wait($status, WNOHANG)) > 0) {
                 $exitCode = \pcntl_wexitstatus($status) ?: 0;
                 foreach (self::$callbacks as $callback) {
@@ -32,11 +34,22 @@ final class SIGCHLDHandler
      */
     public static function onChildProcessExit(\Closure $closure): void
     {
-        if (!self::$isInit) {
-            self::init();
-            self::$isInit = true;
+        if (!self::$isRegistered) {
+            self::register();
         }
 
         self::$callbacks[] = $closure;
+    }
+
+    public static function unregister(): void
+    {
+        if (!self::$isRegistered) {
+            return;
+        }
+
+        EventLoop::disable(self::$signalCallbackId);
+        self::$isRegistered = false;
+        self::$signalCallbackId = '';
+        self::$callbacks = [];
     }
 }

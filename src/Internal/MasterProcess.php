@@ -10,7 +10,6 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\PeriodicProcess;
@@ -48,7 +47,7 @@ final class MasterProcess
 
     public function __construct(
         string|null $pidFile,
-        private readonly int $stopTimeout,
+        int $stopTimeout,
         public readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
@@ -73,7 +72,7 @@ final class MasterProcess
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
-        $this->supervisor = new Supervisor($this->stopTimeout);
+        $this->supervisor = new Supervisor($stopTimeout,);
         $this->scheduler = new Scheduler();
         $this->serverStatus = new ServerStatus();
     }
@@ -81,7 +80,7 @@ final class MasterProcess
     public function addWorkerProcess(WorkerProcess ...$workers): void
     {
         foreach ($workers as $worker) {
-            $this->supervisor->addWorkerProcess($worker);
+            $this->supervisor->registerWorkerProcess($worker);
             $this->serverStatus->addWorkerProcess($worker);
         }
     }
@@ -123,28 +122,25 @@ final class MasterProcess
         $this->saveMasterPid();
         $this->initServer();
         $this->status = Status::RUNNING;
-        $this->supervisor->start($this, $this->suspension);
-        $this->scheduler->start($this, $this->suspension);
+        $this->supervisor->start($this->logger, $this->suspension, $this->getStatus(...), $this->serverStatus);
+        $this->scheduler->start($this->logger, $this->suspension, $this->getStatus(...));
         $this->logger->info(Server::NAME . ' has started');
 
-        $exit = $this->suspension->suspend();
+        $exitCode = $this->suspension->suspend();
 
-        if ($exit instanceof WorkerProcess) {
-            $supervisor = $this->supervisor;
+        if ($exitCode instanceof RunnableProcess) {
+            $worker = $exitCode;
             $this->free();
-            exit($supervisor->runWorker($exit));
+            exit($worker->run(new WorkerContext(
+                socketFile: $this->socketFile,
+                logger: $this->logger,
+            )));
         }
 
-        if ($exit instanceof PeriodicProcess) {
-            $scheduler = $this->scheduler;
-            $this->free();
-            exit($scheduler->runWorker($exit));
-        }
-
-        \assert(\is_int($exit));
+        \assert(\is_int($exitCode));
         $this->onMasterShutdown();
 
-        return $exit;
+        return $exitCode;
     }
 
     /**
@@ -163,9 +159,9 @@ final class MasterProcess
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
         $this->messageHandler = new SocketFileMessageHandler($this->socketFile);
-        $this->supervisor->setHandler($this->messageHandler, $this->socketFile);
 
-        $this->serverStatus->setRunning(true);
+        $this->serverStatus->setRunning();
+        $this->serverStatus->subscribeToWorkerMessages($this->messageHandler);
 
         $this->messageHandler->subscribe(ServerStatusRequest::class, $this->getServerStatus(...));
 
@@ -310,21 +306,21 @@ final class MasterProcess
 
     private function free(): void
     {
-        EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
-        EventLoop::getDriver()->run();
-
         foreach ($this->modules as $module) {
             $module->free();
         }
 
-        // Delete all references
-        foreach ($this as $prop => $val) {
-            try {
-                unset($this->$prop);
-            } catch (\Error) {
-                // Ignore
-            }
-        }
+        unset($this->serverStatus);
+        unset($this->messageHandler);
+        unset($this->supervisor);
+        unset($this->scheduler);
+
+        SIGCHLDHandler::unregister();
+        EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
+        EventLoop::getDriver()->run();
+
+        \gc_collect_cycles();
+        \gc_mem_caches();
     }
 
     public function getServerStatus(): ServerStatus

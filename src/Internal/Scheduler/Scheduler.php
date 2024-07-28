@@ -7,20 +7,23 @@ namespace Luzrain\PHPStreamServer\Internal\Scheduler;
 use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
+use Luzrain\PHPStreamServer\Internal\Status;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
+use function Amp\weakClosure;
 
 final class Scheduler
 {
+    private WorkerPool $pool;
     private LoggerInterface $logger;
     private Suspension $suspension;
-    private WorkerPool $pool;
+    /** @var \Closure(): Status */
+    private \Closure $status;
     private DeferredFuture|null $stopFuture = null;
 
     public function __construct()
@@ -33,12 +36,19 @@ final class Scheduler
         $this->pool->addWorker($worker);
     }
 
-    public function start(MasterProcess $masterProcess, Suspension $suspension): void
-    {
-        $this->logger = $masterProcess->logger;
+    /**
+     * @param \Closure(): Status $status
+     */
+    public function start(
+        LoggerInterface $logger,
+        Suspension $suspension,
+        \Closure $status,
+    ): void {
+        $this->logger = $logger;
         $this->suspension = $suspension;
+        $this->status = $status;
 
-        SIGCHLDHandler::onChildProcessExit($this->onChildStop(...));
+        SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
 
         foreach ($this->pool->getWorkers() as $worker) {
             try {
@@ -52,22 +62,29 @@ final class Scheduler
         }
     }
 
-    private function scheduleWorker(PeriodicProcess $worker, TriggerInterface $trigger): void
+    private function scheduleWorker(PeriodicProcess $worker, TriggerInterface $trigger): bool
     {
+        if (($this->status)() !== Status::RUNNING) {
+            return false;
+        }
+
         $currentDate = new \DateTimeImmutable();
         $nextRunDate = $trigger->getNextRunDate($currentDate);
         if ($nextRunDate !== null) {
             $delay = $nextRunDate->getTimestamp() - $currentDate->getTimestamp();
             EventLoop::delay($delay, fn() => $this->startWorker($worker, $trigger));
         }
+
+        return true;
     }
 
     private function startWorker(PeriodicProcess $worker, TriggerInterface $trigger): void
     {
         // Reschedule a task without running it if the previous task is still running
         if ($this->pool->isWorkerRun($worker)) {
-            $this->logger->info(\sprintf('Periodic task "%s" is already running. Rescheduled', $worker->name));
-            $this->scheduleWorker($worker, $trigger);
+            if($this->scheduleWorker($worker, $trigger)) {
+                $this->logger->info(\sprintf('Periodic task "%s" is already running. Rescheduled', $worker->name));
+            }
             return;
         }
 
@@ -119,24 +136,5 @@ final class Scheduler
         }
 
         return $this->stopFuture->getFuture();
-    }
-
-    private function free(): void
-    {
-        unset($this->suspension);
-        unset($this->pool);
-        unset($this->stopFuture);
-        \gc_collect_cycles();
-        \gc_mem_caches();
-    }
-
-    /**
-     * Runs in forked process
-     */
-    public function runWorker(PeriodicProcess $worker): int
-    {
-        $this->free();
-
-        return $worker->run($this->logger);
     }
 }

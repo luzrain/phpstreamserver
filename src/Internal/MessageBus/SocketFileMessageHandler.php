@@ -19,7 +19,7 @@ final class SocketFileMessageHandler implements MessageHandler
 
     public function __construct(string $socketFile)
     {
-        $this->socket = (new ResourceServerSocketFactory())->listen("unix://$socketFile");
+        $this->socket = (new ResourceServerSocketFactory(chunkSize: PHP_INT_MAX))->listen("unix://$socketFile");
         $server = &$this->socket;
         $subscribers = &$this->subscribers;
 
