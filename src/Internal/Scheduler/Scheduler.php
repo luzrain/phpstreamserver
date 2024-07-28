@@ -7,11 +7,11 @@ namespace Luzrain\PHPStreamServer\Internal\Scheduler;
 use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\PeriodicProcess;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\PeriodicProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -54,7 +54,7 @@ final class Scheduler
             try {
                 $trigger = TriggerFactory::create($worker->schedule, $worker->jitter);
             } catch (\InvalidArgumentException) {
-                $this->logger->warning(\sprintf('Periodic task "%s" skipped. Schedule "%s" is not in valid format', $worker->name, $worker->schedule));
+                $this->logger->warning(\sprintf('Periodic process "%s" skipped. Schedule "%s" is not in valid format', $worker->name, $worker->schedule));
                 continue;
             }
 
@@ -83,7 +83,7 @@ final class Scheduler
         // Reschedule a task without running it if the previous task is still running
         if ($this->pool->isWorkerRun($worker)) {
             if($this->scheduleWorker($worker, $trigger)) {
-                $this->logger->info(\sprintf('Periodic task "%s" is already running. Rescheduled', $worker->name));
+                $this->logger->info(\sprintf('Periodic process "%s" is already running. Rescheduled', $worker->name));
             }
             return;
         }
@@ -93,7 +93,7 @@ final class Scheduler
             return;
         }
 
-        $this->logger->info(\sprintf('Periodic task "%s" [pid:%s] started', $worker->name, $pid));
+        $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] started', $worker->name, $pid));
         $this->scheduleWorker($worker, $trigger);
     }
 
@@ -120,7 +120,7 @@ final class Scheduler
         }
 
         $this->pool->deleteChild($worker);
-        $this->logger->info(\sprintf('Periodic task "%s" [pid:%s] exit with code %s', $worker->name, $pid, $exitCode));
+        $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] exit with code %s', $worker->name, $pid, $exitCode));
 
         if ($this->stopFuture !== null && !$this->stopFuture->isComplete() && $this->pool->getProcessesCount() === 0) {
             $this->stopFuture->complete();

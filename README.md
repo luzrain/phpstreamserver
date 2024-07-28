@@ -38,12 +38,12 @@ Here is example of simple http server.
 // server.php
 
 use Luzrain\PHPStreamServer\Exception\HttpException;
+use Luzrain\PHPStreamServer\Internal\WorkerProcess;
 use Luzrain\PHPStreamServer\Listener;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\Server\Connection\ConnectionInterface;
 use Luzrain\PHPStreamServer\Server\Http\Psr7\Response;
 use Luzrain\PHPStreamServer\Server\Protocols\Http;
-use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Http\Message\ServerRequestInterface;
 
 $server = new Server();

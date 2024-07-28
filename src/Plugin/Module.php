@@ -15,7 +15,7 @@ interface Module
     public function init(MasterProcess $masterProcess): void;
 
     /**
-     * If module has to finish some work right before server stop, module can return Future and master process will wait it.
+     * If module has to finish some work right before server stop, module can return Future and master process will wait for it.
      * If module can be stopped imidiatelly simply return null.
      */
     public function stop(): Future|null;

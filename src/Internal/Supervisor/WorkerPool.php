@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\Internal\WorkerProcess;
 
 /**
  * @internal

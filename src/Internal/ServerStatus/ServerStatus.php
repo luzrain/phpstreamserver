@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\Internal\PeriodicProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
@@ -14,9 +15,8 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
-use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\Internal\WorkerProcess;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Amp\weakClosure;

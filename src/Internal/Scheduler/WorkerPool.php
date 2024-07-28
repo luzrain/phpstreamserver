@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\Scheduler;
 
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\Internal\PeriodicProcess;
 
 /**
  * @internal

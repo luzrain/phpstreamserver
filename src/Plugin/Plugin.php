@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin;
 
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\Internal\WorkerProcess;
 
 interface Plugin
 {

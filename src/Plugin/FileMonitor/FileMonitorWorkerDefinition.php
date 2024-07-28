@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin\FileMonitor;
 
 use Luzrain\PHPStreamServer\Plugin\FileMonitor\FileMonitorWatcher\FileMonitorWatcher;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcessDefinition;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
-final class FileMonitorWorker extends WorkerProcess
+final class FileMonitorWorkerDefinition extends WorkerProcessDefinition
 {
     public function __construct(
         private array $sourceDir,
@@ -26,16 +27,16 @@ final class FileMonitorWorker extends WorkerProcess
         );
     }
 
-    private function onStart(): void
+    private function onStart(WorkerProcessInterface $worker): void
     {
         $fileMonitor = FileMonitorWatcher::create(
-            $this->getLogger(),
+            $worker->getLogger(),
             $this->sourceDir,
             $this->filePattern,
             $this->pollingInterval,
             $this->doReload(...),
         );
-        $fileMonitor->start($this->getEventLoop());
+        $fileMonitor->start();
     }
 
     /**

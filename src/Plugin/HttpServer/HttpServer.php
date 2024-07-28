@@ -14,8 +14,7 @@ use Amp\Socket\BindContext;
 use Amp\Socket\Certificate;
 use Amp\Socket\InternetAddress;
 use Amp\Socket\ServerTlsContext;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Internal\WorkerProcess;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpClientFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpErrorHandler;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpServerSocketFactory;
@@ -25,8 +24,6 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategy
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
-use Luzrain\PHPStreamServer\WorkerProcess;
-use Psr\Log\LoggerInterface;
 
 final readonly class HttpServer implements Plugin
 {

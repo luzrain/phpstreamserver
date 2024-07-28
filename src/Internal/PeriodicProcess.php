@@ -2,22 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
-use Luzrain\PHPStreamServer\Internal\ErrorHandler;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\Internal\RunnableProcess;
-use Luzrain\PHPStreamServer\Internal\WorkerContext;
+use Luzrain\PHPStreamServer\PeriodicProcessDefinition;
+use Luzrain\PHPStreamServer\PeriodicProcessInterface;
+use Luzrain\PHPStreamServer\Server;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-class PeriodicProcess implements RunnableProcess
+final class PeriodicProcess implements RunnableProcess, PeriodicProcessInterface
 {
     public readonly int $id;
     public readonly int $pid;
@@ -38,7 +37,7 @@ class PeriodicProcess implements RunnableProcess
      * @param null|\Closure(self):void $onStart
      * @param null|\Closure(self):void $onStop
      */
-    public function __construct(
+    private function __construct(
         public readonly string $schedule,
         public readonly int $jitter = 0,
         public readonly string $name = 'none',
@@ -49,6 +48,19 @@ class PeriodicProcess implements RunnableProcess
     ) {
         static $nextId = 0;
         $this->id = ++$nextId;
+    }
+
+    public static function createFromDefinition(PeriodicProcessDefinition $definition): self
+    {
+        return new self(
+            schedule: $definition->schedule,
+            jitter: $definition->jitter,
+            name: $definition->name,
+            user: $definition->user,
+            group: $definition->group,
+            onStart: $definition->onStart,
+            onStop: $definition->onStop,
+        );
     }
 
     /**
@@ -63,6 +75,26 @@ class PeriodicProcess implements RunnableProcess
         EventLoop::run();
 
         return 0;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getPid(): int
+    {
+        return $this->pid;
+    }
+
+    public function getLogger(): LoggerInterface
+    {
+        return $this->logger;
     }
 
     private function setUserAndGroup(): void

@@ -2,32 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
-use Luzrain\PHPStreamServer\Internal\ErrorHandler;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
-use Luzrain\PHPStreamServer\Internal\RunnableProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\WorkerProcessDefinition;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-class WorkerProcess implements RunnableProcess
+final class WorkerProcess implements RunnableProcess, WorkerProcessInterface
 {
-    final public const STOP_EXIT_CODE = 0;
-    final public const RELOAD_EXIT_CODE = 100;
+    public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
     public const HEARTBEAT_PERIOD = 2;
 
@@ -46,24 +43,38 @@ class WorkerProcess implements RunnableProcess
      * @param null|\Closure(self):void $onStop
      * @param null|\Closure(self):void $onReload
      */
-    public function __construct(
-        public readonly string $name = 'none',
-        public readonly int $count = 1,
-        private readonly bool $reloadable = true,
-        private string|null $user = null,
-        private string|null $group = null,
-        private \Closure|null $onStart = null,
-        private \Closure|null $onStop = null,
-        private \Closure|null $onReload = null,
+    private function __construct(
+        public readonly string $name,
+        public readonly int $count,
+        private readonly bool $reloadable,
+        private string|null $user,
+        private string|null $group,
+        private \Closure|null $onStart,
+        private \Closure|null $onStop,
+        private \Closure|null $onReload,
     ) {
         static $nextId = 0;
         $this->id = ++$nextId;
     }
 
+    public static function createFromDefinition(WorkerProcessDefinition $definition): self
+    {
+        return new self(
+            name: $definition->name,
+            count: $definition->count,
+            reloadable: $definition->reloadable,
+            user: $definition->user,
+            group: $definition->group,
+            onStart: $definition->onStart,
+            onStop: $definition->onStop,
+            onReload: $definition->onReload,
+        );
+    }
+
     /**
      * @internal
      */
-    final public function run(WorkerContext $workerContext): int
+    public function run(WorkerContext $workerContext): int
     {
         $this->socketFile = $workerContext->socketFile;
         $this->logger = $workerContext->logger;
@@ -72,6 +83,26 @@ class WorkerProcess implements RunnableProcess
         EventLoop::run();
 
         return $this->exitCode;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getPid(): int
+    {
+        return $this->pid;
+    }
+
+    public function getLogger(): LoggerInterface
+    {
+        return $this->logger;
     }
 
     private function setUserAndGroup(): void
@@ -139,7 +170,7 @@ class WorkerProcess implements RunnableProcess
         });
     }
 
-    final public function stop(int $code = self::STOP_EXIT_CODE): void
+    public function stop(int $code = 0): void
     {
         $this->exitCode = $code;
         try {
@@ -149,7 +180,7 @@ class WorkerProcess implements RunnableProcess
         }
     }
 
-    final public function reload(): void
+    public function reload(): void
     {
         if (!$this->reloadable) {
             return;
@@ -196,22 +227,22 @@ class WorkerProcess implements RunnableProcess
         exit(0);
     }
 
-    final public function getUser(): string
+    public function getUser(): string
     {
         return $this->user ?? Functions::getCurrentUser();
     }
 
-    final public function getGroup(): string
+    public function getGroup(): string
     {
         return $this->group ?? Functions::getCurrentGroup();
     }
 
-    final public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
+    public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
     {
         $this->reloadStrategyTrigger->addReloadStrategies(...$reloadStrategies);
     }
 
-    final public function startPlugin(Plugin $plugin): void
+    public function startPlugin(Plugin $plugin): void
     {
         $plugin->start($this);
     }

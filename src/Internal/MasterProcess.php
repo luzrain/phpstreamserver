@@ -12,10 +12,10 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
-use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\PeriodicProcessDefinition;
 use Luzrain\PHPStreamServer\Plugin\Module;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcessDefinition;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -58,10 +58,11 @@ final class MasterProcess
             throw new \RuntimeException('Only one instance of server can be instantiated');
         }
 
+        self::$registered = true;
+
         StdoutHandler::register();
         ErrorHandler::register($this->logger);
 
-        self::$registered = true;
         $this->startFile = Functions::getStartFile();
 
         $runDirectory = $pidFile === null
@@ -77,17 +78,19 @@ final class MasterProcess
         $this->serverStatus = new ServerStatus();
     }
 
-    public function addWorkerProcess(WorkerProcess ...$workers): void
+    public function addWorkerProcess(WorkerProcessDefinition ...$workers): void
     {
-        foreach ($workers as $worker) {
+        foreach ($workers as $workerDefinition) {
+            $worker = WorkerProcess::createFromDefinition($workerDefinition);
             $this->supervisor->registerWorkerProcess($worker);
             $this->serverStatus->addWorkerProcess($worker);
         }
     }
 
-    public function addPeriodicProcess(PeriodicProcess ...$workers): void
+    public function addPeriodicProcess(PeriodicProcessDefinition ...$workers): void
     {
-        foreach ($workers as $worker) {
+        foreach ($workers as $workerDefinition) {
+            $worker = PeriodicProcess::createFromDefinition($workerDefinition);
             $this->scheduler->addWorker($worker);
             $this->serverStatus->addPeriodicProcess($worker);
         }
@@ -299,7 +302,7 @@ final class MasterProcess
         return $this->getPid() !== 0 && \posix_kill($this->getPid(), 0);
     }
 
-    public function getStatus(): Status
+    private function getStatus(): Status
     {
         return $this->status;
     }
