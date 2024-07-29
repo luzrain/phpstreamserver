@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Internal\WorkerProcess;
-
 class WorkerProcessDefinition
 {
     /**
-     * @param null|\Closure(WorkerProcess):void $onStart
-     * @param null|\Closure(WorkerProcess):void $onStop
-     * @param null|\Closure(WorkerProcess):void $onReload
+     * @param null|\Closure(WorkerProcessInterface):void $onStart
+     * @param null|\Closure(WorkerProcessInterface):void $onStop
+     * @param null|\Closure(WorkerProcessInterface):void $onReload
      */
     public function __construct(
         public string $name = 'none',

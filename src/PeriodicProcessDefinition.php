@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Internal\PeriodicProcess;
-
 class PeriodicProcessDefinition
 {
     /**
@@ -18,8 +16,8 @@ class PeriodicProcessDefinition
      *
      * @param string $schedule Schedule in one of the formats described above
      * @param int $jitter Jitter in seconds that adds a random time offset to the schedule
-     * @param null|\Closure(PeriodicProcess):void $onStart
-     * @param null|\Closure(PeriodicProcess):void $onStop
+     * @param null|\Closure(PeriodicProcessInterface):void $onStart
+     * @param null|\Closure(PeriodicProcessInterface):void $onStop
      */
     public function __construct(
         public readonly string $name = 'none',
