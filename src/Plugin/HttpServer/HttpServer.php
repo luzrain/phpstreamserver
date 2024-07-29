@@ -24,6 +24,7 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategy
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
 final readonly class HttpServer implements Plugin
 {
@@ -53,19 +54,21 @@ final readonly class HttpServer implements Plugin
     ) {
     }
 
-    public function start(WorkerProcess $workerProcess): void
+    public function start(WorkerProcessInterface $worker): void
     {
-        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $workerProcess->trafficStatus);
-        $clientFactory = new HttpClientFactory($workerProcess->logger, $this->connectionLimitPerIp, $workerProcess->trafficStatus, $this->onConnect, $this->onClose);
+        \assert($worker instanceof WorkerProcess);
+
+        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $worker->trafficStatus);
+        $clientFactory = new HttpClientFactory($worker->getLogger(), $this->connectionLimitPerIp, $worker->trafficStatus, $this->onConnect, $this->onClose);
         $middleware = [];
 
         if ($this->concurrencyLimit !== null) {
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        $middleware[] = new RequestsCounterMiddleware($workerProcess->trafficStatus);
+        $middleware[] = new RequestsCounterMiddleware($worker->trafficStatus);
         $middleware[] = new ClientExceptionHandleMiddleware();
-        $middleware[] = new ReloadStrategyTriggerMiddleware($workerProcess->reloadStrategyTrigger);
+        $middleware[] = new ReloadStrategyTriggerMiddleware($worker->reloadStrategyTrigger);
         $middleware[] = new AddServerHeadersMiddleware();
         \array_push($middleware, ...$this->middleware);
 
@@ -73,13 +76,13 @@ final readonly class HttpServer implements Plugin
         \usort($middleware, fn (mixed $a): int => $a instanceof StaticMiddleware ? 1 : -1);
 
         $socketHttpServer = new SocketHttpServer(
-            logger: $workerProcess->logger,
+            logger: $worker->getLogger(),
             serverSocketFactory: $serverSocketFactory,
             clientFactory: $clientFactory,
             middleware: $middleware,
             allowedMethods: null,
             httpDriverFactory: new DefaultHttpDriverFactory(
-                logger: $workerProcess->logger,
+                logger: $worker->getLogger(),
                 streamTimeout: $this->connectionTimeout,
                 connectionTimeout: $this->connectionTimeout,
                 headerSizeLimit: $this->headerSizeLimit,

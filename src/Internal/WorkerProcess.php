@@ -31,7 +31,7 @@ final class WorkerProcess implements RunnableProcess, WorkerProcessInterface
     public readonly int $id;
     public readonly int $pid;
     private int $exitCode = 0;
-    public LoggerInterface $logger;
+    private LoggerInterface $logger;
     public TrafficStatus $trafficStatus;
     public ReloadStrategyTrigger $reloadStrategyTrigger;
 
