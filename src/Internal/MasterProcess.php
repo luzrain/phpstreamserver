@@ -319,7 +319,12 @@ final class MasterProcess
         unset($this->scheduler);
 
         SIGCHLDHandler::unregister();
-        EventLoop::queue(static fn() => EventLoop::getDriver()->stop());
+
+        EventLoop::queue(static function() {
+            $identifiers = EventLoop::getDriver()->getIdentifiers();
+            \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
+            EventLoop::getDriver()->stop();
+        });
         EventLoop::getDriver()->run();
 
         \gc_collect_cycles();
