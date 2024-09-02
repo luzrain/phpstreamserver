@@ -48,7 +48,7 @@ final class MasterProcess
     public function __construct(
         string|null $pidFile,
         int $stopTimeout,
-        public readonly LoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
             throw new \RuntimeException('Works in command line mode only');
@@ -123,7 +123,7 @@ final class MasterProcess
         }
 
         $this->saveMasterPid();
-        $this->initServer();
+        $this->start();
         $this->status = Status::RUNNING;
         $this->supervisor->start($this->logger, $this->suspension, $this->getStatus(...), $this->serverStatus);
         $this->scheduler->start($this->logger, $this->suspension, $this->getStatus(...));
@@ -149,7 +149,7 @@ final class MasterProcess
     /**
      * Runs in master process
      */
-    private function initServer(): void
+    private function start(): void
     {
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
@@ -184,7 +184,7 @@ final class MasterProcess
         });
 
         foreach ($this->modules as $module) {
-            $module->init($this);
+            $module->start($this);
         }
     }
 
@@ -259,9 +259,7 @@ final class MasterProcess
         $stopFutures[] = $this->supervisor->stop();
         $stopFutures[] = $this->scheduler->stop();
         foreach ($this->modules as $module) {
-            if (null !== $future = $module->stop()) {
-                $stopFutures[] = $future;
-            }
+            $stopFutures[] = $module->stop();
         }
 
         await($stopFutures);
@@ -309,10 +307,7 @@ final class MasterProcess
 
     private function free(): void
     {
-        foreach ($this->modules as $module) {
-            $module->free();
-        }
-
+        unset($this->modules);
         unset($this->serverStatus);
         unset($this->messageHandler);
         unset($this->supervisor);
@@ -342,5 +337,15 @@ final class MasterProcess
 
         /** @var ServerStatus */
         return $result->await();
+    }
+
+    public function getLogger(): LoggerInterface
+    {
+        return $this->logger;
+    }
+
+    public function getMessageHandler(): MessageHandler
+    {
+        return $this->messageHandler;
     }
 }
