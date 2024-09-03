@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\FileMonitor;
+namespace Luzrain\PHPStreamServer\Plugin\FileMonitor\Internal;
 
 use Revolt\EventLoop;
 

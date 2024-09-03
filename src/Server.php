@@ -43,14 +43,14 @@ final class Server
         );
     }
 
-    public function addWorkersProcess(WorkerProcessDefinition ...$workers): self
+    public function addWorkersProcess(WorkerProcess ...$workers): self
     {
         $this->masterProcess->addWorkerProcess(...$workers);
 
         return $this;
     }
 
-    public function addPeriodicProcess(PeriodicProcessDefinition ...$workers): self
+    public function addPeriodicProcess(PeriodicProcess ...$workers): self
     {
         $this->masterProcess->addPeriodicProcess(...$workers);
 

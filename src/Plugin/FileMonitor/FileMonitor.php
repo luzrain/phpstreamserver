@@ -25,7 +25,7 @@ final readonly class FileMonitor implements Module
 
     public function start(MasterProcess $masterProcess): void
     {
-        $fileMonitor = new InotifyMonitorWatcher(
+        $fileMonitor = new Internal\InotifyMonitorWatcher(
             sourceDir: $this->sourceDir,
             filePattern: $this->filePattern,
             reloadCallback: function () use ($masterProcess): void {

@@ -12,10 +12,10 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
-use Luzrain\PHPStreamServer\PeriodicProcessDefinition;
+use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Plugin\Module;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcessDefinition;
+use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -78,19 +78,17 @@ final class MasterProcess
         $this->serverStatus = new ServerStatus();
     }
 
-    public function addWorkerProcess(WorkerProcessDefinition ...$workers): void
+    public function addWorkerProcess(WorkerProcess ...$workers): void
     {
-        foreach ($workers as $workerDefinition) {
-            $worker = WorkerProcess::createFromDefinition($workerDefinition);
+        foreach ($workers as $worker) {
             $this->supervisor->registerWorkerProcess($worker);
             $this->serverStatus->addWorkerProcess($worker);
         }
     }
 
-    public function addPeriodicProcess(PeriodicProcessDefinition ...$workers): void
+    public function addPeriodicProcess(PeriodicProcess...$workers): void
     {
-        foreach ($workers as $workerDefinition) {
-            $worker = PeriodicProcess::createFromDefinition($workerDefinition);
+        foreach ($workers as $worker) {
             $this->scheduler->addWorker($worker);
             $this->serverStatus->addPeriodicProcess($worker);
         }

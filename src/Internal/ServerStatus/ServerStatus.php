@@ -6,7 +6,6 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Internal\PeriodicProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
@@ -15,8 +14,9 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
-use Luzrain\PHPStreamServer\Internal\WorkerProcess;
+use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\WorkerProcess;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Amp\weakClosure;
@@ -123,18 +123,18 @@ final class ServerStatus
 
     public function addWorkerProcess(WorkerProcess $worker): void
     {
-        $this->workerProcesses[$worker->id] = new WorkerProcessInfo(
+        $this->workerProcesses[$worker->getId()] = new WorkerProcessInfo(
             user: $worker->getUser(),
-            name: $worker->name,
+            name: $worker->getName(),
             count: $worker->count,
         );
     }
 
     public function addPeriodicProcess(PeriodicProcess $worker): void
     {
-        $this->periodicProcesses[$worker->id] = new PeriodicProcessInfo(
+        $this->periodicProcesses[$worker->getId()] = new PeriodicProcessInfo(
             user: $worker->getUser(),
-            name: $worker->name,
+            name: $worker->getName(),
         );
     }
 
