@@ -9,7 +9,6 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ProcessTrait;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
-use Luzrain\PHPStreamServer\Internal\RunnableProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
@@ -19,7 +18,7 @@ use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-final class WorkerProcess implements RunnableProcess, WorkerProcessInterface
+final class WorkerProcess implements WorkerProcessInterface
 {
     use ProcessTrait {
         detach as detachByTrait;

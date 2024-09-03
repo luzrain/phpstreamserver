@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
+use Luzrain\PHPStreamServer\Internal\RunnableProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 
-interface WorkerProcessInterface extends ProcessInterface
+interface WorkerProcessInterface extends ProcessInterface, RunnableProcess
 {
     /**
      * Stop worker with exit code

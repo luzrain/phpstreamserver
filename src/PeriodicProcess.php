@@ -8,11 +8,10 @@ use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ProcessTrait;
-use Luzrain\PHPStreamServer\Internal\RunnableProcess;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-final class PeriodicProcess implements RunnableProcess, PeriodicProcessInterface
+final class PeriodicProcess implements PeriodicProcessInterface
 {
     use ProcessTrait {
         detach as detachByTrait;
