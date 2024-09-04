@@ -22,17 +22,16 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ClientExceptio
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategyTriggerMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin\WorkerModule;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
-final readonly class HttpServer implements Plugin
+final readonly class HttpServerModule implements WorkerModule
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 
     /**
      * @param Listen|array<Listen> $listen
-     * @param RequestHandler $requestHandler
      * @param array<Middleware> $middleware
      * @param positive-int|null $connectionLimit
      * @param positive-int|null $connectionLimitPerIp

@@ -13,7 +13,7 @@ use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\PeriodicProcess;
-use Luzrain\PHPStreamServer\Plugin\Module;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 use Psr\Log\LoggerInterface;
@@ -41,9 +41,9 @@ final class MasterProcess
     private Scheduler $scheduler;
 
     /**
-     * @var array<class-string<Module>, Module>
+     * @var array<class-string<Plugin>, Plugin>
      */
-    private array $modules = [];
+    private array $plugins = [];
 
     public function __construct(
         string|null $pidFile,
@@ -94,14 +94,14 @@ final class MasterProcess
         }
     }
 
-    public function addModules(Module ...$modules): void
+    public function addPlugins(Plugin ...$plugins): void
     {
-        foreach ($modules as $module) {
+        foreach ($plugins as $module) {
             $hash = \hash('xxh128', $module::class);
-            if (isset($this->modules[$hash])) {
+            if (isset($this->plugins[$hash])) {
                 throw new PHPStreamServerException('Can not load more than one instance of the same module');
             }
-            $this->modules[$hash] = $module;
+            $this->plugins[$hash] = $module;
         }
     }
 
@@ -181,7 +181,7 @@ final class MasterProcess
             \gc_mem_caches();
         });
 
-        foreach ($this->modules as $module) {
+        foreach ($this->plugins as $module) {
             $module->start($this);
         }
     }
@@ -256,7 +256,7 @@ final class MasterProcess
         $stopFutures = [];
         $stopFutures[] = $this->supervisor->stop();
         $stopFutures[] = $this->scheduler->stop();
-        foreach ($this->modules as $module) {
+        foreach ($this->plugins as $module) {
             $stopFutures[] = $module->stop();
         }
 
@@ -305,7 +305,7 @@ final class MasterProcess
 
     private function free(): void
     {
-        unset($this->modules);
+        unset($this->plugins);
         unset($this->serverStatus);
         unset($this->messageHandler);
         unset($this->supervisor);

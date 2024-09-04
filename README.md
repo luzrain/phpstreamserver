@@ -43,7 +43,7 @@ use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServer;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServerModule;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
@@ -61,7 +61,7 @@ $server->addWorkersProcess(new WorkerProcess(
             };
         });
 
-        $worker->startPlugin(new HttpServer(
+        $worker->startWorkerModule(new HttpServerModule(
             listen: new Listen(listen: '0.0.0.0:8087'),
             requestHandler: $requestHandler,
         ));

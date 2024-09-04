@@ -14,7 +14,7 @@ use Luzrain\PHPStreamServer\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\Console\App;
 use Luzrain\PHPStreamServer\Internal\Logger\Logger;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\Module;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 
 final class Server
 {
@@ -57,9 +57,9 @@ final class Server
         return $this;
     }
 
-    public function addModules(Module ...$module): self
+    public function addPlugins(Plugin ...$plugin): self
     {
-        $this->masterProcess->addModules(...$module);
+        $this->masterProcess->addPlugins(...$plugin);
 
         return $this;
     }

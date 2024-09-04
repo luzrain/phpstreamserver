@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer;
 
 use Luzrain\PHPStreamServer\Internal\RunnableProcess;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin\WorkerModule;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 
 interface WorkerProcessInterface extends ProcessInterface, RunnableProcess
@@ -26,7 +26,7 @@ interface WorkerProcessInterface extends ProcessInterface, RunnableProcess
     public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void;
 
     /**
-     * Start plugin in this worker
+     * Start worker module in this worker
      */
-    public function startPlugin(Plugin $plugin): void;
+    public function startWorkerModule(WorkerModule $module): void;
 }
