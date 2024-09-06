@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\ReloadStrategy\Strategy;
+
+use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
 
 /**
  * Reload worker if worker memory usage has increased $maxMemory value
  */
-class MaxMemoryReloadStrategy implements TimerReloadStrategy
+final class MaxMemoryReloadStrategy implements TimerReloadStrategyInterface
 {
     private const TIMER_INTERVAL = 30;
 
@@ -20,12 +22,8 @@ class MaxMemoryReloadStrategy implements TimerReloadStrategy
         return self::TIMER_INTERVAL;
     }
 
-    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
+    public function shouldReload(mixed $eventObject = null): bool
     {
-        if ($eventCode !== self::EVENT_CODE_TIMER) {
-            return false;
-        }
-
         return \max(\memory_get_peak_usage(), \memory_get_usage()) > $this->maxMemory;
     }
 }

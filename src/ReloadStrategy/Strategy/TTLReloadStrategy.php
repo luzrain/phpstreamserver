@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\ReloadStrategy\Strategy;
+
+use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
 
 /**
  * Reload worker after $ttl working time
  */
-class TTLReloadStrategy implements TimerReloadStrategy
+final class TTLReloadStrategy implements TimerReloadStrategyInterface
 {
     /**
      * @param int $ttl TTL in seconds
@@ -21,8 +23,8 @@ class TTLReloadStrategy implements TimerReloadStrategy
         return $this->ttl;
     }
 
-    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
+    public function shouldReload(mixed $eventObject = null): bool
     {
-        return $eventCode === self::EVENT_CODE_TIMER;
+        return true;
     }
 }

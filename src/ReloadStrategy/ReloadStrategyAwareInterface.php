@@ -9,7 +9,7 @@ interface ReloadStrategyAwareInterface
     /**
      * Add reload strategy for worker
      */
-    public function addReloadStrategy(ReloadStrategy ...$reloadStrategies): void;
+    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void;
 
     /**
      * Emit event for checking by reload strategies

@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\ReloadStrategy\Strategy;
 
 use Amp\Http\Server\ClientException;
 use Amp\Http\Server\HttpErrorException;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker each time after exception occurs
  */
-class ExceptionReloadStrategy implements ReloadStrategy
+final class ExceptionReloadStrategy implements ReloadStrategyInterface
 {
     /** @var array<class-string<\Throwable>> */
     private array $allowedExceptions = [
@@ -26,9 +27,9 @@ class ExceptionReloadStrategy implements ReloadStrategy
         \array_push($this->allowedExceptions, ...$allowedExceptions);
     }
 
-    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
+    public function shouldReload(mixed $eventObject = null): bool
     {
-        if ($eventCode !== self::EVENT_CODE_EXCEPTION) {
+        if (!$eventObject instanceof \Throwable) {
             return false;
         }
 

@@ -2,27 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
-use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategy;
 use Revolt\EventLoop;
 
 final class ReloadStrategyTrigger
 {
-    /** @var array<ReloadStrategy> */
+    /** @var list<ReloadStrategyInterface> */
     private array $reloadStrategies = [];
 
     public function __construct(private readonly \Closure $reloadCallback)
     {
     }
 
-    public function addReloadStrategy(ReloadStrategy ...$reloadStrategies): void
+    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
     {
         foreach ($reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy instanceof TimerReloadStrategy) {
+            if ($reloadStrategy instanceof TimerReloadStrategyInterface) {
                 EventLoop::repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
-                    $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload();
+                    $reloadStrategy->shouldReload() && $this->reload();
                 });
             } else {
                 $this->reloadStrategies[] = $reloadStrategy;
@@ -30,11 +28,10 @@ final class ReloadStrategyTrigger
         }
     }
 
-    public function emitEvent(mixed $request): void
+    public function emitEvent(mixed $event): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
-            $eventCode = $request instanceof \Throwable ? ReloadStrategy::EVENT_CODE_EXCEPTION : ReloadStrategy::EVENT_CODE_REQUEST;
-            if ($reloadStrategy->shouldReload($eventCode, $request)) {
+            if ($reloadStrategy->shouldReload($event)) {
                 $this->reload();
                 break;
             }

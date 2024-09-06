@@ -8,15 +8,15 @@ use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ProcessTrait;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatusAwareInterface;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyTrigger;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
@@ -152,7 +152,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $module->start($this);
     }
 
-    public function addReloadStrategy(ReloadStrategy ...$reloadStrategies): void
+    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
     {
         $this->reloadStrategyTrigger->addReloadStrategy(...$reloadStrategies);
     }

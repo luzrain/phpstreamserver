@@ -2,14 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\ReloadStrategy\Strategy;
+
+use Amp\Http\Server\Request;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker on every $maxRequests requests.
  * To prevent simultaneous restart of all workers $dispersionPercentage can be set.
  * 1000 $maxRequests and 20% $dispersionPercentage will restart between 800 and 1000
  */
-class MaxRequestsReloadStrategy implements ReloadStrategy
+final class MaxRequestsReloadStrategy implements ReloadStrategyInterface
 {
     private int $requestsCount = 0;
     private readonly int $maxRequests;
@@ -20,8 +23,8 @@ class MaxRequestsReloadStrategy implements ReloadStrategy
         $this->maxRequests = \random_int($minRequests, $maxRequests);
     }
 
-    public function shouldReload(int $eventCode, mixed $eventObject = null): bool
+    public function shouldReload(mixed $eventObject = null): bool
     {
-        return $eventCode === self::EVENT_CODE_REQUEST && ++$this->requestsCount > $this->maxRequests;
+        return $eventObject instanceof Request && ++$this->requestsCount > $this->maxRequests;
     }
 }
