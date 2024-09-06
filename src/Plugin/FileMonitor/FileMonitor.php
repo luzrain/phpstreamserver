@@ -15,12 +15,6 @@ final readonly class FileMonitor implements PluginInterface
         private string $sourceDir,
         private array $filePattern = ['*'],
     ) {
-        if (!\function_exists('inotify_init')) {
-            throw new \LogicException(\sprintf(
-                'You cannot use "%s" as the "inotify" extension is not installed. Try running "composer require luzrain/polyfill-inotify" or install "inotify" extension.',
-                __CLASS__
-            ));
-        }
     }
 
     public function start(MasterProcess $masterProcess): void
