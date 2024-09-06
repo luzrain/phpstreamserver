@@ -10,7 +10,7 @@ use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -35,7 +35,7 @@ final class Supervisor
         $this->workerPool = new WorkerPool();
     }
 
-    public function registerWorkerProcess(WorkerProcess $worker): void
+    public function addWorker(WorkerProcessInterface $worker): void
     {
         $this->workerPool->registerWorkerProcess($worker);
     }
@@ -55,7 +55,7 @@ final class Supervisor
         $this->status = $status;
 
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
-        EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
+        EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
         $this->spawnWorkers();
     }
@@ -73,7 +73,7 @@ final class Supervisor
         });
     }
 
-    private function spawnWorker(WorkerProcess $worker): bool
+    private function spawnWorker(WorkerProcessInterface $worker): bool
     {
         $pid = \pcntl_fork();
         if ($pid > 0) {

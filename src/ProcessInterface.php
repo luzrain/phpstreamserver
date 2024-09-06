@@ -6,10 +6,16 @@ namespace Luzrain\PHPStreamServer;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
+use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Psr\Log\LoggerInterface;
 
 interface ProcessInterface
 {
+    /**
+     * Run process
+     */
+    public function run(WorkerContext $workerContext): int;
+
     /**
      * Process name
      */

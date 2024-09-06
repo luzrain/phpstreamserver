@@ -14,7 +14,7 @@ use Luzrain\PHPStreamServer\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\Console\App;
 use Luzrain\PHPStreamServer\Internal\Logger\Logger;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin\PluginInterface;
 
 final class Server
 {
@@ -34,32 +34,25 @@ final class Server
         /**
          * Timeout in seconds that master process will be waiting before force kill child processes after sending stop command.
          */
-        public int $stopTimeout = 6,
+        int $stopTimeout = 6,
     ) {
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
-            stopTimeout: $this->stopTimeout,
+            stopTimeout: $stopTimeout,
             logger: new Logger(null),
         );
     }
 
-    public function addWorkersProcess(WorkerProcess ...$workers): self
+    public function addPlugin(PluginInterface ...$plugin): self
     {
-        $this->masterProcess->addWorkerProcess(...$workers);
+        $this->masterProcess->addPlugin(...$plugin);
 
         return $this;
     }
 
-    public function addPeriodicProcess(PeriodicProcess ...$workers): self
+    public function addWorker(ProcessInterface ...$workers): self
     {
-        $this->masterProcess->addPeriodicProcess(...$workers);
-
-        return $this;
-    }
-
-    public function addPlugins(Plugin ...$plugin): self
-    {
-        $this->masterProcess->addPlugins(...$plugin);
+        $this->masterProcess->addWorker(...$workers);
 
         return $this;
     }

@@ -11,7 +11,7 @@ use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -31,7 +31,7 @@ final class Scheduler
         $this->pool = new WorkerPool();
     }
 
-    public function addWorker(PeriodicProcess $worker): void
+    public function addWorker(PeriodicProcessInterface $worker): void
     {
         $this->pool->addWorker($worker);
     }
@@ -51,7 +51,7 @@ final class Scheduler
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
 
         foreach ($this->pool->getWorkers() as $worker) {
-            /** @var PeriodicProcess $worker */
+            /** @var PeriodicProcessInterface $worker */
             try {
                 $trigger = TriggerFactory::create($worker->schedule, $worker->jitter);
             } catch (\InvalidArgumentException) {
@@ -63,7 +63,7 @@ final class Scheduler
         }
     }
 
-    private function scheduleWorker(PeriodicProcess $worker, TriggerInterface $trigger): bool
+    private function scheduleWorker(PeriodicProcessInterface $worker, TriggerInterface $trigger): bool
     {
         if (($this->status)() !== Status::RUNNING) {
             return false;
@@ -79,7 +79,7 @@ final class Scheduler
         return true;
     }
 
-    private function startWorker(PeriodicProcess $worker, TriggerInterface $trigger): void
+    private function startWorker(PeriodicProcessInterface $worker, TriggerInterface $trigger): void
     {
         // Reschedule a task without running it if the previous task is still running
         if ($this->pool->isWorkerRun($worker)) {
@@ -98,7 +98,7 @@ final class Scheduler
         $this->scheduleWorker($worker, $trigger);
     }
 
-    private function spawnWorker(PeriodicProcess $worker): int
+    private function spawnWorker(PeriodicProcessInterface $worker): int
     {
         $pid = \pcntl_fork();
         if ($pid > 0) {

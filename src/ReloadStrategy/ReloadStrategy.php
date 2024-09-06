@@ -24,7 +24,7 @@ interface ReloadStrategy
     /**
      * If the method returns true, the worker should be reloaded immediately.
      *
-     * @param int $eventCode one of the event codes from the EVENT_CODE_ constants above.
+     * @param int $eventCode one of the event codes from the EVENT_CODE_* constants above.
      * @param mixed $eventObject could be a request object, exception object, or null, depending on the eventCode.
      */
     public function shouldReload(int $eventCode, mixed $eventObject = null): bool;

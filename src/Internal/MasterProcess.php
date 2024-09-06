@@ -12,10 +12,11 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
-use Luzrain\PHPStreamServer\PeriodicProcess;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\PeriodicProcessInterface;
+use Luzrain\PHPStreamServer\Plugin\PluginInterface;
+use Luzrain\PHPStreamServer\ProcessInterface;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
@@ -41,7 +42,7 @@ final class MasterProcess
     private Scheduler $scheduler;
 
     /**
-     * @var array<class-string<Plugin>, Plugin>
+     * @var array<class-string<PluginInterface>, PluginInterface>
      */
     private array $plugins = [];
 
@@ -78,31 +79,21 @@ final class MasterProcess
         $this->serverStatus = new ServerStatus();
     }
 
-    public function addWorkerProcess(WorkerProcess ...$workers): void
+    public function addWorker(WorkerProcessInterface|PeriodicProcessInterface ...$workers): void
     {
         foreach ($workers as $worker) {
-            $this->supervisor->registerWorkerProcess($worker);
-            $this->serverStatus->addWorkerProcess($worker);
-        }
-    }
-
-    public function addPeriodicProcess(PeriodicProcess...$workers): void
-    {
-        foreach ($workers as $worker) {
-            $this->scheduler->addWorker($worker);
-            $this->serverStatus->addPeriodicProcess($worker);
-        }
-    }
-
-    public function addPlugins(Plugin ...$plugins): void
-    {
-        foreach ($plugins as $module) {
-            $hash = \hash('xxh128', $module::class);
-            if (isset($this->plugins[$hash])) {
-                throw new PHPStreamServerException('Can not load more than one instance of the same module');
+            if ($worker instanceof WorkerProcessInterface) {
+                $this->supervisor->addWorker($worker);
+            } elseif($worker instanceof PeriodicProcessInterface) {
+                $this->scheduler->addWorker($worker);
             }
-            $this->plugins[$hash] = $module;
+            $this->serverStatus->addWorker($worker);
         }
+    }
+
+    public function addPlugin(PluginInterface ...$plugins): void
+    {
+        \array_push($this->plugins, ...$plugins);
     }
 
     public function run(bool $daemonize = false): int
@@ -127,21 +118,21 @@ final class MasterProcess
         $this->scheduler->start($this->logger, $this->suspension, $this->getStatus(...));
         $this->logger->info(Server::NAME . ' has started');
 
-        $exitCode = $this->suspension->suspend();
+        $ret = $this->suspension->suspend();
 
-        if ($exitCode instanceof RunnableProcess) {
-            $worker = $exitCode;
+        if ($ret instanceof ProcessInterface) {
+            $workerProcess = $ret;
             $this->free();
-            exit($worker->run(new WorkerContext(
+            exit($workerProcess->run(new WorkerContext(
                 socketFile: $this->socketFile,
                 logger: $this->logger,
             )));
         }
 
-        \assert(\is_int($exitCode));
+        \assert(\is_int($ret));
         $this->onMasterShutdown();
 
-        return $exitCode;
+        return $ret;
     }
 
     /**
@@ -213,7 +204,7 @@ final class MasterProcess
         }
 
         if (\file_exists($this->socketFile)) {
-            unlink($this->socketFile);
+            \unlink($this->socketFile);
         }
 
         if (false === \file_put_contents($this->pidFile, (string) \posix_getpid())) {
@@ -256,8 +247,8 @@ final class MasterProcess
         $stopFutures = [];
         $stopFutures[] = $this->supervisor->stop();
         $stopFutures[] = $this->scheduler->stop();
-        foreach ($this->plugins as $module) {
-            $stopFutures[] = $module->stop();
+        foreach ($this->plugins as $plugin) {
+            $stopFutures[] = $plugin->stop();
         }
 
         await($stopFutures);

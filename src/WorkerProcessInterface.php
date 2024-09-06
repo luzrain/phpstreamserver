@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Internal\RunnableProcess;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
 
-interface WorkerProcessInterface extends ProcessInterface, RunnableProcess
+interface WorkerProcessInterface extends ProcessInterface
 {
+    final public const RELOAD_EXIT_CODE = 100;
+    final public const HEARTBEAT_PERIOD = 2;
+
     /**
      * Stop worker with exit code
      */
@@ -19,11 +20,6 @@ interface WorkerProcessInterface extends ProcessInterface, RunnableProcess
      * Reload worker
      */
     public function reload(): void;
-
-    /**
-     * Add reload strategy for worker
-     */
-    public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void;
 
     /**
      * Start worker module in this worker

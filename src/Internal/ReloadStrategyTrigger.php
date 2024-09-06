@@ -17,33 +17,24 @@ final class ReloadStrategyTrigger
     {
     }
 
-    public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
+    public function addReloadStrategy(ReloadStrategy ...$reloadStrategies): void
     {
-        \array_push($this->reloadStrategies, ...$reloadStrategies);
-
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TimerReloadStrategy) {
                 EventLoop::repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
                     $reloadStrategy->shouldReload($reloadStrategy::EVENT_CODE_TIMER) && $this->reload();
                 });
+            } else {
+                $this->reloadStrategies[] = $reloadStrategy;
             }
         }
     }
 
-    public function emitRequest(mixed $request): void
+    public function emitEvent(mixed $request): void
     {
         foreach ($this->reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy->shouldReload(ReloadStrategy::EVENT_CODE_REQUEST, $request)) {
-                $this->reload();
-                break;
-            }
-        }
-    }
-
-    public function emitException(\Throwable $throwable): void
-    {
-        foreach ($this->reloadStrategies as $reloadStrategy) {
-            if ($reloadStrategy->shouldReload(ReloadStrategy::EVENT_CODE_EXCEPTION, $throwable)) {
+            $eventCode = $request instanceof \Throwable ? ReloadStrategy::EVENT_CODE_EXCEPTION : ReloadStrategy::EVENT_CODE_REQUEST;
+            if ($reloadStrategy->shouldReload($eventCode, $request)) {
                 $this->reload();
                 break;
             }

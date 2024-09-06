@@ -14,9 +14,10 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
-use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\PeriodicProcessInterface;
+use Luzrain\PHPStreamServer\ProcessInterface;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Amp\weakClosure;
@@ -121,21 +122,20 @@ final class ServerStatus
         }));
     }
 
-    public function addWorkerProcess(WorkerProcess $worker): void
+    public function addWorker(ProcessInterface $worker): void
     {
-        $this->workerProcesses[$worker->getId()] = new WorkerProcessInfo(
-            user: $worker->getUser(),
-            name: $worker->getName(),
-            count: $worker->count,
-        );
-    }
-
-    public function addPeriodicProcess(PeriodicProcess $worker): void
-    {
-        $this->periodicProcesses[$worker->getId()] = new PeriodicProcessInfo(
-            user: $worker->getUser(),
-            name: $worker->getName(),
-        );
+        if ($worker instanceof WorkerProcessInterface) {
+            $this->workerProcesses[$worker->getId()] = new WorkerProcessInfo(
+                user: $worker->getUser(),
+                name: $worker->getName(),
+                count: $worker->count,
+            );
+        } elseif($worker instanceof PeriodicProcessInterface) {
+            $this->periodicProcesses[$worker->getId()] = new PeriodicProcessInfo(
+                user: $worker->getUser(),
+                name: $worker->getName(),
+            );
+        }
     }
 
     public function setRunning(bool $isRunning = true): void

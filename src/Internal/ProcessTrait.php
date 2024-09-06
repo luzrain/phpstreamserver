@@ -12,8 +12,8 @@ use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 
 /**
+ * @internal
  * @psalm-require-implements ProcessInterface
- * @psalm-require-implements RunnableProcess
  */
 trait ProcessTrait
 {
@@ -26,9 +26,6 @@ trait ProcessTrait
     private LoggerInterface $logger;
     private readonly string $socketFile;
 
-    /**
-     * @internal
-     */
     public function run(WorkerContext $workerContext): int
     {
         $this->logger = $workerContext->logger;
@@ -65,7 +62,7 @@ trait ProcessTrait
         try {
             Functions::setUserAndGroup($this->user, $this->group);
         } catch (UserChangeException $e) {
-            $refl = new \ReflectionClass($this::class);
+            $refl = new \ReflectionObject($this);
             $this->logger->warning($e->getMessage(), [$refl->getShortName() => $this->getName()]);
             $this->user = Functions::getCurrentUser();
         }

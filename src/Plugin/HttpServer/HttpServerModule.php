@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
+use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
 use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\Middleware;
@@ -13,17 +14,20 @@ use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\BindContext;
 use Amp\Socket\Certificate;
 use Amp\Socket\InternetAddress;
+use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
+use Amp\Sync\LocalSemaphore;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatusAwareInterface;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpClientFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpErrorHandler;
-use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpServerSocketFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\AddServerHeadersMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ClientExceptionHandleMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategyTriggerMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingSocketFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
 final readonly class HttpServerModule implements WorkerModule
@@ -55,20 +59,37 @@ final readonly class HttpServerModule implements WorkerModule
 
     public function start(WorkerProcessInterface $worker): void
     {
-        \assert($worker instanceof WorkerProcess);
-
-        $serverSocketFactory = new HttpServerSocketFactory($this->connectionLimit, $worker->trafficStatus);
-        $clientFactory = new HttpClientFactory($worker->getLogger(), $this->connectionLimitPerIp, $worker->trafficStatus, $this->onConnect, $this->onClose);
+        $serverSocketFactory = new ResourceServerSocketFactory();
         $middleware = [];
+
+        $clientFactory = new HttpClientFactory(
+            logger: $worker->getLogger(),
+            connectionLimitPerIp: $this->connectionLimitPerIp,
+            trafficStatisticStore: $worker instanceof TrafficStatusAwareInterface ? $worker->getTrafficStatus() : null,
+            onConnectCallback: $this->onConnect,
+            onCloseCallback: $this->onClose,
+        );
+
+        if ($this->connectionLimit !== null) {
+            $serverSocketFactory = new ConnectionLimitingServerSocketFactory(new LocalSemaphore($this->connectionLimit), $serverSocketFactory);
+        }
+
+        if ($worker instanceof TrafficStatusAwareInterface) {
+            $serverSocketFactory = new TrafficCountingSocketFactory($worker->getTrafficStatus(), $serverSocketFactory);
+            $middleware[] = new RequestsCounterMiddleware($worker->getTrafficStatus());
+        }
 
         if ($this->concurrencyLimit !== null) {
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        $middleware[] = new RequestsCounterMiddleware($worker->trafficStatus);
+        if ($worker instanceof ReloadStrategyAwareInterface) {
+            $middleware[] = new ReloadStrategyTriggerMiddleware($worker);
+        }
+
         $middleware[] = new ClientExceptionHandleMiddleware();
-        $middleware[] = new ReloadStrategyTriggerMiddleware($worker->reloadStrategyTrigger);
         $middleware[] = new AddServerHeadersMiddleware();
+
         \array_push($middleware, ...$this->middleware);
 
         // Force move StaticMiddleware to the end of the chain

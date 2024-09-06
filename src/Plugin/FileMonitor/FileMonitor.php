@@ -6,10 +6,10 @@ namespace Luzrain\PHPStreamServer\Plugin\FileMonitor;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin\PluginInterface;
 use function Amp\async;
 
-final readonly class FileMonitor implements Plugin
+final readonly class FileMonitor implements PluginInterface
 {
     public function __construct(
         private string $sourceDir,

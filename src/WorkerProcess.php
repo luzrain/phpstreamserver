@@ -13,23 +13,23 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatusAwareInterface;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategy;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-final class WorkerProcess implements WorkerProcessInterface
+final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAwareInterface, TrafficStatusAwareInterface
 {
     use ProcessTrait {
         detach as detachByTrait;
     }
 
-    public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
-    public const HEARTBEAT_PERIOD = 2;
 
-    public TrafficStatus $trafficStatus;
-    public ReloadStrategyTrigger $reloadStrategyTrigger;
+    private TrafficStatus $trafficStatus;
+    private ReloadStrategyTrigger $reloadStrategyTrigger;
     private MessageBus $messageBus;
 
     /**
@@ -61,19 +61,19 @@ final class WorkerProcess implements WorkerProcessInterface
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->name));
         }
 
-        EventLoop::setDriver((new DriverFactory())->create());
-
-        EventLoop::setErrorHandler(function (\Throwable $exception) {
-            ErrorHandler::handleException($exception);
-            $this->reloadStrategyTrigger->emitException($exception);
-        });
-
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
         $this->messageBus = new SocketFileMessageBus($this->socketFile);
         $this->trafficStatus = new TrafficStatus($this->messageBus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
+
+        EventLoop::setDriver((new DriverFactory())->create());
+
+        EventLoop::setErrorHandler(function (\Throwable $exception) {
+            ErrorHandler::handleException($exception);
+            $this->emitReloadEvent($exception);
+        });
 
         // onStart callback
         EventLoop::defer(function (): void {
@@ -147,13 +147,23 @@ final class WorkerProcess implements WorkerProcessInterface
         \gc_mem_caches();
     }
 
-    public function addReloadStrategies(ReloadStrategy ...$reloadStrategies): void
-    {
-        $this->reloadStrategyTrigger->addReloadStrategies(...$reloadStrategies);
-    }
-
     public function startWorkerModule(WorkerModule $module): void
     {
         $module->start($this);
+    }
+
+    public function addReloadStrategy(ReloadStrategy ...$reloadStrategies): void
+    {
+        $this->reloadStrategyTrigger->addReloadStrategy(...$reloadStrategies);
+    }
+
+    public function emitReloadEvent(mixed $event): void
+    {
+        $this->reloadStrategyTrigger->emitEvent($event);
+    }
+
+    public function getTrafficStatus(): TrafficStatus
+    {
+        return $this->trafficStatus;
     }
 }

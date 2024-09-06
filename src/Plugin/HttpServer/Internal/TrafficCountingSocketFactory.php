@@ -5,48 +5,24 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin\HttpServer\Internal;
 
 use Amp\Cancellation;
-use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
 use Amp\Socket\BindContext;
-use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerSocket;
 use Amp\Socket\ServerSocketFactory;
 use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
-use Amp\Sync\LocalSemaphore;
-use Amp\Sync\PosixSemaphore;
-use Amp\Sync\Semaphore;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 
-final readonly class HttpServerSocketFactory implements ServerSocketFactory
+final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
 {
-    private ServerSocketFactory $serverSocketFactory;
-
-    /**
-     * @param int<1, max>|null $connectionLimit
-     */
     public function __construct(
-        int|null $connectionLimit,
         private TrafficStatus $trafficStatisticStore,
+        private ServerSocketFactory $socketServerFactory,
     ) {
-        $serverSocketFactory = new ResourceServerSocketFactory();
-
-        if ($connectionLimit !== null) {
-            $semaphoreFactory =
-                /** @param int<1, max> $maxLocks */
-                static fn(int $maxLocks): Semaphore => \extension_loaded('sysvmsg')
-                ? PosixSemaphore::create($maxLocks)
-                : new LocalSemaphore($maxLocks)
-            ;
-
-            $serverSocketFactory = new ConnectionLimitingServerSocketFactory($semaphoreFactory($connectionLimit), $serverSocketFactory);
-        }
-
-        $this->serverSocketFactory = $serverSocketFactory;
     }
 
     public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): ServerSocket
     {
-        $serverSocket = $this->serverSocketFactory->listen($address, $bindContext);
+        $serverSocket = $this->socketServerFactory->listen($address, $bindContext);
 
         return new class ($serverSocket, $this->trafficStatisticStore) implements ServerSocket {
             public function __construct(private readonly ServerSocket $serverSocket, private readonly TrafficStatus $trafficStatisticStore)

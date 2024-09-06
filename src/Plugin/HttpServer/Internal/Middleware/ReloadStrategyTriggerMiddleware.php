@@ -8,13 +8,12 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategyTrigger;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
 
 final readonly class ReloadStrategyTriggerMiddleware implements Middleware
 {
-    public function __construct(
-        private ReloadStrategyTrigger $reloadStrategyTrigger,
-    ) {
+    public function __construct(private ReloadStrategyAwareInterface $worker)
+    {
     }
 
     /**
@@ -25,11 +24,10 @@ final readonly class ReloadStrategyTriggerMiddleware implements Middleware
         try {
             return $requestHandler->handleRequest($request);
         } catch (\Throwable $e) {
-            $this->reloadStrategyTrigger->emitException($e);
-
+            $this->worker->emitReloadEvent($e);
             throw $e;
         } finally {
-            $this->reloadStrategyTrigger->emitRequest($request);
+            $this->worker->emitReloadEvent($request);
         }
     }
 }

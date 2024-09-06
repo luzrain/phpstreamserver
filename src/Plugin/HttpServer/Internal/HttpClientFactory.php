@@ -19,7 +19,7 @@ final readonly class HttpClientFactory implements ClientFactory
     public function __construct(
         LoggerInterface $logger,
         int|null $connectionLimitPerIp,
-        private TrafficStatus $trafficStatisticStore,
+        private TrafficStatus|null $trafficStatisticStore = null,
         private \Closure|null $onConnectCallback = null,
         private \Closure|null $onCloseCallback = null,
     ) {
@@ -46,7 +46,7 @@ final readonly class HttpClientFactory implements ClientFactory
 
     private function onConnect(Socket $socket, Client $client): void
     {
-        $this->trafficStatisticStore->addConnection($socket);
+        $this->trafficStatisticStore?->addConnection($socket);
 
         if ($this->onConnectCallback !== null) {
             ($this->onConnectCallback)($client);
@@ -55,7 +55,7 @@ final readonly class HttpClientFactory implements ClientFactory
 
     private function onClose(Socket $socket, Client $client): void
     {
-        $this->trafficStatisticStore->removeConnection($socket);
+        $this->trafficStatisticStore?->removeConnection($socket);
 
         if ($this->onCloseCallback !== null) {
             ($this->onCloseCallback)($client);

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
 /**
  * @internal
@@ -13,12 +13,12 @@ use Luzrain\PHPStreamServer\WorkerProcess;
 final class WorkerPool
 {
     /**
-     * @var array<int, WorkerProcess>
+     * @var array<int, WorkerProcessInterface>
      */
     private array $workerPool = [];
 
     /**
-     * @var \WeakMap<WorkerProcess, list<int>>
+     * @var \WeakMap<WorkerProcessInterface, list<int>>
      */
     private \WeakMap $pidMap;
 
@@ -28,13 +28,13 @@ final class WorkerPool
         $this->pidMap = new \WeakMap();
     }
 
-    public function registerWorkerProcess(WorkerProcess $worker): void
+    public function registerWorkerProcess(WorkerProcessInterface $worker): void
     {
         $this->workerPool[\spl_object_id($worker)] = $worker;
         $this->pidMap[$worker] = [];
     }
 
-    public function addChild(WorkerProcess $worker, int $pid): void
+    public function addChild(WorkerProcessInterface $worker, int $pid): void
     {
         if (!isset($this->workerPool[\spl_object_id($worker)])) {
             throw new PHPStreamServerException('Worker is not found in pool');
@@ -52,7 +52,7 @@ final class WorkerPool
         }
     }
 
-    public function getWorkerByPid(int $pid): WorkerProcess|null
+    public function getWorkerByPid(int $pid): WorkerProcessInterface|null
     {
         foreach ($this->pidMap as $worker => $pids) {
             if (\in_array($pid, $pids, true)) {
@@ -64,7 +64,7 @@ final class WorkerPool
     }
 
     /**
-     * @return \Iterator<WorkerProcess>
+     * @return \Iterator<WorkerProcessInterface>
      */
     public function getRegisteredWorkers(): \Iterator
     {
@@ -74,7 +74,7 @@ final class WorkerPool
     /**
      * @return \Iterator<int>
      */
-    public function getAliveWorkerPids(WorkerProcess $worker): \Iterator
+    public function getAliveWorkerPids(WorkerProcessInterface $worker): \Iterator
     {
         return new \ArrayIterator($this->pidMap[$worker]);
     }

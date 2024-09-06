@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\Plugin;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 
-interface Plugin
+interface PluginInterface
 {
     /**
      * Initialize module before event loop starts
@@ -15,7 +15,7 @@ interface Plugin
     public function start(MasterProcess $masterProcess): void;
 
     /**
-     * If module has to finish some work right before server stop, master process will wait for it
+     * If plugin has to finish some work before server stop, master process will wait for it
      */
     public function stop(): Future;
 }

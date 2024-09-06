@@ -50,7 +50,7 @@ use Luzrain\PHPStreamServer\WorkerProcess;
 
 $server = new Server();
 
-$server->addWorkersProcess(new WorkerProcess(
+$server->addWorkerProcess(new WorkerProcess(
     name: 'HTTP Server',
     onStart: function (WorkerProcess $worker) {
         $requestHandler = new ClosureRequestHandler(function (Request $request) : Response {
