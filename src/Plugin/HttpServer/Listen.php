@@ -19,6 +19,10 @@ final readonly class Listen
         $this->host = $p['host'] ?? $p;
         $this->port = $p['port'] ?? ($tls ? 443 : 80);
 
+        if (\str_contains($listen, '://')) {
+            throw new \InvalidArgumentException('Listen should not contain schema');
+        }
+
         if ($this->port < 0 || $this->port > 65535) {
             throw new \InvalidArgumentException('Port number must be an integer between 0 and 65535; got ' . $this->port);
         }

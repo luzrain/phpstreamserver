@@ -6,10 +6,7 @@ namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
 use Amp\Future;
 use Amp\Http\Server\Driver\HttpDriver;
-use Amp\Http\Server\HttpErrorException;
-use Amp\Http\Server\Request;
-use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
-use Amp\Http\Server\Response;
+use Amp\Http\Server\RequestHandler;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\PluginInterface;
 use Luzrain\PHPStreamServer\WorkerProcess;
@@ -17,8 +14,13 @@ use function Amp\async;
 
 final readonly class HttpServer implements PluginInterface
 {
+    /**
+     * @param Listen|string|array<Listen> $listen
+     * @param \Closure(WorkerProcess): RequestHandler $onStart
+     */
     public function __construct(
-        private Listen|array $listen,
+        private Listen|string|array $listen,
+        private \Closure $onStart,
         private string $name = 'HTTP Server',
         private int $count = 1,
         private bool $reloadable = true,
@@ -44,16 +46,18 @@ final readonly class HttpServer implements PluginInterface
             user: $this->user,
             group: $this->group,
             onStart: function (WorkerProcess $worker) {
-                $requestHandler = new ClosureRequestHandler(function (Request $request) : Response {
-                    return match ($request->getUri()->getPath()) {
-                        '/' => new Response(body: 'Hello world1'),
-                        '/ping' => new Response(body: 'pong2'),
-                        default => throw new HttpErrorException(404),
-                    };
-                });
+                $requestHandler = ($this->onStart)($worker);
+
+                if (!$requestHandler instanceof RequestHandler) {
+                    throw new \RuntimeException(sprintf(
+                        'onStart() closure: Return value must be of type %s, %s returned',
+                        RequestHandler::class,
+                        \get_debug_type($requestHandler)),
+                    );
+                }
 
                 $worker->startWorkerModule(new HttpServerModule(
-                    listen: $this->listen,
+                    listen: self::createListenList($this->listen),
                     requestHandler: $requestHandler,
                     middleware: $this->middleware,
                     connectionLimit: $this->connectionLimit,
@@ -71,5 +75,25 @@ final readonly class HttpServer implements PluginInterface
     public function stop(): Future
     {
         return async(static fn() => null);
+    }
+
+    /**
+     * @return list<Listen>
+     */
+    public static function createListenList(self|string|array $listen): array
+    {
+        $listen = \is_array($listen) ? $listen : [$listen];
+        $ret = [];
+        foreach ($listen as $listenItem) {
+            if ($listenItem instanceof Listen) {
+                $ret[] = $listenItem;
+            } elseif (\is_string($listenItem)) {
+                $ret[] = new Listen($listenItem);
+            } else {
+                throw new \InvalidArgumentException('Invalid listen');
+            }
+        }
+
+        return $ret;
     }
 }
