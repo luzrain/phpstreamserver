@@ -24,7 +24,7 @@ trait ProcessTrait
     private string|null $group = null;
     private int $exitCode = 0;
     private LoggerInterface $logger;
-    private readonly string $socketFile;
+    private string $socketFile;
 
     public function run(WorkerContext $workerContext): int
     {
