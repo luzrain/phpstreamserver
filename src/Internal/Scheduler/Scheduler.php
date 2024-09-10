@@ -53,9 +53,9 @@ final class Scheduler
         foreach ($this->pool->getWorkers() as $worker) {
             /** @var PeriodicProcessInterface $worker */
             try {
-                $trigger = TriggerFactory::create($worker->schedule, $worker->jitter);
+                $trigger = TriggerFactory::create($worker->getSchedule(), $worker->getJitter());
             } catch (\InvalidArgumentException) {
-                $this->logger->warning(\sprintf('Periodic process "%s" skipped. Schedule "%s" is not in valid format', $worker->getName(), $worker->schedule));
+                $this->logger->warning(\sprintf('Periodic process "%s" skipped. Schedule "%s" is not in valid format', $worker->getName(), $worker->getSchedule()));
                 continue;
             }
 

@@ -34,8 +34,8 @@ final class PeriodicProcess implements PeriodicProcessInterface
      */
     public function __construct(
         string $name = 'none',
-        public readonly string $schedule = '1 minute',
-        public readonly int $jitter = 0,
+        private readonly string $schedule = '1 minute',
+        private readonly int $jitter = 0,
         string|null $user = null,
         string|null $group = null,
         private \Closure|null $onStart = null,
@@ -77,5 +77,15 @@ final class PeriodicProcess implements PeriodicProcessInterface
         $this->onStop = null;
         \gc_collect_cycles();
         \gc_mem_caches();
+    }
+
+    public function getSchedule(): string
+    {
+        return $this->schedule;
+    }
+
+    public function getJitter(): int
+    {
+        return $this->jitter;
     }
 }
