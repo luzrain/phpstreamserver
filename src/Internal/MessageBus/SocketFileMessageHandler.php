@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\MessageBus;
 
+use Amp\ByteStream\StreamException;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Revolt\EventLoop;
@@ -26,6 +27,12 @@ final class SocketFileMessageHandler implements MessageHandler
         EventLoop::queue(static function () use (&$server, &$subscribers) {
             while ($socket = $server->accept()) {
                 $data = $socket->read(limit: PHP_INT_MAX);
+
+                // if socket is not readable anymore
+                if ($data === null) {
+                    continue;
+                }
+
                 $message = \unserialize($data);
                 \assert($message instanceof Message);
                 $return = null;
@@ -37,7 +44,13 @@ final class SocketFileMessageHandler implements MessageHandler
                     }
                 }
 
-                $socket->write(\serialize($return));
+                try {
+                    $socket->write(\serialize($return));
+                } catch (StreamException) {
+                    // if socket is not writable anymore
+                    continue;
+                }
+
                 $socket->end();
             }
         });

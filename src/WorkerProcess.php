@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
+use Amp\DeferredFuture;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -31,6 +32,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
     private TrafficStatus $trafficStatus;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
     private MessageBus $messageBus;
+    private DeferredFuture|null $startFuture = null;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -61,6 +63,8 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->name));
         }
 
+        $this->startFuture = new DeferredFuture();
+
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
@@ -83,14 +87,12 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
-        EventLoop::queue(function () {
-            $this->messageBus->dispatch(new Spawn(
-                pid: $this->pid,
-                user: $this->getUser(),
-                name: $this->name,
-                startedAt: new \DateTimeImmutable('now'),
-            ));
-        });
+        $this->messageBus->dispatch(new Spawn(
+            pid: $this->pid,
+            user: $this->getUser(),
+            name: $this->name,
+            startedAt: new \DateTimeImmutable('now'),
+        ))->await();
 
         EventLoop::queue($heartbeat = function (): void {
             $this->messageBus->dispatch(new Heartbeat(
@@ -107,10 +109,14 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             \gc_collect_cycles();
             \gc_mem_caches();
         });
+
+        $this->startFuture->complete();
+        $this->startFuture = null;
     }
 
     public function stop(int $code = 0): void
     {
+        $this->startFuture?->getFuture()->await();
         $this->exitCode = $code;
         try {
             $this->onStop !== null && ($this->onStop)($this);
@@ -125,6 +131,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             return;
         }
 
+        $this->startFuture?->getFuture()->await();
         $this->exitCode = self::RELOAD_EXIT_CODE;
         try {
             $this->onReload !== null && ($this->onReload)($this);
@@ -135,6 +142,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
 
     public function detach(): void
     {
+        $this->startFuture?->getFuture()->await();
         $this->messageBus->dispatch(new Detach($this->pid))->await();
         $this->detachByTrait();
         unset($this->trafficStatus);

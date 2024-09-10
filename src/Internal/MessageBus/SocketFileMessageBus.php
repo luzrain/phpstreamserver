@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\MessageBus;
 
 use Amp\Future;
+use Amp\Socket\ConnectException;
 use Amp\Socket\DnsSocketConnector;
-use Amp\Socket\RetrySocketConnector;
 use Amp\Socket\SocketConnector;
 use Amp\Socket\StaticSocketConnector;
 use function Amp\async;
+use function Amp\delay;
 
 final class SocketFileMessageBus implements MessageBus
 {
@@ -17,11 +18,7 @@ final class SocketFileMessageBus implements MessageBus
 
     public function __construct(string $socketFile)
     {
-        $this->connector = new RetrySocketConnector(
-            delegate: new StaticSocketConnector("unix://{$socketFile}", new DnsSocketConnector()),
-            maxAttempts: 3,
-            exponentialBackoffBase: 1,
-        );
+        $this->connector = new StaticSocketConnector("unix://{$socketFile}", new DnsSocketConnector());
     }
 
     public function dispatch(Message $message): Future
@@ -29,7 +26,15 @@ final class SocketFileMessageBus implements MessageBus
         $connector = &$this->connector;
 
         return async(static function () use (&$connector, &$message): mixed {
-            $socket = $connector->connect('');
+            while (true) {
+                try {
+                    $socket = $connector->connect('');
+                    break;
+                } catch (ConnectException) {
+                    delay(0.01);
+                }
+            }
+
             $socket->write(\serialize($message));
             $buffer = $socket->read(limit: PHP_INT_MAX);
 

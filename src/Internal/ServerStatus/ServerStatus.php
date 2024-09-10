@@ -70,7 +70,7 @@ final class ServerStatus
 
     public function subscribeToWorkerMessages(MessageHandler $handler): void
     {
-        $handler->subscribe(Spawn::class, weakClosure(function (Spawn $message) {
+        $handler->subscribe(Spawn::class, weakClosure(function (Spawn $message): void {
             $this->processes[$message->pid] = new Process(
                 pid: $message->pid,
                 user: $message->user,
@@ -79,7 +79,11 @@ final class ServerStatus
             );
         }));
 
-        $handler->subscribe(Heartbeat::class, weakClosure(function (Heartbeat $message) {
+        $handler->subscribe(Heartbeat::class, weakClosure(function (Heartbeat $message): void {
+            if (!isset($this->processes[$message->pid]) || $this->processes[$message->pid]?->detached === true) {
+                return;
+            }
+
             $this->processes[$message->pid]->memory = $message->memory;
             $this->processes[$message->pid]->time = $message->time;
 
@@ -88,7 +92,11 @@ final class ServerStatus
             }
         }));
 
-        $handler->subscribe(Detach::class, weakClosure(function (Detach $message) {
+        $handler->subscribe(Detach::class, weakClosure(function (Detach $message): void {
+            if (!isset($this->processes[$message->pid])) {
+                return;
+            }
+
             $this->processes[$message->pid]->detached = true;
             $this->processes[$message->pid]->memory = 0;
             $this->processes[$message->pid]->requests = 0;
@@ -99,25 +107,25 @@ final class ServerStatus
             $this->processes[$message->pid]->connections = [];
         }));
 
-        $handler->subscribe(RxtInc::class, weakClosure(function (RxtInc $message) {
+        $handler->subscribe(RxtInc::class, weakClosure(function (RxtInc $message): void {
             $this->processes[$message->pid]->connections[$message->connectionId]->rx += $message->rx;
             $this->processes[$message->pid]->rx += $message->rx;
         }));
 
-        $handler->subscribe(TxtInc::class, weakClosure(function (TxtInc $message) {
+        $handler->subscribe(TxtInc::class, weakClosure(function (TxtInc $message): void {
             $this->processes[$message->pid]->connections[$message->connectionId]->tx += $message->tx;
             $this->processes[$message->pid]->tx += $message->tx;
         }));
 
-        $handler->subscribe(RequestInc::class, weakClosure(function (RequestInc $message) {
+        $handler->subscribe(RequestInc::class, weakClosure(function (RequestInc $message): void {
             $this->processes[$message->pid]->requests += $message->requests;
         }));
 
-        $handler->subscribe(Connect::class, weakClosure(function (Connect $message) {
+        $handler->subscribe(Connect::class, weakClosure(function (Connect $message): void {
             $this->processes[$message->pid]->connections[$message->connectionId] = $message->connection;
         }));
 
-        $handler->subscribe(Disconnect::class, weakClosure(function (Disconnect $message) {
+        $handler->subscribe(Disconnect::class, weakClosure(function (Disconnect $message): void {
             unset($this->processes[$message->pid]->connections[$message->connectionId]);
         }));
     }
@@ -200,12 +208,12 @@ final class ServerStatus
 
     public function getTotalMemory(): int
     {
-        return (int) \array_sum(\array_map(static fn(Process $p) => $p->memory, $this->processes));
+        return (int) \array_sum(\array_map(static fn(Process $p): int => $p->memory, $this->processes));
     }
 
     public function getTotalConnections(): int
     {
-        return (int) \array_sum(\array_map(static fn(Process $p) => $p->connections, $this->processes));
+        return (int) \array_sum(\array_map(static fn(Process $p): array => $p->connections, $this->processes));
     }
 
     public function isDetached(int $pid): bool
