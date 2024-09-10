@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
 
-use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Plugin\PcntlExecCommand;
+use Luzrain\PHPStreamServer\Plugin\NullStop;
 use Luzrain\PHPStreamServer\Plugin\PluginInterface;
 use Luzrain\PHPStreamServer\WorkerProcess;
-use function Amp\async;
 
 final readonly class Supervisor implements PluginInterface
 {
+    use NullStop;
+    use PcntlExecCommand;
+
     /**
      * @param string|\Closure(WorkerProcess): void $command bash command as string or php closure
      */
@@ -34,6 +37,8 @@ final readonly class Supervisor implements PluginInterface
             default => $this->name,
         };
 
+        $pcntlExec = \is_string($this->command) ? $this->prepareCommandForPcntlExec($this->command) : null;
+
         $masterProcess->addWorker(new WorkerProcess(
             name: $name,
             count: $this->count,
@@ -41,37 +46,13 @@ final readonly class Supervisor implements PluginInterface
             restartDelay: $this->restartDelay,
             user: $this->user,
             group: $this->group,
-            onStart: function (WorkerProcess $worker) {
-                if (\is_string($this->command)) {
-                    $worker->exec(...$this->prepareCommand($this->command));
+            onStart: function (WorkerProcess $worker) use ($pcntlExec) {
+                if ($pcntlExec !== null) {
+                    $worker->exec(...$pcntlExec);
                 } else {
                     ($this->command)($worker);
                 }
             },
         ));
-    }
-
-    /**
-     * @return array{0: string, 1: list<string>}
-     */
-    private function prepareCommand(string $command): array
-    {
-        \preg_match_all('/\'[^\']*\'|"[^"]*"|\S+/', $command, $matches);
-        $parts = \array_map(static fn (string $part) => \trim($part, '"\''), $matches[0]);
-        $binary = \array_shift($parts);
-        $args = $parts;
-
-        if (!\str_starts_with($binary, '/')) {
-            if (\is_string($absoluteBinaryPath = \shell_exec("command -v $binary"))) {
-                $binary = \trim($absoluteBinaryPath);
-            }
-        }
-
-        return [$binary, $args];
-    }
-
-    public function stop(): Future
-    {
-        return async(static fn() => null);
     }
 }
