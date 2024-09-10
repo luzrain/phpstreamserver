@@ -64,7 +64,7 @@ final class Supervisor
     {
         EventLoop::queue(function (): void {
             foreach ($this->workerPool->getRegisteredWorkers() as $worker) {
-                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->count) {
+                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->getProcessCount()) {
                     if ($this->spawnWorker($worker)) {
                         return;
                     }
@@ -122,7 +122,11 @@ final class Supervisor
                     default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
                 };
                 // Restart worker
-                $this->spawnWorker($worker);
+                if (0 < $delay = $worker->getProcessRestartDelay()) {
+                    EventLoop::delay($delay, function () use ($worker) { $this->spawnWorker($worker); });
+                } else {
+                    $this->spawnWorker($worker);
+                }
                 break;
             case Status::SHUTDOWN:
                 if ($this->workerPool->getProcessesCount() === 0) {

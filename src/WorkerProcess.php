@@ -41,8 +41,9 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
      */
     public function __construct(
         string $name = 'none',
-        public readonly int $count = 1,
+        private readonly int $count = 1,
         private readonly bool $reloadable = true,
+        private readonly float $restartDelay = 0,
         string|null $user = null,
         string|null $group = null,
         private \Closure|null $onStart = null,
@@ -173,5 +174,15 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
     public function getTrafficStatus(): TrafficStatus
     {
         return $this->trafficStatus;
+    }
+
+    public function getProcessCount(): int
+    {
+        return $this->count;
+    }
+
+    public function getProcessRestartDelay(): float
+    {
+        return $this->restartDelay;
     }
 }

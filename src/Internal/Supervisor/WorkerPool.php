@@ -65,6 +65,7 @@ final class WorkerPool
 
     /**
      * @return \Iterator<WorkerProcessInterface>
+     * @psalm-return iterable<WorkerProcessInterface>
      */
     public function getRegisteredWorkers(): \Iterator
     {

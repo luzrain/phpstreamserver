@@ -25,4 +25,14 @@ interface WorkerProcessInterface extends ProcessInterface
      * Start worker module in this worker
      */
     public function startWorkerModule(WorkerModule $module): void;
+
+    /**
+     * Count of processes
+     */
+    public function getProcessCount(): int;
+
+    /**
+     * Delay in seconds between processes restart
+     */
+    public function getProcessRestartDelay(): float;
 }

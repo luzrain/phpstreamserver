@@ -136,7 +136,7 @@ final class ServerStatus
             $this->workerProcesses[$worker->getId()] = new WorkerProcessInfo(
                 user: $worker->getUser(),
                 name: $worker->getName(),
-                count: $worker->count,
+                count: $worker->getProcessCount(),
             );
         } elseif($worker instanceof PeriodicProcessInterface) {
             $this->periodicProcesses[$worker->getId()] = new PeriodicProcessInfo(
