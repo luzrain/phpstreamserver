@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
+use Luzrain\PHPStreamServer\Exception\AlreadyRunningException;
+use Luzrain\PHPStreamServer\Exception\NotRunningException;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -102,8 +104,7 @@ final class MasterProcess
     public function run(bool $daemonize = false): int
     {
         if ($this->isRunning()) {
-            $this->logger->error('Master process already running');
-            return 1;
+            throw new AlreadyRunningException();
         }
 
         if ($daemonize && $this->doDaemonize()) {
@@ -229,8 +230,7 @@ final class MasterProcess
     public function stop(int $code = 0): void
     {
         if (!$this->isRunning()) {
-            $this->logger->error(Server::NAME . ' is not running');
-            return;
+            throw new NotRunningException();
         }
 
         // If it called from outside working process
@@ -263,8 +263,7 @@ final class MasterProcess
     public function reload(): void
     {
         if (!$this->isRunning()) {
-            $this->logger->error(Server::NAME . ' is not running');
-            return;
+            throw new NotRunningException();
         }
 
         // If it called from outside working process

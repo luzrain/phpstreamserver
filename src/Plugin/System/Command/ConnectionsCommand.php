@@ -24,7 +24,6 @@ final class ConnectionsCommand extends Command
             \array_push($connections, ...$process->connections);
         }
 
-
         echo "❯ Connections\n";
 
         if (\count($connections) > 0) {

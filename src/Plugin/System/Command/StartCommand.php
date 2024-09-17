@@ -7,6 +7,7 @@ namespace Luzrain\PHPStreamServer\Plugin\System\Command;
 use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Options;
 use Luzrain\PHPStreamServer\Console\Table;
+use Luzrain\PHPStreamServer\Exception\AlreadyRunningException;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\WorkerProcessInfo;
 use Luzrain\PHPStreamServer\Server;
@@ -63,6 +64,11 @@ final class StartCommand extends Command
             echo "Press Ctrl+C to stop.\n";
         }
 
-        return $this->masterProcess->run($isDaemon);
+        try {
+            return $this->masterProcess->run($isDaemon);
+        } catch (AlreadyRunningException $e) {
+            echo \sprintf("<color;bg=red>%s</>\n", $e->getMessage());
+            return 1;
+        }
     }
 }
