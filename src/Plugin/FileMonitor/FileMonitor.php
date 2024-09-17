@@ -4,36 +4,36 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\FileMonitor;
 
-use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\PluginInterface;
-use function Amp\async;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 
-final readonly class FileMonitor implements PluginInterface
+final class FileMonitor extends Plugin
 {
+    private \Closure $reload;
+
     public function __construct(
         private string $sourceDir,
         private array $filePattern = ['*'],
     ) {
     }
 
-    public function start(MasterProcess $masterProcess): void
+    public function init(MasterProcess $masterProcess): void
+    {
+        $this->reload = $masterProcess->reload(...);
+    }
+
+    public function start(): void
     {
         $fileMonitor = new Internal\InotifyMonitorWatcher(
             sourceDir: $this->sourceDir,
             filePattern: $this->filePattern,
-            reloadCallback: function () use ($masterProcess): void {
-                $masterProcess->reload();
+            reloadCallback: function (): void {
+                ($this->reload)();
                 $this->opcacheInvalidate();
             },
         );
 
         $fileMonitor->start();
-    }
-
-    public function stop(): Future
-    {
-        return async(static fn() => null);
     }
 
     private function opcacheInvalidate(): void

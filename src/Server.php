@@ -4,17 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Command\ConnectionsCommand;
-use Luzrain\PHPStreamServer\Command\ProcessesCommand;
-use Luzrain\PHPStreamServer\Command\ReloadCommand;
-use Luzrain\PHPStreamServer\Command\StartCommand;
-use Luzrain\PHPStreamServer\Command\StatusCommand;
-use Luzrain\PHPStreamServer\Command\StopCommand;
-use Luzrain\PHPStreamServer\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\Console\App;
 use Luzrain\PHPStreamServer\Internal\Logger\Logger;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\PluginInterface;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin\System\System;
 
 final class Server
 {
@@ -23,6 +17,7 @@ final class Server
     public const NAME = 'PHPStreamServer';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
 
+    private App $app;
     private MasterProcess $masterProcess;
 
     public function __construct(
@@ -41,11 +36,19 @@ final class Server
             stopTimeout: $stopTimeout,
             logger: new Logger(null),
         );
+
+        $this->app = new App();
+        $this->addPlugin(new System());
     }
 
-    public function addPlugin(PluginInterface ...$plugin): self
+    public function addPlugin(Plugin ...$plugins): self
     {
-        $this->masterProcess->addPlugin(...$plugin);
+        foreach ($plugins as $plugin) {
+            $this->masterProcess->addPlugin($plugin);
+            foreach ($plugin->commands() as $command) {
+                $this->app->register($command);
+            }
+        }
 
         return $this;
     }
@@ -57,16 +60,8 @@ final class Server
         return $this;
     }
 
-    public function run(string $cmd = ''): int
+    public function run(): int
     {
-        return (new App(
-            new StartCommand($this->masterProcess),
-            new StopCommand($this->masterProcess),
-            new ReloadCommand($this->masterProcess),
-            new StatusCommand($this->masterProcess),
-            new WorkersCommand($this->masterProcess),
-            new ProcessesCommand($this->masterProcess),
-            new ConnectionsCommand($this->masterProcess),
-        ))->run($cmd);
+        return $this->app->run();
     }
 }

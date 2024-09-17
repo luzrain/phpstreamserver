@@ -2,31 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Command;
+namespace Luzrain\PHPStreamServer\Plugin\System\Command;
 
 use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Options;
 use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\WorkerProcessInfo;
 
-final class WorkersCommand implements Command
+final class WorkersCommand extends Command
 {
-    public function __construct(
-        private MasterProcess $masterProcess,
-    ) {
-    }
+    protected const COMMAND = 'workers';
+    protected const DESCRIPTION = 'Show workers status';
 
-    public function getCommand(): string
-    {
-        return 'workers';
-    }
-
-    public function getHelp(): string
-    {
-        return 'Show workers status';
-    }
-
-    public function run(array $arguments): int
+    public function execute(Options $options): int
     {
         $status = $this->masterProcess->getServerStatus();
 

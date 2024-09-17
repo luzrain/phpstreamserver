@@ -2,39 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Command;
+namespace Luzrain\PHPStreamServer\Plugin\System\Command;
 
 use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Options;
 use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\ConnectionsRequest;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Connection;
 
-final class ConnectionsCommand implements Command
+final class ConnectionsCommand extends Command
 {
-    public function __construct(
-        private MasterProcess $masterProcess,
-    ) {
-    }
+    protected const COMMAND = 'connections';
+    protected const DESCRIPTION = 'Show active connections';
 
-    public function getCommand(): string
+    public function execute(Options $options): int
     {
-        return 'connections';
-    }
-
-    public function getHelp(): string
-    {
-        return 'Show active connections';
-    }
-
-    public function run(array $arguments): int
-    {
-
-
-
-
         $status = $this->masterProcess->getServerStatus();
         $connections = [];
 

@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
-use Amp\Future;
 use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\RequestHandler;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\PluginInterface;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\WorkerProcess;
-use function Amp\async;
 
-final readonly class HttpServer implements PluginInterface
+final class HttpServer extends Plugin
 {
     /**
      * @param Listen|string|array<Listen> $listen
@@ -37,7 +35,7 @@ final readonly class HttpServer implements PluginInterface
     ) {
     }
 
-    public function start(MasterProcess $masterProcess): void
+    public function init(MasterProcess $masterProcess): void
     {
         $masterProcess->addWorker(new WorkerProcess(
             name: $this->name,
@@ -45,36 +43,34 @@ final readonly class HttpServer implements PluginInterface
             reloadable: $this->reloadable,
             user: $this->user,
             group: $this->group,
-            onStart: function (WorkerProcess $worker) {
-                $requestHandler = ($this->onStart)($worker);
-
-                if (!$requestHandler instanceof RequestHandler) {
-                    throw new \RuntimeException(sprintf(
-                        'onStart() closure: Return value must be of type %s, %s returned',
-                        RequestHandler::class,
-                        \get_debug_type($requestHandler)),
-                    );
-                }
-
-                $worker->startWorkerModule(new HttpServerModule(
-                    listen: self::createListenList($this->listen),
-                    requestHandler: $requestHandler,
-                    middleware: $this->middleware,
-                    connectionLimit: $this->connectionLimit,
-                    connectionLimitPerIp: $this->connectionLimitPerIp,
-                    concurrencyLimit: $this->concurrencyLimit,
-                    http2Enabled: $this->http2Enabled,
-                    connectionTimeout: $this->connectionTimeout,
-                    headerSizeLimit: $this->headerSizeLimit,
-                    bodySizeLimit: $this->bodySizeLimit,
-                ));
-            },
+            onStart: $this->onWorkerStart(...),
         ));
     }
 
-    public function stop(): Future
+    private function onWorkerStart(WorkerProcess $worker): void
     {
-        return async(static fn() => null);
+        $requestHandler = ($this->onStart)($worker);
+
+        if (!$requestHandler instanceof RequestHandler) {
+            throw new \RuntimeException(sprintf(
+                'onStart() closure: Return value must be of type %s, %s returned',
+                RequestHandler::class,
+                \get_debug_type($requestHandler)),
+            );
+        }
+
+        $worker->startWorkerModule(new HttpServerModule(
+            listen: self::createListenList($this->listen),
+            requestHandler: $requestHandler,
+            middleware: $this->middleware,
+            connectionLimit: $this->connectionLimit,
+            connectionLimitPerIp: $this->connectionLimitPerIp,
+            concurrencyLimit: $this->concurrencyLimit,
+            http2Enabled: $this->http2Enabled,
+            connectionTimeout: $this->connectionTimeout,
+            headerSizeLimit: $this->headerSizeLimit,
+            bodySizeLimit: $this->bodySizeLimit,
+        ));
     }
 
     /**

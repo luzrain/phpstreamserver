@@ -10,6 +10,7 @@ namespace Luzrain\PHPStreamServer\Console;
 final class StdoutHandler
 {
     private static bool $isRegistered = false;
+    private static bool $enableColors = true;
 
     private function __construct()
     {
@@ -43,6 +44,11 @@ final class StdoutHandler
         \ob_start(static fn() => '', 1);
     }
 
+    public static function disableColor(): void
+    {
+        self::$enableColors = false;
+    }
+
     /**
      * @param resource $stream
      */
@@ -52,7 +58,7 @@ final class StdoutHandler
         \ob_start(static function (string $chunk, int $phase) use ($hasColorSupport, $stream): string {
             $isWrite = ($phase & \PHP_OUTPUT_HANDLER_WRITE) === \PHP_OUTPUT_HANDLER_WRITE;
             if ($isWrite && $chunk !== '') {
-                $text = $hasColorSupport ? Colorizer::colorize($chunk) : Colorizer::stripTags($chunk);
+                $text = self::$enableColors && $hasColorSupport ? Colorizer::colorize($chunk) : Colorizer::stripTags($chunk);
                 \fwrite($stream, $text);
                 \fflush($stream);
             }

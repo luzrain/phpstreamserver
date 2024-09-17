@@ -6,14 +6,14 @@ namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
 
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\PcntlExecCommand;
-use Luzrain\PHPStreamServer\Plugin\NullStop;
-use Luzrain\PHPStreamServer\Plugin\PluginInterface;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\WorkerProcess;
 
-final readonly class Supervisor implements PluginInterface
+final class Supervisor extends Plugin
 {
-    use NullStop;
     use PcntlExecCommand;
+
+    private array|null $pcntlExec;
 
     /**
      * @param string|\Closure(WorkerProcess): void $command bash command as string or php closure
@@ -29,15 +29,13 @@ final readonly class Supervisor implements PluginInterface
     ) {
     }
 
-    public function start(MasterProcess $masterProcess): void
+    public function init(MasterProcess $masterProcess): void
     {
         $name = match (true) {
             $this->name === null && \is_string($this->command) => $this->command,
             $this->name === null => 'closure',
             default => $this->name,
         };
-
-        $pcntlExec = \is_string($this->command) ? $this->prepareCommandForPcntlExec($this->command) : null;
 
         $masterProcess->addWorker(new WorkerProcess(
             name: $name,
@@ -46,13 +44,18 @@ final readonly class Supervisor implements PluginInterface
             restartDelay: $this->restartDelay,
             user: $this->user,
             group: $this->group,
-            onStart: function (WorkerProcess $worker) use ($pcntlExec) {
-                if ($pcntlExec !== null) {
-                    $worker->exec(...$pcntlExec);
+            onStart: function (WorkerProcess $worker) {
+                if ($this->pcntlExec !== null) {
+                    $worker->exec(...$this->pcntlExec);
                 } else {
                     ($this->command)($worker);
                 }
             },
         ));
+    }
+
+    public function start(): void
+    {
+        $this->pcntlExec = \is_string($this->command) ? $this->prepareCommandForPcntlExec($this->command) : null;
     }
 }

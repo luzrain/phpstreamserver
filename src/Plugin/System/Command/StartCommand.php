@@ -2,35 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Command;
+namespace Luzrain\PHPStreamServer\Plugin\System\Command;
 
 use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Options;
 use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\WorkerProcessInfo;
 use Luzrain\PHPStreamServer\Server;
 
-final class StartCommand implements Command
+final class StartCommand extends Command
 {
-    public function __construct(
-        private MasterProcess $masterProcess,
-    ) {
+    protected const COMMAND = 'start';
+    protected const DESCRIPTION = 'Start server';
+
+    public function configure(Options $options): void
+    {
+        $options->addOptionDefinition('daemon', 'd', 'Run in daemon mode');
     }
 
-    public function getCommand(): string
+    public function execute(Options $options): int
     {
-        return 'start';
-    }
+        $isDaemon = (bool) $options->getOption('daemon');
 
-    public function getHelp(): string
-    {
-        return 'Start server';
-    }
-
-    public function run(array $arguments): int
-    {
-        $isDaemon = \in_array('-d', $arguments, true) || \in_array('--daemon', $arguments, true);
         /** @var \WeakReference<ServerStatus> $status */
         $status = \WeakReference::create($this->masterProcess->getServerStatus());
 

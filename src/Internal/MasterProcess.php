@@ -13,7 +13,7 @@ use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\PeriodicProcessInterface;
-use Luzrain\PHPStreamServer\Plugin\PluginInterface;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\ProcessInterface;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
@@ -42,7 +42,7 @@ final class MasterProcess
     private Scheduler $scheduler;
 
     /**
-     * @var array<class-string<PluginInterface>, PluginInterface>
+     * @var array<class-string<Plugin>, Plugin>
      */
     private array $plugins = [];
 
@@ -74,7 +74,7 @@ final class MasterProcess
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
-        $this->supervisor = new Supervisor($stopTimeout,);
+        $this->supervisor = new Supervisor($stopTimeout);
         $this->scheduler = new Scheduler();
         $this->serverStatus = new ServerStatus();
     }
@@ -91,9 +91,12 @@ final class MasterProcess
         }
     }
 
-    public function addPlugin(PluginInterface ...$plugins): void
+    public function addPlugin(Plugin ...$plugins): void
     {
-        \array_push($this->plugins, ...$plugins);
+        foreach ($plugins as $plugin) {
+            $plugin->init($this);
+            $this->plugins[] = $plugin;
+        }
     }
 
     public function run(bool $daemonize = false): int
@@ -173,7 +176,7 @@ final class MasterProcess
         });
 
         foreach ($this->plugins as $module) {
-            $module->start($this);
+            $module->start();
         }
     }
 

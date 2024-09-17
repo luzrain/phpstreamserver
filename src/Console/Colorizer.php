@@ -71,7 +71,7 @@ final class Colorizer
             if (isset(self::COLORMAP[$bg][1])) {
                 $colors[] = self::COLORMAP[$bg][1];
             }
-            if (empty($colors)) {
+            if ($colors === []) {
                 continue;
             }
             $formattedString = \sprintf("\e[%sm%s\e[0m", \implode(';', $colors), $text);
