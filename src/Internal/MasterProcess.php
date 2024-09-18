@@ -101,6 +101,9 @@ final class MasterProcess
         }
     }
 
+    /**
+     * @throws AlreadyRunningException
+     */
     public function run(bool $daemonize = false): int
     {
         if ($this->isRunning()) {
@@ -227,6 +230,9 @@ final class MasterProcess
         }
     }
 
+    /**
+     * @throws NotRunningException
+     */
     public function stop(int $code = 0): void
     {
         if (!$this->isRunning()) {
@@ -260,6 +266,9 @@ final class MasterProcess
         $this->suspension->resume($code);
     }
 
+    /**
+     * @throws NotRunningException
+     */
     public function reload(): void
     {
         if (!$this->isRunning()) {
