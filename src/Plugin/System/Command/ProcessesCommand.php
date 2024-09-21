@@ -8,7 +8,7 @@ use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Options;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Process;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\RunningProcess;
 
 final class ProcessesCommand extends Command
 {
@@ -33,7 +33,7 @@ final class ProcessesCommand extends Command
                     'Bytes (RX / TX)',
                     'Status',
                 ])
-                ->addRows(\array_map(array: $status->getProcesses(), callback: static function (Process $w) {
+                ->addRows(\array_map(array: $status->getProcesses(), callback: static function (RunningProcess $w) {
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",

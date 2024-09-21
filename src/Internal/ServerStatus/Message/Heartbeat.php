@@ -6,6 +6,9 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
 
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
+/**
+ * Process sends this message periodically
+ */
 final readonly class Heartbeat implements Message
 {
     public function __construct(

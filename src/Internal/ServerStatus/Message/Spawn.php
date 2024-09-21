@@ -6,6 +6,9 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
 
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
+/**
+ * Process spawned
+ */
 final readonly class Spawn implements Message
 {
     public function __construct(

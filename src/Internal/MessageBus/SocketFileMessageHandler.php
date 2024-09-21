@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\MessageBus;
 
 use Amp\ByteStream\StreamException;
+use Amp\Future;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Revolt\EventLoop;
+use function Amp\async;
 
-final class SocketFileMessageHandler implements MessageHandler
+final class SocketFileMessageHandler implements MessageHandler, MessageBus
 {
     private ResourceServerSocket $socket;
 
@@ -81,5 +83,20 @@ final class SocketFileMessageHandler implements MessageHandler
     public function unsubscribe(string $class, \Closure $closure): void
     {
         unset($this->subscribers[$class][\spl_object_id($closure)]);
+    }
+
+    public function dispatch(Message $message): Future
+    {
+        $subscribers = &$this->subscribers;
+
+        return async(static function () use (&$subscribers, &$message): mixed {
+            foreach ($subscribers[$message::class] ?? [] as $subscriber) {
+                if (null !== $subscriberReturn = $subscriber($message)) {
+                    return $subscriberReturn;
+                }
+            }
+
+            return null;
+        });
     }
 }

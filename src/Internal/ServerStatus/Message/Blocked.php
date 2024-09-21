@@ -7,9 +7,9 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
 /**
- * Process detached
+ * Process blocked by IO operations
  */
-final readonly class Detach implements Message
+final readonly class Blocked implements Message
 {
     public function __construct(
         public int $pid,

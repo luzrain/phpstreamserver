@@ -6,10 +6,12 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Blocked;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Killed;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
@@ -18,7 +20,6 @@ use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Luzrain\PHPStreamServer\ProcessInterface;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
-use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Amp\weakClosure;
 
@@ -28,9 +29,6 @@ use function Amp\weakClosure;
  */
 final class ServerStatus
 {
-    private const BLOCKED_LABEL_PERSISTENCE = 30;
-    public const BLOCK_WARNING_TRESHOLD = 6;
-
     public readonly string $version;
     public readonly string $phpVersion;
     public readonly string $eventLoop;
@@ -49,14 +47,9 @@ final class ServerStatus
     private array $periodicProcesses = [];
 
     /**
-     * @var array<int, Process>
+     * @var array<int, RunningProcess>
      */
     private array $processes = [];
-
-    /**
-     * @var array<int, true>
-     */
-    private array $blockedProcesses = [];
 
     public function __construct()
     {
@@ -71,7 +64,7 @@ final class ServerStatus
     public function subscribeToWorkerMessages(MessageHandler $handler): void
     {
         $handler->subscribe(Spawn::class, weakClosure(function (Spawn $message): void {
-            $this->processes[$message->pid] = new Process(
+            $this->processes[$message->pid] = new RunningProcess(
                 pid: $message->pid,
                 user: $message->user,
                 name: $message->name,
@@ -85,11 +78,19 @@ final class ServerStatus
             }
 
             $this->processes[$message->pid]->memory = $message->memory;
-            $this->processes[$message->pid]->time = $message->time;
+            $this->processes[$message->pid]->blocked = false;
+        }));
 
-            if (!isset($this->blockedProcesses[$message->pid])) {
-                $this->processes[$message->pid]->blocked = false;
+        $handler->subscribe(Blocked::class, weakClosure(function (Blocked $message): void {
+            if (!isset($this->processes[$message->pid]) || $this->processes[$message->pid]?->detached === true) {
+                return;
             }
+
+            $this->processes[$message->pid]->blocked = true;
+        }));
+
+        $handler->subscribe(Killed::class, weakClosure(function (Killed $message): void {
+            unset($this->processes[$message->pid]);
         }));
 
         $handler->subscribe(Detach::class, weakClosure(function (Detach $message): void {
@@ -102,7 +103,6 @@ final class ServerStatus
             $this->processes[$message->pid]->requests = 0;
             $this->processes[$message->pid]->rx = 0;
             $this->processes[$message->pid]->tx = 0;
-            $this->processes[$message->pid]->time = 0;
             $this->processes[$message->pid]->blocked = false;
             $this->processes[$message->pid]->connections = [];
         }));
@@ -152,21 +152,6 @@ final class ServerStatus
         $this->isRunning = $isRunning;
     }
 
-    public function deleteProcess(int $pid): void
-    {
-        unset($this->processes[$pid]);
-    }
-
-    public function markProcessAsBlocked(int $pid): void
-    {
-        $this->blockedProcesses[$pid] = true;
-        $this->processes[$pid]->blocked = true;
-
-        EventLoop::delay(self::BLOCKED_LABEL_PERSISTENCE, function () use ($pid) {
-            unset($this->blockedProcesses[$pid]);
-        });
-    }
-
     public function getWorkersCount(): int
     {
         return \count($this->workerProcesses);
@@ -199,7 +184,7 @@ final class ServerStatus
     }
 
     /**
-     * @return list<Process>
+     * @return list<RunningProcess>
      */
     public function getProcesses(): array
     {
@@ -208,16 +193,11 @@ final class ServerStatus
 
     public function getTotalMemory(): int
     {
-        return (int) \array_sum(\array_map(static fn(Process $p): int => $p->memory, $this->processes));
+        return (int) \array_sum(\array_map(static fn(RunningProcess $p): int => $p->memory, $this->processes));
     }
 
     public function getTotalConnections(): int
     {
-        return (int) \array_sum(\array_map(static fn(Process $p): array => $p->connections, $this->processes));
-    }
-
-    public function isDetached(int $pid): bool
-    {
-        return $this->processes[$pid]->detached ?? false;
+        return (int) \array_sum(\array_map(static fn(RunningProcess $p): array => $p->connections, $this->processes));
     }
 }

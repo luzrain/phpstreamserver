@@ -6,57 +6,84 @@ namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
+use Revolt\EventLoop;
 
 /**
  * @internal
  */
 final class WorkerPool
 {
+    private const BLOCKED_LABEL_PERSISTENCE = 30;
+    public const BLOCK_WARNING_TRESHOLD = 6;
+
     /**
      * @var array<int, WorkerProcessInterface>
      */
     private array $workerPool = [];
 
     /**
-     * @var \WeakMap<WorkerProcessInterface, list<int>>
+     * @var array<int, array<int, Process>>
      */
-    private \WeakMap $pidMap;
+    private array $processMap;
 
     public function __construct()
     {
-        /** @psalm-suppress PropertyTypeCoercion */
-        $this->pidMap = new \WeakMap();
     }
 
-    public function registerWorkerProcess(WorkerProcessInterface $worker): void
+    public function registerWorker(WorkerProcessInterface $worker): void
     {
-        $this->workerPool[\spl_object_id($worker)] = $worker;
-        $this->pidMap[$worker] = [];
+        $this->workerPool[$worker->getId()] = $worker;
+        $this->processMap[$worker->getId()] = [];
     }
 
     public function addChild(WorkerProcessInterface $worker, int $pid): void
     {
-        if (!isset($this->workerPool[\spl_object_id($worker)])) {
+        if (!isset($this->workerPool[$worker->getId()])) {
             throw new PHPStreamServerException('Worker is not found in pool');
         }
 
-        $this->pidMap[$worker][] = $pid;
+        $this->processMap[$worker->getId()][$pid] = new Process($pid);
     }
 
-    public function deleteChild(int $pid): void
+    public function markAsDeleted(int $pid): void
     {
         if (null !== $worker = $this->getWorkerByPid($pid)) {
-            $pids = $this->pidMap[$worker] ?? [];
-            unset($pids[\array_search($pid, $pids, true)]);
-            $this->pidMap[$worker] = \array_values($pids);
+            unset($this->processMap[$worker->getId()][$pid]);
+        }
+    }
+
+    public function markAsDetached(int $pid): void
+    {
+        if (null !== $worker = $this->getWorkerByPid($pid)) {
+            $this->processMap[$worker->getId()][$pid]->detached = true;
+        }
+    }
+
+    public function markAsBlocked(int $pid): void
+    {
+        if (null !== $worker = $this->getWorkerByPid($pid)) {
+            $this->processMap[$worker->getId()][$pid]->blocked = true;
+            EventLoop::delay(self::BLOCKED_LABEL_PERSISTENCE, function () use ($worker, $pid) {
+                if (isset($this->processMap[$worker->getId()][$pid])) {
+                    $this->processMap[$worker->getId()][$pid]->blocked = false;
+                }
+            });
+        }
+    }
+
+    public function markAsHealthy(int $pid, int $time): void
+    {
+        if (null !== $worker = $this->getWorkerByPid($pid)) {
+            $this->processMap[$worker->getId()][$pid]->blocked = false;
+            $this->processMap[$worker->getId()][$pid]->time = $time;
         }
     }
 
     public function getWorkerByPid(int $pid): WorkerProcessInterface|null
     {
-        foreach ($this->pidMap as $worker => $pids) {
-            if (\in_array($pid, $pids, true)) {
-                return $worker;
+        foreach ($this->processMap as $workerId => $processes) {
+            if (\in_array($pid, \array_keys($processes), true)) {
+                return $this->workerPool[$workerId];
             }
         }
 
@@ -77,17 +104,17 @@ final class WorkerPool
      */
     public function getAliveWorkerPids(WorkerProcessInterface $worker): \Iterator
     {
-        return new \ArrayIterator($this->pidMap[$worker]);
+        return new \ArrayIterator(\array_keys($this->processMap[$worker->getId()] ?? []));
     }
 
     /**
-     * @return \Iterator<int>
+     * @return \Iterator<WorkerProcessInterface, Process>
      */
-    public function getAlivePids(): \Iterator
+    public function getProcesses(): \Iterator
     {
-        foreach ($this->pidMap as $pids) {
-            foreach ($pids as $pid) {
-                yield $pid;
+        foreach ($this->processMap as $workerId => $processes) {
+            foreach ($processes as $process) {
+                yield $this->workerPool[$workerId] => $process;
             }
         }
     }
@@ -99,6 +126,6 @@ final class WorkerPool
 
     public function getProcessesCount(): int
     {
-        return \iterator_count($this->getAlivePids());
+        return \iterator_count($this->getProcesses());
     }
 }

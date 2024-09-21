@@ -80,11 +80,6 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             $this->emitReloadEvent($exception);
         });
 
-        // onStart callback
-        EventLoop::defer(function (): void {
-            $this->onStart !== null && ($this->onStart)($this);
-        });
-
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
@@ -110,6 +105,13 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             \gc_collect_cycles();
             \gc_mem_caches();
         });
+
+        // onStart callback
+        if ($this->onStart !== null) {
+            $this->startFuture->getFuture()->finally(function (): void {
+                ($this->onStart)($this);
+            });
+        }
 
         $this->startFuture->complete();
         $this->startFuture = null;

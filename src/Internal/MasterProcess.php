@@ -8,6 +8,7 @@ use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\AlreadyRunningException;
 use Luzrain\PHPStreamServer\Exception\NotRunningException;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
@@ -39,7 +40,7 @@ final class MasterProcess
     private Suspension $suspension;
     private Status $status = Status::STARTING;
     private ServerStatus $serverStatus;
-    private MessageHandler $messageHandler;
+    private MessageHandler&MessageBus $messageHandler;
     private Supervisor $supervisor;
     private Scheduler $scheduler;
 
@@ -76,7 +77,7 @@ final class MasterProcess
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
-        $this->supervisor = new Supervisor($stopTimeout);
+        $this->supervisor = new Supervisor($this, $stopTimeout);
         $this->scheduler = new Scheduler();
         $this->serverStatus = new ServerStatus();
     }
@@ -121,7 +122,7 @@ final class MasterProcess
         $this->saveMasterPid();
         $this->start();
         $this->status = Status::RUNNING;
-        $this->supervisor->start($this->logger, $this->suspension, $this->getStatus(...), $this->serverStatus);
+        $this->supervisor->start($this->suspension, );
         $this->scheduler->start($this->logger, $this->suspension, $this->getStatus(...));
         $this->logger->info(Server::NAME . ' has started');
 
@@ -300,7 +301,7 @@ final class MasterProcess
         return $this->getPid() !== 0 && \posix_kill($this->getPid(), 0);
     }
 
-    private function getStatus(): Status
+    public function getStatus(): Status
     {
         return $this->status;
     }
@@ -344,7 +345,7 @@ final class MasterProcess
         return $this->logger;
     }
 
-    public function getMessageHandler(): MessageHandler
+    public function getMessageHandler(): MessageHandler&MessageBus
     {
         return $this->messageHandler;
     }

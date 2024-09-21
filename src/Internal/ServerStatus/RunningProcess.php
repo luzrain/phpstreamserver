@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
-final class Process
+final class RunningProcess
 {
     /**
      * @param array<int, Connection> $connections
@@ -14,7 +14,6 @@ final class Process
         public string $user,
         public string $name,
         public \DateTimeImmutable $startedAt,
-        public int $time = 0,
         public int $memory = 0,
         public bool $detached = false,
         public int $requests = 0,
