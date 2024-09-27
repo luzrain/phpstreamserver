@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Exception;
 
 use Luzrain\PHPStreamServer\Server;
 
-final class NotRunningException extends \Exception
+final class ServerIsShutdownException extends \Exception
 {
     public function __construct()
     {

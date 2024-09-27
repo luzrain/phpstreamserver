@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Exception;
 
 use Luzrain\PHPStreamServer\Server;
 
-final class AlreadyRunningException extends \Exception
+final class ServerAlreadyRunningException extends \Exception
 {
     public function __construct()
     {

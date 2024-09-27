@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Plugin\System\Command;
 
 use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Console\Options;
-use Luzrain\PHPStreamServer\Exception\NotRunningException;
+use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
 
 final class ReloadCommand extends Command
 {
@@ -17,7 +17,7 @@ final class ReloadCommand extends Command
     {
         try {
             $this->masterProcess->reload();
-        } catch (NotRunningException $e) {
+        } catch (ServerIsShutdownException $e) {
             echo \sprintf("<color;bg=red>%s</>\n", $e->getMessage());
             return 1;
         }

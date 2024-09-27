@@ -6,8 +6,8 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
-use Luzrain\PHPStreamServer\Exception\AlreadyRunningException;
-use Luzrain\PHPStreamServer\Exception\NotRunningException;
+use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
+use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
@@ -109,12 +109,12 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     }
 
     /**
-     * @throws AlreadyRunningException
+     * @throws ServerAlreadyRunningException
      */
     public function run(bool $daemonize = false): int
     {
         if ($this->isRunning()) {
-            throw new AlreadyRunningException();
+            throw new ServerAlreadyRunningException();
         }
 
         if ($daemonize && $this->doDaemonize()) {
@@ -248,12 +248,12 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     }
 
     /**
-     * @throws NotRunningException
+     * @throws ServerIsShutdownException
      */
     public function stop(int $code = 0): void
     {
         if (!$this->isRunning()) {
-            throw new NotRunningException();
+            throw new ServerIsShutdownException();
         }
 
         // If it called from outside working process
@@ -285,12 +285,12 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     }
 
     /**
-     * @throws NotRunningException
+     * @throws ServerIsShutdownException
      */
     public function reload(): void
     {
         if (!$this->isRunning()) {
-            throw new NotRunningException();
+            throw new ServerIsShutdownException();
         }
 
         // If it called from outside working process
@@ -377,12 +377,12 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
      * @template T
      * @param Message<T> $message
      * @return Future<T>
-     * @throws NotRunningException
+     * @throws ServerIsShutdownException
      */
     public function dispatch(Message $message): Future
     {
         if (!$this->isRunning()) {
-            throw new NotRunningException();
+            throw new ServerIsShutdownException();
         }
 
         if ($this->status === Status::RUNNING) {
