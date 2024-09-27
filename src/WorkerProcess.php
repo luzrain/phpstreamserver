@@ -12,8 +12,8 @@ use Luzrain\PHPStreamServer\Internal\Message\ProcessDetachedEvent;
 use Luzrain\PHPStreamServer\Internal\Message\ProcessHeartbeatEvent;
 use Luzrain\PHPStreamServer\Internal\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\Internal\ProcessTrait;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatusAwareInterface;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounterAwareInterface;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
@@ -21,7 +21,7 @@ use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyTrigger;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAwareInterface, TrafficStatusAwareInterface
+final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAwareInterface, NetworkTrafficCounterAwareInterface
 {
     use ProcessTrait {
         detach as detachByTrait;
@@ -29,7 +29,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
 
     private const GC_PERIOD = 180;
 
-    private TrafficStatus $trafficStatus;
+    private NetworkTrafficCounter $trafficStatus;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
     private MessageBus $messageBus;
     private DeferredFuture|null $startFuture = null;
@@ -70,7 +70,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $this->pid = \posix_getpid();
 
         $this->messageBus = new SocketFileMessageBus($this->socketFile);
-        $this->trafficStatus = new TrafficStatus($this->messageBus);
+        $this->trafficStatus = new NetworkTrafficCounter($this->messageBus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 
         EventLoop::setDriver((new DriverFactory())->create());
@@ -173,7 +173,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $this->reloadStrategyTrigger->emitEvent($event);
     }
 
-    public function getTrafficStatus(): TrafficStatus
+    public function getNetworkTrafficCounter(): NetworkTrafficCounter
     {
         return $this->trafficStatus;
     }

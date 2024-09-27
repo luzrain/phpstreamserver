@@ -9,7 +9,7 @@ use Amp\Http\Server\Driver\ClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
 use Psr\Log\LoggerInterface;
 
 final readonly class HttpClientFactory implements ClientFactory
@@ -19,7 +19,7 @@ final readonly class HttpClientFactory implements ClientFactory
     public function __construct(
         LoggerInterface $logger,
         int|null $connectionLimitPerIp,
-        private TrafficStatus|null $trafficStatisticStore = null,
+        private NetworkTrafficCounter|null $trafficStatisticStore = null,
         private \Closure|null $onConnectCallback = null,
         private \Closure|null $onCloseCallback = null,
     ) {

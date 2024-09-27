@@ -10,7 +10,7 @@ use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
 use Amp\Socket\TlsInfo;
 use Amp\Socket\TlsState;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
 
 /**
  * @implements \IteratorAggregate<int, string>
@@ -19,7 +19,7 @@ final readonly class TrafficCountingSocket implements Socket, \IteratorAggregate
 {
     use ReadableStreamIteratorAggregate;
 
-    public function __construct(private Socket $socket, private TrafficStatus $trafficStatisticStore)
+    public function __construct(private Socket $socket, private NetworkTrafficCounter $trafficStatisticStore)
     {
     }
 

@@ -13,33 +13,18 @@ use Luzrain\PHPStreamServer\Internal\Message\RequestCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\Internal\Message\RxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\Internal\Message\TxCounterIncreaseEvent;
 
-/**
- * @readonly
- * @psalm-allow-private-mutation
- */
-final class TrafficStatus
+final class NetworkTrafficCounter
 {
-    /**
-     * @var \WeakMap<Socket, Connection>
-     */
+    /** @var \WeakMap<Socket, Connection> */
     private \WeakMap $activeConnections;
-
-    public int $rx = 0;
-    public int $tx = 0;
-    public int $connections = 0;
-    public int $requests = 0;
+    private int $rx = 0;
+    private int $tx = 0;
+    private int $connections = 0;
+    private int $requests = 0;
 
     public function __construct(private readonly MessageBus $bus)
     {
         $this->activeConnections = new \WeakMap();
-    }
-
-    /**
-     * @return list<Connection>
-     */
-    public function getConnections(): array
-    {
-        return \iterator_to_array($this->activeConnections, false);
     }
 
     public function addConnection(Socket $socket): void
@@ -123,5 +108,33 @@ final class TrafficStatus
             pid: \posix_getpid(),
             requests: $val,
         ));
+    }
+
+    /**
+     * @return list<Connection>
+     */
+    public function getConnections(): array
+    {
+        return \iterator_to_array($this->activeConnections, false);
+    }
+
+    public function getTotalRx(): int
+    {
+        return $this->rx;
+    }
+
+    public function getTotalTx(): int
+    {
+        return $this->tx;
+    }
+
+    public function getTotalConnection(): int
+    {
+        return $this->connections;
+    }
+
+    public function getTotalRequests(): int
+    {
+        return $this->requests;
     }
 }

@@ -10,12 +10,12 @@ use Amp\Socket\ServerSocket;
 use Amp\Socket\ServerSocketFactory;
 use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
 
 final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
 {
     public function __construct(
-        private TrafficStatus $trafficStatisticStore,
+        private NetworkTrafficCounter $trafficStatisticStore,
         private ServerSocketFactory $socketServerFactory,
     ) {
     }
@@ -25,7 +25,7 @@ final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
         $serverSocket = $this->socketServerFactory->listen($address, $bindContext);
 
         return new class ($serverSocket, $this->trafficStatisticStore) implements ServerSocket {
-            public function __construct(private readonly ServerSocket $serverSocket, private readonly TrafficStatus $trafficStatisticStore)
+            public function __construct(private readonly ServerSocket $serverSocket, private readonly NetworkTrafficCounter $trafficStatisticStore)
             {
             }
 
