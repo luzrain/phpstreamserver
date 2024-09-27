@@ -22,11 +22,9 @@ final class Scheduler
     private WorkerPool $pool;
     private LoggerInterface $logger;
     private Suspension $suspension;
-    /** @var \Closure(): Status */
-    private \Closure $status;
     private DeferredFuture|null $stopFuture = null;
 
-    public function __construct()
+    public function __construct(private Status &$status)
     {
         $this->pool = new WorkerPool();
     }
@@ -36,17 +34,10 @@ final class Scheduler
         $this->pool->addWorker($worker);
     }
 
-    /**
-     * @param \Closure(): Status $status
-     */
-    public function start(
-        LoggerInterface $logger,
-        Suspension $suspension,
-        \Closure $status,
-    ): void {
-        $this->logger = $logger;
+    public function start(Suspension $suspension, LoggerInterface $logger): void
+    {
         $this->suspension = $suspension;
-        $this->status = $status;
+        $this->logger = $logger;
 
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
 
@@ -65,12 +56,13 @@ final class Scheduler
 
     private function scheduleWorker(PeriodicProcessInterface $worker, TriggerInterface $trigger): bool
     {
-        if (($this->status)() !== Status::RUNNING) {
+        if ($this->status !== Status::RUNNING) {
             return false;
         }
 
         $currentDate = new \DateTimeImmutable();
         $nextRunDate = $trigger->getNextRunDate($currentDate);
+
         if ($nextRunDate !== null) {
             $delay = $nextRunDate->getTimestamp() - $currentDate->getTimestamp();
             EventLoop::delay($delay, fn() => $this->startWorker($worker, $trigger));
