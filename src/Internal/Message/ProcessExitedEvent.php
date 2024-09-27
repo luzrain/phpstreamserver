@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
+namespace Luzrain\PHPStreamServer\Internal\Message;
 
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
 /**
- * Process detached
+ * @implements Message<void>
  */
-final readonly class Detach implements Message
+final readonly class ProcessExitedEvent implements Message
 {
     public function __construct(
         public int $pid,

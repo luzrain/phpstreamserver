@@ -6,14 +6,17 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
+use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
 use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
-use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
+use Luzrain\PHPStreamServer\Internal\Message\ContainerGetCommand;
+use Luzrain\PHPStreamServer\Internal\Message\ContainerHasCommand;
+use Luzrain\PHPStreamServer\Internal\Message\ContainerSetCommand;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
@@ -277,6 +280,8 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         await($stopFutures);
+
+        dump($code);
 
         $this->logger->info(Server::NAME . ' stopped');
         $this->suspension->resume($code);

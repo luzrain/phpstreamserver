@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
+namespace Luzrain\PHPStreamServer\Internal\Message;
 
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
 /**
  * Process sends this message periodically
+ * @implements Message<void>
  */
-final readonly class Heartbeat implements Message
+final readonly class ProcessHeartbeatEvent implements Message
 {
     public function __construct(
         public int $pid,

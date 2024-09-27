@@ -8,10 +8,10 @@ use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Blocked;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Killed;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessBlockedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessHeartbeatEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessExitedEvent;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
@@ -51,11 +51,11 @@ final class Supervisor
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
-        $this->masterProcess->subscribe(Detach::class, function (Detach $message): void {
+        $this->masterProcess->subscribe(ProcessDetachedEvent::class, function (ProcessDetachedEvent $message): void {
             $this->workerPool->markAsDetached($message->pid);
         });
 
-        $this->masterProcess->subscribe(Heartbeat::class, function (Heartbeat $message): void {
+        $this->masterProcess->subscribe(ProcessHeartbeatEvent::class, function (ProcessHeartbeatEvent $message): void {
             $this->workerPool->markAsHealthy($message->pid, $message->time);
         });
 
@@ -98,7 +98,7 @@ final class Supervisor
             if ($process->blocked === false && $blockTime > $this->workerPool::BLOCK_WARNING_TRESHOLD) {
                 $this->workerPool->markAsBlocked($process->pid);
                 EventLoop::defer(function () use ($process): void {
-                    $this->masterProcess->dispatch(new Blocked($process->pid));
+                    $this->masterProcess->dispatch(new ProcessBlockedEvent($process->pid));
                 });
                 $this->logger->warning(\sprintf(
                     'Worker %s[pid:%d] blocked event loop for more than %s seconds',
@@ -119,7 +119,7 @@ final class Supervisor
         $this->workerPool->markAsDeleted($pid);
 
         EventLoop::defer(function () use ($pid): void {
-            $this->masterProcess->dispatch(new Killed($pid));
+            $this->masterProcess->dispatch(new ProcessExitedEvent($pid));
         });
 
         switch ($this->status) {

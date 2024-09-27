@@ -7,11 +7,11 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
+use Luzrain\PHPStreamServer\Internal\Message\ConnectionCreatedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ConnectionClosedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\RequestCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\Internal\Message\RxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\Internal\Message\TxCounterIncreaseEvent;
 
 /**
  * @readonly
@@ -61,7 +61,7 @@ final class TrafficStatus
         $this->connections++;
         $this->activeConnections[$socket] = $connection;
 
-        $this->bus->dispatch(new Connect(
+        $this->bus->dispatch(new ConnectionCreatedEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             connection: $connection,
@@ -72,7 +72,7 @@ final class TrafficStatus
     {
         unset($this->activeConnections[$socket]);
 
-        $this->bus->dispatch(new Disconnect(
+        $this->bus->dispatch(new ConnectionClosedEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
         ));
@@ -90,7 +90,7 @@ final class TrafficStatus
         $this->activeConnections[$socket]->rx += $val;
         $this->rx += $val;
 
-        $this->bus->dispatch(new RxtInc(
+        $this->bus->dispatch(new RxCounterIncreaseEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             rx: $val,
@@ -105,7 +105,7 @@ final class TrafficStatus
         $this->activeConnections[$socket]->tx += $val;
         $this->tx += $val;
 
-        $this->bus->dispatch(new TxtInc(
+        $this->bus->dispatch(new TxCounterIncreaseEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             tx: $val,
@@ -119,7 +119,7 @@ final class TrafficStatus
     {
         $this->requests += $val;
 
-        $this->bus->dispatch(new RequestInc(
+        $this->bus->dispatch(new RequestCounterIncreaseEvent(
             pid: \posix_getpid(),
             requests: $val,
         ));

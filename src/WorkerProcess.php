@@ -8,15 +8,15 @@ use Amp\DeferredFuture;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessHeartbeatEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\Internal\ProcessTrait;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatus;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\TrafficStatusAwareInterface;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyTrigger;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
@@ -83,7 +83,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
-        $this->messageBus->dispatch(new Spawn(
+        $this->messageBus->dispatch(new ProcessSpawnedEvent(
             pid: $this->pid,
             user: $this->getUser(),
             name: $this->name,
@@ -91,7 +91,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         ))->await();
 
         EventLoop::queue($heartbeat = function (): void {
-            $this->messageBus->dispatch(new Heartbeat(
+            $this->messageBus->dispatch(new ProcessHeartbeatEvent(
                 pid: $this->pid,
                 memory: \memory_get_usage(),
                 time: \hrtime(true),
@@ -146,7 +146,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
     public function detach(): void
     {
         $this->startFuture?->getFuture()->await();
-        $this->messageBus->dispatch(new Detach($this->pid))->await();
+        $this->messageBus->dispatch(new ProcessDetachedEvent($this->pid))->await();
         $this->detachByTrait();
         unset($this->trafficStatus);
         unset($this->reloadStrategyTrigger);

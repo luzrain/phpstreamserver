@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ServerStatus\Message;
+namespace Luzrain\PHPStreamServer\Internal\Message;
 
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
-final readonly class TxtInc implements Message
+/**
+ * @implements Message<void>
+ */
+final readonly class TxCounterIncreaseEvent implements Message
 {
     public function __construct(
         public int $pid,

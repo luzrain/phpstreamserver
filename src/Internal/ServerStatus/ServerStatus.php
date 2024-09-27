@@ -6,16 +6,16 @@ namespace Luzrain\PHPStreamServer\Internal\ServerStatus;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Blocked;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Connect;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Detach;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Disconnect;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Heartbeat;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Killed;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RequestInc;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\RxtInc;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\Spawn;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\Message\TxtInc;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessBlockedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ConnectionCreatedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ConnectionClosedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessHeartbeatEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessExitedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\RequestCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\Internal\Message\RxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\Internal\Message\ProcessSpawnedEvent;
+use Luzrain\PHPStreamServer\Internal\Message\TxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Luzrain\PHPStreamServer\ProcessInterface;
 use Luzrain\PHPStreamServer\Server;
@@ -63,7 +63,7 @@ final class ServerStatus
 
     public function subscribeToWorkerMessages(MessageHandler $handler): void
     {
-        $handler->subscribe(Spawn::class, weakClosure(function (Spawn $message): void {
+        $handler->subscribe(ProcessSpawnedEvent::class, weakClosure(function (ProcessSpawnedEvent $message): void {
             $this->processes[$message->pid] = new RunningProcess(
                 pid: $message->pid,
                 user: $message->user,
@@ -72,7 +72,7 @@ final class ServerStatus
             );
         }));
 
-        $handler->subscribe(Heartbeat::class, weakClosure(function (Heartbeat $message): void {
+        $handler->subscribe(ProcessHeartbeatEvent::class, weakClosure(function (ProcessHeartbeatEvent $message): void {
             if (!isset($this->processes[$message->pid]) || $this->processes[$message->pid]?->detached === true) {
                 return;
             }
@@ -81,7 +81,7 @@ final class ServerStatus
             $this->processes[$message->pid]->blocked = false;
         }));
 
-        $handler->subscribe(Blocked::class, weakClosure(function (Blocked $message): void {
+        $handler->subscribe(ProcessBlockedEvent::class, weakClosure(function (ProcessBlockedEvent $message): void {
             if (!isset($this->processes[$message->pid]) || $this->processes[$message->pid]?->detached === true) {
                 return;
             }
@@ -89,11 +89,11 @@ final class ServerStatus
             $this->processes[$message->pid]->blocked = true;
         }));
 
-        $handler->subscribe(Killed::class, weakClosure(function (Killed $message): void {
+        $handler->subscribe(ProcessExitedEvent::class, weakClosure(function (ProcessExitedEvent $message): void {
             unset($this->processes[$message->pid]);
         }));
 
-        $handler->subscribe(Detach::class, weakClosure(function (Detach $message): void {
+        $handler->subscribe(ProcessDetachedEvent::class, weakClosure(function (ProcessDetachedEvent $message): void {
             if (!isset($this->processes[$message->pid])) {
                 return;
             }
@@ -107,25 +107,25 @@ final class ServerStatus
             $this->processes[$message->pid]->connections = [];
         }));
 
-        $handler->subscribe(RxtInc::class, weakClosure(function (RxtInc $message): void {
+        $handler->subscribe(RxCounterIncreaseEvent::class, weakClosure(function (RxCounterIncreaseEvent $message): void {
             $this->processes[$message->pid]->connections[$message->connectionId]->rx += $message->rx;
             $this->processes[$message->pid]->rx += $message->rx;
         }));
 
-        $handler->subscribe(TxtInc::class, weakClosure(function (TxtInc $message): void {
+        $handler->subscribe(TxCounterIncreaseEvent::class, weakClosure(function (TxCounterIncreaseEvent $message): void {
             $this->processes[$message->pid]->connections[$message->connectionId]->tx += $message->tx;
             $this->processes[$message->pid]->tx += $message->tx;
         }));
 
-        $handler->subscribe(RequestInc::class, weakClosure(function (RequestInc $message): void {
+        $handler->subscribe(RequestCounterIncreaseEvent::class, weakClosure(function (RequestCounterIncreaseEvent $message): void {
             $this->processes[$message->pid]->requests += $message->requests;
         }));
 
-        $handler->subscribe(Connect::class, weakClosure(function (Connect $message): void {
+        $handler->subscribe(ConnectionCreatedEvent::class, weakClosure(function (ConnectionCreatedEvent $message): void {
             $this->processes[$message->pid]->connections[$message->connectionId] = $message->connection;
         }));
 
-        $handler->subscribe(Disconnect::class, weakClosure(function (Disconnect $message): void {
+        $handler->subscribe(ConnectionClosedEvent::class, weakClosure(function (ConnectionClosedEvent $message): void {
             unset($this->processes[$message->pid]->connections[$message->connectionId]);
         }));
     }
