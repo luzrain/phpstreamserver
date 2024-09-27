@@ -80,7 +80,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
         $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
-        $this->supervisor = new Supervisor($this, $stopTimeout);
+        $this->supervisor = new Supervisor($this, $stopTimeout, $this->status);
         $this->scheduler = new Scheduler();
         $this->container = new ArrayContainer();
     }
@@ -128,6 +128,10 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         $this->status = Status::STARTING;
         $this->saveMasterPid();
         $this->start();
+        $this->supervisor->start($this->suspension);
+        $this->scheduler->start($this->logger, $this->suspension, function () {
+            return $this->status;
+        });
         $this->status = Status::RUNNING;
         $this->logger->info(Server::NAME . ' has started');
 
@@ -313,11 +317,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         return (0 !== $pid = $this->getPid()) && \posix_kill($pid, 0);
-    }
-
-    public function getStatus(): Status
-    {
-        return $this->status;
     }
 
     private function free(): void

@@ -33,6 +33,7 @@ final class Supervisor
     public function __construct(
         private readonly MasterProcess $masterProcess,
         private readonly int $stopTimeout,
+        private Status &$status,
     ) {
         $this->workerPool = new WorkerPool();
     }
@@ -121,7 +122,7 @@ final class Supervisor
             $this->masterProcess->dispatch(new Killed($pid));
         });
 
-        switch (($this->masterProcess->getStatus())) {
+        switch ($this->status) {
             case Status::RUNNING:
                 match ($exitCode) {
                     0 => $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
