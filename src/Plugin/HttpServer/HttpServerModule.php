@@ -24,9 +24,11 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\AddServerHeade
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ClientExceptionHandleMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\ReloadStrategyTriggerMiddleware;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingClientFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingSocketFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
+use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
 final readonly class HttpServerModule implements WorkerModule
@@ -58,15 +60,13 @@ final readonly class HttpServerModule implements WorkerModule
 
     public function start(WorkerProcessInterface $worker): void
     {
-        $serverSocketFactory = new ResourceServerSocketFactory();
         $middleware = [];
 
-        $networkTrafficCounter = $worker instanceof NetworkTrafficCounterAwareInterface ? $worker->getNetworkTrafficCounter() : null;
+        $serverSocketFactory = new ResourceServerSocketFactory();
 
         $clientFactory = new HttpClientFactory(
             logger: $worker->getLogger(),
             connectionLimitPerIp: $this->connectionLimitPerIp,
-            trafficStatisticStore: $networkTrafficCounter,
             onConnectCallback: $this->onConnect,
             onCloseCallback: $this->onClose,
         );
@@ -75,16 +75,18 @@ final readonly class HttpServerModule implements WorkerModule
             $serverSocketFactory = new ConnectionLimitingServerSocketFactory(new LocalSemaphore($this->connectionLimit), $serverSocketFactory);
         }
 
-        if ($networkTrafficCounter !== null) {
-            $serverSocketFactory = new TrafficCountingSocketFactory($worker->getNetworkTrafficCounter(), $serverSocketFactory);
-            $middleware[] = new RequestsCounterMiddleware($worker->getNetworkTrafficCounter());
+        if ($worker instanceof NetworkTrafficCounterAwareInterface) {
+            $networkTrafficCounter = $worker->getNetworkTrafficCounter();
+            $serverSocketFactory = new TrafficCountingSocketFactory($serverSocketFactory, $networkTrafficCounter);
+            $clientFactory = new TrafficCountingClientFactory($clientFactory, $networkTrafficCounter);
+            $middleware[] = new RequestsCounterMiddleware($networkTrafficCounter);
         }
 
         if ($this->concurrencyLimit !== null) {
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        if ($networkTrafficCounter !== null) {
+        if ($worker instanceof ReloadStrategyAwareInterface) {
             $middleware[] = new ReloadStrategyTriggerMiddleware($worker);
         }
 

@@ -15,8 +15,8 @@ use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
 final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
 {
     public function __construct(
-        private NetworkTrafficCounter $trafficStatisticStore,
         private ServerSocketFactory $socketServerFactory,
+        private NetworkTrafficCounter $trafficStatisticStore,
     ) {
     }
 

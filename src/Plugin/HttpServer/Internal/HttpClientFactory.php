@@ -9,7 +9,6 @@ use Amp\Http\Server\Driver\ClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
 use Psr\Log\LoggerInterface;
 
 final readonly class HttpClientFactory implements ClientFactory
@@ -19,7 +18,6 @@ final readonly class HttpClientFactory implements ClientFactory
     public function __construct(
         LoggerInterface $logger,
         int|null $connectionLimitPerIp,
-        private NetworkTrafficCounter|null $trafficStatisticStore = null,
         private \Closure|null $onConnectCallback = null,
         private \Closure|null $onCloseCallback = null,
     ) {
@@ -36,29 +34,20 @@ final readonly class HttpClientFactory implements ClientFactory
     {
         $client = $this->clientFactory->createClient($socket);
 
-        if ($client !== null) {
-            $this->onConnect($socket, $client);
-            $client->onClose(fn() => $this->onClose($socket, $client));
+        if ($client === null) {
+            return null;
         }
-
-        return $client;
-    }
-
-    private function onConnect(Socket $socket, Client $client): void
-    {
-        $this->trafficStatisticStore?->addConnection($socket);
 
         if ($this->onConnectCallback !== null) {
             ($this->onConnectCallback)($client);
         }
-    }
 
-    private function onClose(Socket $socket, Client $client): void
-    {
-        $this->trafficStatisticStore?->removeConnection($socket);
+        $client->onClose(function () use ($socket, $client) {
+            if ($this->onCloseCallback !== null) {
+                ($this->onCloseCallback)($client);
+            }
+        });
 
-        if ($this->onCloseCallback !== null) {
-            ($this->onCloseCallback)($client);
-        }
+        return $client;
     }
 }
