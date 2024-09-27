@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
+use Amp\Future;
 use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\AlreadyRunningException;
 use Luzrain\PHPStreamServer\Exception\NotRunningException;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -29,7 +31,7 @@ use function Amp\Future\await;
 /**
  * @internal
  */
-final class MasterProcess
+final class MasterProcess implements MessageHandler, MessageBus, Container
 {
     private const GC_PERIOD = 300;
 
@@ -38,11 +40,12 @@ final class MasterProcess
     private string $pidFile;
     private string $socketFile;
     private Suspension $suspension;
-    private Status $status = Status::STARTING;
-    private ServerStatus $serverStatus;
+    private Status $status = Status::SHUTDOWN;
     private MessageHandler&MessageBus $messageHandler;
+    private SocketFileMessageBus $socketFileMessageBus;
     private Supervisor $supervisor;
     private Scheduler $scheduler;
+    private Container $container;
 
     /**
      * @var array<class-string<Plugin>, Plugin>
@@ -79,18 +82,21 @@ final class MasterProcess
 
         $this->supervisor = new Supervisor($this, $stopTimeout);
         $this->scheduler = new Scheduler();
-        $this->serverStatus = new ServerStatus();
+        $this->container = new ArrayContainer();
     }
 
     public function addWorker(WorkerProcessInterface|PeriodicProcessInterface ...$workers): void
     {
+        /** @var ServerStatus|null $status */
+        $status = $this->container->get(ServerStatus::class);
+
         foreach ($workers as $worker) {
             if ($worker instanceof WorkerProcessInterface) {
                 $this->supervisor->addWorker($worker);
             } elseif($worker instanceof PeriodicProcessInterface) {
                 $this->scheduler->addWorker($worker);
             }
-            $this->serverStatus->addWorker($worker);
+            $status?->addWorker($worker);
         }
     }
 
@@ -119,11 +125,10 @@ final class MasterProcess
             StdoutHandler::disableStdout();
         }
 
+        $this->status = Status::STARTING;
         $this->saveMasterPid();
         $this->start();
         $this->status = Status::RUNNING;
-        $this->supervisor->start($this->suspension, );
-        $this->scheduler->start($this->logger, $this->suspension, $this->getStatus(...));
         $this->logger->info(Server::NAME . ' has started');
 
         $ret = $this->suspension->suspend();
@@ -160,10 +165,17 @@ final class MasterProcess
 
         $this->messageHandler = new SocketFileMessageHandler($this->socketFile);
 
-        $this->serverStatus->setRunning();
-        $this->serverStatus->subscribeToWorkerMessages($this->messageHandler);
+        $this->messageHandler->subscribe(ContainerGetCommand::class, function (ContainerGetCommand $message) {
+            return $this->container->get($message->id);
+        });
 
-        $this->messageHandler->subscribe(ServerStatusRequest::class, $this->getServerStatus(...));
+        $this->messageHandler->subscribe(ContainerHasCommand::class, function (ContainerHasCommand $message) {
+            return $this->container->has($message->id);
+        });
+
+        $this->messageHandler->subscribe(ContainerSetCommand::class, function (ContainerSetCommand $message) {
+            $this->container->set($message->id, $message->value);
+        });
 
         $stopCallback = function (): void { $this->stop(); };
         $reloadCallback = function (): void { $this->reload(); };
@@ -241,6 +253,7 @@ final class MasterProcess
         }
 
         // If it called from outside working process
+        // TODO: rewrite to use messagebus and pass $code
         if (($masterPid = $this->getPid()) !== \posix_getpid()) {
             echo Server::NAME ." stopping ...\n";
             \posix_kill($masterPid, SIGTERM);
@@ -277,6 +290,7 @@ final class MasterProcess
         }
 
         // If it called from outside working process
+        // TODO: rewrite to use messagebus
         if (($masterPid = $this->getPid()) !== \posix_getpid()) {
             echo Server::NAME . " reloading ...\n";
             \posix_kill($masterPid, SIGUSR1);
@@ -292,13 +306,13 @@ final class MasterProcess
         return \is_file($this->pidFile) ? (int) \file_get_contents($this->pidFile) : 0;
     }
 
-    private function isRunning(): bool
+    public function isRunning(): bool
     {
         if ($this->status === Status::RUNNING) {
             return true;
         }
 
-        return $this->getPid() !== 0 && \posix_kill($this->getPid(), 0);
+        return (0 !== $pid = $this->getPid()) && \posix_kill($pid, 0);
     }
 
     public function getStatus(): Status
@@ -309,10 +323,10 @@ final class MasterProcess
     private function free(): void
     {
         unset($this->plugins);
-        unset($this->serverStatus);
         unset($this->messageHandler);
         unset($this->supervisor);
         unset($this->scheduler);
+        unset($this->container);
 
         SIGCHLDHandler::unregister();
 
@@ -327,26 +341,87 @@ final class MasterProcess
         \gc_mem_caches();
     }
 
-    public function getServerStatus(): ServerStatus
-    {
-        if ($this->status === Status::RUNNING || !$this->isRunning()) {
-            return $this->serverStatus;
-        }
-
-        $bus = new SocketFileMessageBus($this->socketFile);
-        $result = $bus->dispatch(new ServerStatusRequest());
-
-        /** @var ServerStatus */
-        return $result->await();
-    }
-
     public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    public function getMessageHandler(): MessageHandler&MessageBus
+    /**
+     * @template T of Message
+     * @param class-string<T> $class
+     * @param \Closure(T): mixed $closure
+     */
+    public function subscribe(string $class, \Closure $closure): void
     {
-        return $this->messageHandler;
+        if ($this->status !== Status::STARTING && $this->status !== Status::RUNNING) {
+            throw new \RuntimeException(\sprintf('%s() can not be used from outside running process', __METHOD__));
+        }
+
+        $this->messageHandler->subscribe($class, $closure);
+    }
+
+    /**
+     * @template T of Message
+     * @param class-string<T> $class
+     * @param \Closure(T): mixed $closure
+     */
+    public function unsubscribe(string $class, \Closure $closure): void
+    {
+        if ($this->status !== Status::STARTING && $this->status !== Status::RUNNING) {
+            throw new \RuntimeException(\sprintf('%s() can not be used from outside running process', __METHOD__));
+        }
+
+        $this->messageHandler->unsubscribe($class, $closure);
+    }
+
+    /**
+     * @template T
+     * @param Message<T> $message
+     * @return Future<T>
+     * @throws NotRunningException
+     */
+    public function dispatch(Message $message): Future
+    {
+        if (!$this->isRunning()) {
+            throw new NotRunningException();
+        }
+
+        if ($this->status === Status::RUNNING) {
+            return $this->messageHandler->dispatch($message);
+        }
+
+        $this->socketFileMessageBus ??= new SocketFileMessageBus($this->socketFile);
+        return $this->socketFileMessageBus->dispatch($message);
+    }
+
+    public function set(string $id, mixed $value): void
+    {
+        if ($this->status === Status::STARTING || $this->status === Status::RUNNING || !$this->isRunning()) {
+            $this->container->set($id, $value);
+            return;
+        }
+
+        $this->socketFileMessageBus ??= new SocketFileMessageBus($this->socketFile);
+        $this->socketFileMessageBus->dispatch(new ContainerSetCommand($id, $value))->await();
+    }
+
+    public function get(string $id): mixed
+    {
+        if ($this->status === Status::STARTING || $this->status === Status::RUNNING || !$this->isRunning()) {
+            return $this->container->get($id);
+        }
+
+        $this->socketFileMessageBus ??= new SocketFileMessageBus($this->socketFile);
+        return $this->socketFileMessageBus->dispatch(new ContainerGetCommand($id))->await();
+    }
+
+    public function has(string $id): bool
+    {
+        if ($this->status === Status::STARTING || $this->status === Status::RUNNING || !$this->isRunning()) {
+            return $this->container->has($id);
+        }
+
+        $this->socketFileMessageBus ??= new SocketFileMessageBus($this->socketFile);
+        return $this->socketFileMessageBus->dispatch(new ContainerHasCommand($id))->await();
     }
 }

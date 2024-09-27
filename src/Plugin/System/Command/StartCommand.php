@@ -26,22 +26,22 @@ final class StartCommand extends Command
     {
         $isDaemon = (bool) $options->getOption('daemon');
 
-        /** @var \WeakReference<ServerStatus> $status */
-        $status = \WeakReference::create($this->masterProcess->getServerStatus());
+        /** @var ServerStatus $status */
+        $status = $this->masterProcess->get(ServerStatus::class);
 
         echo "❯ " . Server::TITLE . "\n";
         echo (new Table(indent: 1))
             ->addRows([
-                ['PHP version:', $status->get()->phpVersion],
-                [Server::NAME . ' version:', $status->get()->version],
-                ['Event loop driver:', $status->get()->eventLoop],
-                ['Workers count:', $status->get()->getWorkersCount()],
+                ['PHP version:', $status->phpVersion],
+                [Server::NAME . ' version:', $status->version],
+                ['Event loop driver:', $status->eventLoop],
+                ['Workers count:', $status->getWorkersCount()],
             ])
         ;
 
         echo "❯ Workers\n";
 
-        if ($status->get()->getWorkersCount() > 0) {
+        if ($status->getWorkersCount() > 0) {
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'User',
@@ -54,7 +54,7 @@ final class StartCommand extends Command
                         $w->name,
                         $w->count,
                     ];
-                }, $status->get()->getWorkerProcesses()))
+                }, $status->getWorkerProcesses()))
             ;
         } else {
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";

@@ -9,6 +9,7 @@ use Luzrain\PHPStreamServer\Console\Options;
 use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\ServerStatus\RunningProcess;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 
 final class ProcessesCommand extends Command
 {
@@ -17,7 +18,14 @@ final class ProcessesCommand extends Command
 
     public function execute(Options $options): int
     {
-        $status = $this->masterProcess->getServerStatus();
+        if(!$this->masterProcess->isRunning()) {
+            echo "  <color;bg=yellow> ! </> <color;fg=yellow>Server is not running</>\n";
+
+            return 0;
+        }
+
+        $status = $this->masterProcess->get(ServerStatus::class);
+        \assert($status instanceof ServerStatus);
 
         echo "❯ Processes\n";
 

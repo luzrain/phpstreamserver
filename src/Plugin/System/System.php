@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin\System;
 
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Plugin\System\Command\ConnectionsCommand;
 use Luzrain\PHPStreamServer\Plugin\System\Command\ProcessesCommand;
@@ -18,9 +19,25 @@ final class System extends Plugin
 {
     private MasterProcess $masterProcess;
 
+    public function __construct()
+    {
+    }
+
     public function init(MasterProcess $masterProcess): void
     {
         $this->masterProcess = $masterProcess;
+
+        if (!$this->masterProcess->isRunning()) {
+            $this->masterProcess->set(ServerStatus::class, new ServerStatus());
+        }
+    }
+
+    public function start(): void
+    {
+        /** @var ServerStatus $serverStatus */
+        $serverStatus = $this->masterProcess->get(ServerStatus::class);
+        $serverStatus->setRunning();
+        $serverStatus->subscribeToWorkerMessages($this->masterProcess);
     }
 
     public function commands(): array

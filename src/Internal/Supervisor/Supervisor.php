@@ -50,11 +50,11 @@ final class Supervisor
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
-        $this->masterProcess->getMessageHandler()->subscribe(Detach::class, function (Detach $message): void {
+        $this->masterProcess->subscribe(Detach::class, function (Detach $message): void {
             $this->workerPool->markAsDetached($message->pid);
         });
 
-        $this->masterProcess->getMessageHandler()->subscribe(Heartbeat::class, function (Heartbeat $message): void {
+        $this->masterProcess->subscribe(Heartbeat::class, function (Heartbeat $message): void {
             $this->workerPool->markAsHealthy($message->pid, $message->time);
         });
 
@@ -97,7 +97,7 @@ final class Supervisor
             if ($process->blocked === false && $blockTime > $this->workerPool::BLOCK_WARNING_TRESHOLD) {
                 $this->workerPool->markAsBlocked($process->pid);
                 EventLoop::defer(function () use ($process): void {
-                    $this->masterProcess->getMessageHandler()->dispatch(new Blocked($process->pid));
+                    $this->masterProcess->dispatch(new Blocked($process->pid));
                 });
                 $this->logger->warning(\sprintf(
                     'Worker %s[pid:%d] blocked event loop for more than %s seconds',
@@ -118,7 +118,7 @@ final class Supervisor
         $this->workerPool->markAsDeleted($pid);
 
         EventLoop::defer(function () use ($pid): void {
-            $this->masterProcess->getMessageHandler()->dispatch(new Killed($pid));
+            $this->masterProcess->dispatch(new Killed($pid));
         });
 
         switch (($this->masterProcess->getStatus())) {
