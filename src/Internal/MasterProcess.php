@@ -9,6 +9,8 @@ use Luzrain\PHPStreamServer\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
 use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
+use Luzrain\PHPStreamServer\Internal\Message\ReloadServerCommand;
+use Luzrain\PHPStreamServer\Internal\Message\StopServerCommand;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
@@ -182,6 +184,14 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
             $this->container->set($message->id, $message->value);
         });
 
+        $this->messageHandler->subscribe(StopServerCommand::class, function (StopServerCommand $message) {
+            $this->stop($message->code);
+        });
+
+        $this->messageHandler->subscribe(ReloadServerCommand::class, function () {
+            $this->reload();
+        });
+
         $stopCallback = function (): void { $this->stop(); };
         $reloadCallback = function (): void { $this->reload(); };
         EventLoop::onSignal(SIGINT, $stopCallback);
@@ -258,10 +268,9 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         // If it called from outside working process
-        // TODO: rewrite to use messagebus and pass $code
-        if (($masterPid = $this->getPid()) !== \posix_getpid()) {
+        if ($this->getPid() !== \posix_getpid()) {
             echo Server::NAME ." stopping ...\n";
-            \posix_kill($masterPid, SIGTERM);
+            $this->dispatch(new StopServerCommand($code))->await();
             return;
         }
 
@@ -281,8 +290,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
         await($stopFutures);
 
-        dump($code);
-
         $this->logger->info(Server::NAME . ' stopped');
         $this->suspension->resume($code);
     }
@@ -297,10 +304,9 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         // If it called from outside working process
-        // TODO: rewrite to use messagebus
-        if (($masterPid = $this->getPid()) !== \posix_getpid()) {
+        if ($this->getPid() !== \posix_getpid()) {
             echo Server::NAME . " reloading ...\n";
-            \posix_kill($masterPid, SIGUSR1);
+            $this->dispatch(new ReloadServerCommand())->await();
             return;
         }
 
