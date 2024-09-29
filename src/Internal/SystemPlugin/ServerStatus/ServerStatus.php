@@ -10,7 +10,7 @@ use Luzrain\PHPStreamServer\Message\ConnectionClosedEvent;
 use Luzrain\PHPStreamServer\Message\ConnectionCreatedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessBlockedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\Message\ProcessExitedEvent;
+use Luzrain\PHPStreamServer\Message\ProcessExitEvent;
 use Luzrain\PHPStreamServer\Message\ProcessHeartbeatEvent;
 use Luzrain\PHPStreamServer\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\Message\RequestCounterIncreaseEvent;
@@ -89,7 +89,7 @@ final class ServerStatus
             $this->processes[$message->pid]->blocked = true;
         }));
 
-        $handler->subscribe(ProcessExitedEvent::class, weakClosure(function (ProcessExitedEvent $message): void {
+        $handler->subscribe(ProcessExitEvent::class, weakClosure(function (ProcessExitEvent $message): void {
             unset($this->processes[$message->pid]);
         }));
 

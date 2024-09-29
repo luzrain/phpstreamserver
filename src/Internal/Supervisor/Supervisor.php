@@ -12,7 +12,7 @@ use Luzrain\PHPStreamServer\Internal\Status;
 use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Message\ProcessBlockedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\Message\ProcessExitedEvent;
+use Luzrain\PHPStreamServer\Message\ProcessExitEvent;
 use Luzrain\PHPStreamServer\Message\ProcessHeartbeatEvent;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Psr\Log\LoggerInterface;
@@ -118,8 +118,8 @@ final class Supervisor
 
         $this->workerPool->markAsDeleted($pid);
 
-        EventLoop::defer(function () use ($pid): void {
-            $this->masterProcess->dispatch(new ProcessExitedEvent($pid));
+        EventLoop::defer(function () use ($pid, $exitCode): void {
+            $this->masterProcess->dispatch(new ProcessExitEvent($pid, $exitCode));
         });
 
         switch ($this->status) {
