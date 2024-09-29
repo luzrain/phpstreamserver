@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
 
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\PcntlExecCommand;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\WorkerProcess;

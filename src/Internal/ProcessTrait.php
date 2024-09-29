@@ -6,14 +6,14 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
-use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
+use Luzrain\PHPStreamServer\Message;
 use Luzrain\PHPStreamServer\ProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 
 /**
- * @internal
  * @psalm-require-implements ProcessInterface
+ * @internal
  */
 trait ProcessTrait
 {

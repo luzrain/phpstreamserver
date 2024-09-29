@@ -17,6 +17,9 @@ use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 use function Amp\weakClosure;
 
+/**
+ * @internal
+ */
 final class Scheduler
 {
     private WorkerPool $pool;

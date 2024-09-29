@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Psr\Log\LoggerInterface;
 

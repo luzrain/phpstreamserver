@@ -8,7 +8,7 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\NetworkTrafficCounter;
 
 final class RequestsCounterMiddleware implements Middleware
 {

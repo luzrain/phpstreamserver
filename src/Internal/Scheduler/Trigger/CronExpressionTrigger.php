@@ -8,6 +8,7 @@ use Cron\CronExpression;
 
 /**
  * @psalm-suppress UndefinedClass
+ * @internal
  */
 final class CronExpressionTrigger implements TriggerInterface
 {
@@ -35,6 +36,10 @@ final class CronExpressionTrigger implements TriggerInterface
     {
         $next = $this->expression->getNextRunDate($now);
 
-        return $next instanceof \DateTime ? \DateTimeImmutable::createFromMutable($next) : $next;
+        if ($next instanceof \DateTime) {
+            $next = \DateTimeImmutable::createFromMutable($next);
+        }
+
+        return $next;
     }
 }

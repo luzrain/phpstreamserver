@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\Console\Command;
+use Luzrain\PHPStreamServer\MasterProcess;
 use function Amp\async;
 
 abstract class Plugin

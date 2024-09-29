@@ -8,9 +8,13 @@ use Amp\ByteStream\StreamException;
 use Amp\Future;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
+use Luzrain\PHPStreamServer\Message;
 use Revolt\EventLoop;
 use function Amp\async;
 
+/**
+ * @internal
+ */
 final class SocketFileMessageHandler implements MessageHandler, MessageBus
 {
     private ResourceServerSocket $socket;

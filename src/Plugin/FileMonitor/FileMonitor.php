@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\FileMonitor;
 
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 
 final class FileMonitor extends Plugin

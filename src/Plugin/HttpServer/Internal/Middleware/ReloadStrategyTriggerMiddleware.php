@@ -8,7 +8,7 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
 
 final readonly class ReloadStrategyTriggerMiddleware implements Middleware
 {

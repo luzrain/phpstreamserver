@@ -6,6 +6,9 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Revolt\EventLoop;
 
+/**
+ * @internal
+ */
 final class SIGCHLDHandler
 {
     private static bool $isRegistered = false;

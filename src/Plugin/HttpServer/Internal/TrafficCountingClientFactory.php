@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\Plugin\HttpServer\Internal;
 use Amp\Http\Server\Driver\Client;
 use Amp\Http\Server\Driver\ClientFactory;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\NetworkTrafficCounter;
 
 final readonly class TrafficCountingClientFactory implements ClientFactory
 {

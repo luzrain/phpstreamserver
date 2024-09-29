@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Scheduler\Trigger;
 
+/**
+ * @internal
+ */
 final class JitterTrigger implements TriggerInterface
 {
     public function __construct(private readonly TriggerInterface $trigger, private readonly int $jitter)

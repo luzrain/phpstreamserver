@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Luzrain\PHPStreamServer\Message;
+
+use Luzrain\PHPStreamServer\Message;
+
+/**
+ * @implements Message<mixed>
+ */
+final readonly class ContainerGetCommand implements Message
+{
+    public function __construct(public string $id)
+    {
+    }
+}

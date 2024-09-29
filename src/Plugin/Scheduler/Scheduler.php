@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\Scheduler;
 
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Plugin\PcntlExecCommand;
 use Luzrain\PHPStreamServer\Plugin\Plugin;

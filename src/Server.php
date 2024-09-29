@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Console\App;
-use Luzrain\PHPStreamServer\Internal\Logger\Logger;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\Console\App;
+use Luzrain\PHPStreamServer\Internal\Logger;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\System;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
-use Luzrain\PHPStreamServer\Plugin\System\System;
 
 final class Server
 {

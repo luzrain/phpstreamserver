@@ -17,7 +17,8 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounterAwareInterface;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\NetworkTrafficCounterAwareInterface;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpClientFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\HttpErrorHandler;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\AddServerHeadersMiddleware;
@@ -28,7 +29,6 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingClientFact
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingSocketFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Plugin\WorkerModule;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyAwareInterface;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
 final readonly class HttpServerModule implements WorkerModule

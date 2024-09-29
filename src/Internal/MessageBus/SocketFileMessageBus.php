@@ -9,9 +9,13 @@ use Amp\Socket\ConnectException;
 use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\SocketConnector;
 use Amp\Socket\StaticSocketConnector;
+use Luzrain\PHPStreamServer\Message;
 use function Amp\async;
 use function Amp\delay;
 
+/**
+ * @internal
+ */
 final class SocketFileMessageBus implements MessageBus
 {
     private SocketConnector $connector;

@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
 use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\RequestHandler;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\WorkerProcess;
 

@@ -10,7 +10,7 @@ use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
 use Amp\Socket\TlsInfo;
 use Amp\Socket\TlsState;
-use Luzrain\PHPStreamServer\Internal\ServerStatus\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\NetworkTrafficCounter;
 
 /**
  * @implements \IteratorAggregate<int, string>
