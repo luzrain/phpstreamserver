@@ -21,6 +21,8 @@ final class ProcessesCommand extends Command
 
     public function execute(Options $options): int
     {
+        echo "❯ Processes\n";
+
         if(!$this->masterProcess->isRunning()) {
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>Server is not running</>\n";
 
@@ -29,8 +31,6 @@ final class ProcessesCommand extends Command
 
         $status = $this->masterProcess->get(ServerStatus::class);
         \assert($status instanceof ServerStatus);
-
-        echo "❯ Processes\n";
 
         if ($status->getProcessesCount() > 0) {
             echo (new Table(indent: 1))

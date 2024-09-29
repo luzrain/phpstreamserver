@@ -29,10 +29,11 @@ final class StartCommand extends Command
     {
         $isDaemon = (bool) $options->getOption('daemon');
 
-        /** @var ServerStatus $status */
         $status = $this->masterProcess->get(ServerStatus::class);
+        \assert($status instanceof ServerStatus);
 
         echo "❯ " . Server::TITLE . "\n";
+
         echo (new Table(indent: 1))
             ->addRows([
                 ['PHP version:', $status->phpVersion],

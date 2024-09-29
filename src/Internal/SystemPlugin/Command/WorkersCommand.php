@@ -7,6 +7,7 @@ namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\WorkerInfo;
 
 /**
@@ -19,9 +20,10 @@ final class WorkersCommand extends Command
 
     public function execute(Options $options): int
     {
-        $status = $this->masterProcess->getServerStatus();
-
         echo "❯ Workers\n";
+
+        $status = $this->masterProcess->get(ServerStatus::class);
+        \assert($status instanceof ServerStatus);
 
         if ($status->getWorkersCount() > 0) {
             echo (new Table(indent: 1))
@@ -30,7 +32,7 @@ final class WorkersCommand extends Command
                     'Worker',
                     'Count',
                 ])
-                ->addRows(\array_map(array: $status->getWorkerProcesses(), callback: static fn(WorkerInfo $w) => [
+                ->addRows(\array_map(array: $status->getWorkers(), callback: static fn(WorkerInfo $w) => [
                     $w->user,
                     $w->name,
                     $w->count,

@@ -21,6 +21,8 @@ final class ConnectionsCommand extends Command
 
     public function execute(Options $options): int
     {
+        echo "❯ Connections\n";
+
         if(!$this->masterProcess->isRunning()) {
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>Server is not running</>\n";
 
@@ -29,13 +31,11 @@ final class ConnectionsCommand extends Command
 
         $status = $this->masterProcess->get(ServerStatus::class);
         \assert($status instanceof ServerStatus);
-        $connections = [];
 
+        $connections = [];
         foreach ($status->getProcesses() as $process) {
             \array_push($connections, ...$process->connections);
         }
-
-        echo "❯ Connections\n";
 
         if (\count($connections) > 0) {
             echo (new Table(indent: 1))

@@ -8,6 +8,7 @@ use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Server;
 
 /**
@@ -20,7 +21,9 @@ final class StatusCommand extends Command
 
     public function execute(Options $options): int
     {
-        $status = $this->masterProcess->getServerStatus();
+        $status = $this->masterProcess->get(ServerStatus::class);
+        \assert($status instanceof ServerStatus);
+
         $processesCount = $status->getProcessesCount();
         $totalMemory = $status->getTotalMemory();
 
