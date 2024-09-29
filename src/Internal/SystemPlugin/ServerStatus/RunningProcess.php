@@ -10,6 +10,7 @@ final class RunningProcess
      * @param array<int, Connection> $connections
      */
     public function __construct(
+        public int $workerId,
         public int $pid,
         public string $user,
         public string $name,

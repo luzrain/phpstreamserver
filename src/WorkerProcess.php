@@ -84,6 +84,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
         $this->messageBus->dispatch(new ProcessSpawnedEvent(
+            workerId: $this->id,
             pid: $this->pid,
             user: $this->getUser(),
             name: $this->name,

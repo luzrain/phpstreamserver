@@ -13,6 +13,7 @@ use Luzrain\PHPStreamServer\Message;
 final readonly class ProcessSpawnedEvent implements Message
 {
     public function __construct(
+        public int $workerId,
         public int $pid,
         public string $user,
         public string $name,

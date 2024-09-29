@@ -33,6 +33,9 @@ final class ProcessesCommand extends Command
         \assert($status instanceof ServerStatus);
 
         if ($status->getProcessesCount() > 0) {
+            $processes = $status->getProcesses();
+            \usort($processes, static fn (RunningProcess $a, RunningProcess $b) => $a->workerId <=> $b->workerId);
+
             echo (new Table(indent: 1))
                 ->setHeaderRow([
                     'Pid',
@@ -44,7 +47,7 @@ final class ProcessesCommand extends Command
                     'Bytes (RX / TX)',
                     'Status',
                 ])
-                ->addRows(\array_map(array: $status->getProcesses(), callback: static function (RunningProcess $w) {
+                ->addRows(\array_map(array: $processes, callback: static function (RunningProcess $w) {
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",

@@ -65,6 +65,7 @@ final class ServerStatus
     {
         $handler->subscribe(ProcessSpawnedEvent::class, weakClosure(function (ProcessSpawnedEvent $message): void {
             $this->processes[$message->pid] = new RunningProcess(
+                workerId: $message->workerId,
                 pid: $message->pid,
                 user: $message->user,
                 name: $message->name,
