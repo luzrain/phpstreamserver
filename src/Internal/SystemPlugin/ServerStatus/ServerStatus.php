@@ -12,6 +12,7 @@ use Luzrain\PHPStreamServer\Message\ProcessBlockedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessDetachedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessExitEvent;
 use Luzrain\PHPStreamServer\Message\ProcessHeartbeatEvent;
+use Luzrain\PHPStreamServer\Message\ProcessScheduledEvent;
 use Luzrain\PHPStreamServer\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\Message\RequestCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\Message\RxCounterIncreaseEvent;
@@ -129,6 +130,10 @@ final class ServerStatus
         $handler->subscribe(ConnectionClosedEvent::class, weakClosure(function (ConnectionClosedEvent $message): void {
             unset($this->processes[$message->pid]->connections[$message->connectionId]);
         }));
+
+        $handler->subscribe(ProcessScheduledEvent::class, weakClosure(function (ProcessScheduledEvent $message): void {
+            $this->periodicWorkers[$message->id]->nextRunDate = $message->nextRunDate;
+        }));
     }
 
     public function addWorker(ProcessInterface $worker): void
@@ -143,6 +148,7 @@ final class ServerStatus
             $this->periodicWorkers[$worker->getId()] = new PeriodicWorkerInfo(
                 user: $worker->getUser(),
                 name: $worker->getName(),
+                schedule: $worker->getSchedule(),
             );
         }
     }

@@ -32,8 +32,8 @@ final class Supervisor
 
     public function __construct(
         private readonly MasterProcess $masterProcess,
-        private readonly int $stopTimeout,
         private Status &$status,
+        private readonly int $stopTimeout,
     ) {
         $this->workerPool = new WorkerPool();
     }

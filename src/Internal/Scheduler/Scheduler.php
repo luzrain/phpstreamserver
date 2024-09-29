@@ -11,6 +11,8 @@ use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
+use Luzrain\PHPStreamServer\MasterProcess;
+use Luzrain\PHPStreamServer\Message\ProcessScheduledEvent;
 use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
@@ -27,8 +29,10 @@ final class Scheduler
     private Suspension $suspension;
     private DeferredFuture|null $stopFuture = null;
 
-    public function __construct(private Status &$status)
-    {
+    public function __construct(
+        private readonly MasterProcess $masterProcess,
+        private Status &$status,
+    ) {
         $this->pool = new WorkerPool();
     }
 
@@ -59,7 +63,7 @@ final class Scheduler
 
     private function scheduleWorker(PeriodicProcessInterface $worker, TriggerInterface $trigger): bool
     {
-        if ($this->status !== Status::RUNNING) {
+        if ($this->status === Status::SHUTDOWN) {
             return false;
         }
 
@@ -68,8 +72,14 @@ final class Scheduler
 
         if ($nextRunDate !== null) {
             $delay = $nextRunDate->getTimestamp() - $currentDate->getTimestamp();
-            EventLoop::delay($delay, fn() => $this->startWorker($worker, $trigger));
+            EventLoop::delay($delay, function () use($worker, $trigger): void {
+                $this->startWorker($worker, $trigger);
+            });
         }
+
+        EventLoop::defer(function () use ($worker, $nextRunDate): void {
+            $this->masterProcess->dispatch(new ProcessScheduledEvent($worker->getId(), $nextRunDate));
+        });
 
         return true;
     }
