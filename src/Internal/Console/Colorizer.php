@@ -10,18 +10,18 @@ namespace Luzrain\PHPStreamServer\Internal\Console;
 final class Colorizer
 {
     /**
-     * Color name => [foreground code, background code]
+     * @see https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
      */
     private const COLORMAP = [
-        'black' => ['30', '40'],
-        'red' => ['31', '41'],
-        'green' => ['32', '42'],
-        'yellow' => ['33', '43'],
-        'blue' => ['34', '44'],
-        'magenta' => ['35', '45'],
-        'cyan' => ['36', '46'],
-        'white' => ['37', '47'],
-        'gray' => ['90', '100'],
+        'black' => 0,
+        'red' => 1,
+        'green' => 2,
+        'yellow' => 3,
+        'blue' => 4,
+        'magenta' => 5,
+        'cyan' => 6,
+        'white' => 7,
+        'gray' => 8,
     ];
 
     private function __construct()
@@ -65,19 +65,9 @@ final class Colorizer
             $pos = \strpos($string, $match[0]);
             $len = \strlen($match[0]);
             $text = \strip_tags($match[0]);
-            $fg = $attr['fg'] ?? null;
-            $bg = $attr['bg'] ?? null;
-            $colors = [];
-            if (isset(self::COLORMAP[$fg][0])) {
-                $colors[] = self::COLORMAP[$fg][0];
-            }
-            if (isset(self::COLORMAP[$bg][1])) {
-                $colors[] = self::COLORMAP[$bg][1];
-            }
-            if ($colors === []) {
-                continue;
-            }
-            $formattedString = \sprintf("\e[%sm%s\e[0m", \implode(';', $colors), $text);
+            $color = self::COLORMAP[$attr['fg'] ?? $attr['bg']] ?? $attr['fg'] ?? $attr['bg'];
+            $isFg = isset($attr['fg']);
+            $formattedString = \sprintf("\e[%s:5:%sm%s\e[0m", $isFg ? '38' : '48', $color, $text);
             $string = \substr_replace($string, $formattedString, $pos, $len);
         }
 
