@@ -16,7 +16,6 @@ use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\NetworkTrafficCou
 use Luzrain\PHPStreamServer\Message\ProcessDetachedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessHeartbeatEvent;
 use Luzrain\PHPStreamServer\Message\ProcessSpawnedEvent;
-use Luzrain\PHPStreamServer\Plugin\WorkerModule;
 use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
@@ -157,11 +156,6 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $this->onReload = null;
         \gc_collect_cycles();
         \gc_mem_caches();
-    }
-
-    public function startWorkerModule(WorkerModule $module): void
-    {
-        $module->start($this);
     }
 
     public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void

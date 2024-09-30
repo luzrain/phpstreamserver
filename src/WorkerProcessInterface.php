@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Plugin\WorkerModule;
-
 interface WorkerProcessInterface extends ProcessInterface
 {
     final public const RELOAD_EXIT_CODE = 100;
@@ -20,11 +18,6 @@ interface WorkerProcessInterface extends ProcessInterface
      * Reload worker
      */
     public function reload(): void;
-
-    /**
-     * Start worker module in this worker
-     */
-    public function startWorkerModule(WorkerModule $module): void;
 
     /**
      * Count of processes

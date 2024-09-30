@@ -59,7 +59,7 @@ final class HttpServer extends Plugin
             );
         }
 
-        $worker->startWorkerModule(new HttpServerModule(
+        $module = new HttpServerModule(
             listen: self::createListenList($this->listen),
             requestHandler: $requestHandler,
             middleware: $this->middleware,
@@ -70,7 +70,9 @@ final class HttpServer extends Plugin
             connectionTimeout: $this->connectionTimeout,
             headerSizeLimit: $this->headerSizeLimit,
             bodySizeLimit: $this->bodySizeLimit,
-        ));
+        );
+
+        $module->start($worker);
     }
 
     /**

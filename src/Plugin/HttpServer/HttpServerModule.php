@@ -28,10 +28,9 @@ use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\Middleware\RequestsCounte
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingClientFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Internal\TrafficCountingSocketFactory;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Middleware\StaticMiddleware;
-use Luzrain\PHPStreamServer\Plugin\WorkerModule;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 
-final readonly class HttpServerModule implements WorkerModule
+final readonly class HttpServerModule
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 
