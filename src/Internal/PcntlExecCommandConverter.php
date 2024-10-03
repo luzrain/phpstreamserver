@@ -2,18 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin;
+namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\Server;
 
-trait PcntlExecCommand
+final class PcntlExecCommandConverter
 {
+    private function __construct()
+    {
+    }
+
     /**
      * Prepare command for pcntl_exec acceptable format
      *
      * @return array{0: string, 1: list<string>}
      */
-    private function prepareCommandForPcntlExec(string $command): array
+    public static function convert(string $command): array
     {
         // Check if command contains logic operators such as && and ||
         if (\preg_match('/(\'[^\']*\'|"[^"]*")(*SKIP)(*FAIL)|&&|\|\|/', $command) === 1) {

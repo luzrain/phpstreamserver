@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Plugin\Scheduler;
 
+use Luzrain\PHPStreamServer\Internal\PcntlExecCommandConverter;
 use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\PeriodicProcess;
-use Luzrain\PHPStreamServer\Plugin\PcntlExecCommand;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Plugin\Scheduler\Command\SchedulerCommand;
 
 final class Scheduler extends Plugin
 {
-    use PcntlExecCommand;
-
     private MasterProcess $masterProcess;
     private array|null $pcntlExec;
 
@@ -58,7 +56,7 @@ final class Scheduler extends Plugin
 
     public function start(): void
     {
-        $this->pcntlExec = \is_string($this->command) ? $this->prepareCommandForPcntlExec($this->command) : null;
+        $this->pcntlExec = \is_string($this->command) ? PcntlExecCommandConverter::convert($this->command) : null;
     }
 
     public function commands(): iterable
