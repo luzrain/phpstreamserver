@@ -8,11 +8,13 @@ use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Plugin\PcntlExecCommand;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin\Scheduler\Command\SchedulerCommand;
 
 final class Scheduler extends Plugin
 {
     use PcntlExecCommand;
 
+    private MasterProcess $masterProcess;
     private array|null $pcntlExec;
 
     /**
@@ -30,13 +32,15 @@ final class Scheduler extends Plugin
 
     public function init(MasterProcess $masterProcess): void
     {
+        $this->masterProcess = $masterProcess;
+
         $name = match (true) {
             $this->name === null && \is_string($this->command) => $this->command,
             $this->name === null => 'closure',
             default => $this->name,
         };
 
-        $masterProcess->addWorker(new PeriodicProcess(
+        $this->masterProcess->addWorker(new PeriodicProcess(
             name: $name,
             schedule: $this->schedule,
             jitter: $this->jitter,
@@ -55,5 +59,12 @@ final class Scheduler extends Plugin
     public function start(): void
     {
         $this->pcntlExec = \is_string($this->command) ? $this->prepareCommandForPcntlExec($this->command) : null;
+    }
+
+    public function commands(): iterable
+    {
+        return [
+            new SchedulerCommand($this->masterProcess),
+        ];
     }
 }

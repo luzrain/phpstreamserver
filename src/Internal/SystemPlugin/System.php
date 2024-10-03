@@ -7,7 +7,6 @@ namespace Luzrain\PHPStreamServer\Internal\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ConnectionsCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ProcessesCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ReloadCommand;
-use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\SchedulerCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\StartCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\StatusCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\StopCommand;
@@ -54,7 +53,6 @@ final class System extends Plugin
             new WorkersCommand($this->masterProcess),
             new ProcessesCommand($this->masterProcess),
             new ConnectionsCommand($this->masterProcess),
-            new SchedulerCommand($this->masterProcess),
         ];
     }
 }

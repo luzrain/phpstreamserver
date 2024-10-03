@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
+namespace Luzrain\PHPStreamServer\Plugin\Scheduler\Command;
 
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\PeriodicWorkerInfo;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
 

@@ -13,7 +13,7 @@ use Luzrain\PHPStreamServer\Server;
 final class App
 {
     /**
-     * @var array<Command>
+     * @var array<class-string<Command>, Command>
      */
     private array $commands = [];
 
@@ -63,7 +63,9 @@ final class App
 
     public function register(Command $command): void
     {
-        $this->commands[] = $command;
+        if (!isset($this->commands[$command::class])) {
+            $this->commands[$command::class] = $command;
+        }
     }
 
     public function run(array|null $argv = null): int

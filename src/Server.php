@@ -44,9 +44,8 @@ final class Server
     {
         foreach ($plugins as $plugin) {
             $this->masterProcess->addPlugin($plugin);
-            foreach ($plugin->commands() as $command) {
-                $this->app->register($command);
-            }
+            $commands = $plugin->commands();
+            \array_walk($commands, $this->app->register(...));
         }
 
         return $this;
