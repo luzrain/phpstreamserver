@@ -5,20 +5,26 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin\HttpServer;
 
 use Amp\Http\Server\Driver\HttpDriver;
+use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
+use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\WorkerProcess;
 
 final class HttpServer extends Plugin
 {
+    private mixed $context = null;
+
     /**
      * @param Listen|string|array<Listen> $listen
-     * @param \Closure(WorkerProcess): RequestHandler $onStart
+     * @param \Closure(WorkerProcess, mixed): void $onStart
+     * @param \Closure(Request, mixed): Response $onRequest
      */
     public function __construct(
         private Listen|string|array $listen,
         private \Closure $onStart,
+        private \Closure $onRequest,
         private string $name = 'HTTP Server',
         private int $count = 1,
         private bool $reloadable = true,
@@ -49,18 +55,21 @@ final class HttpServer extends Plugin
 
     private function onWorkerStart(WorkerProcess $worker): void
     {
-        $requestHandler = ($this->onStart)($worker);
+        ($this->onStart)($worker, $this->context);
 
-        if (!$requestHandler instanceof RequestHandler) {
-            throw new \RuntimeException(sprintf(
-                'onStart() closure: Return value must be of type %s, %s returned',
-                RequestHandler::class,
-                \get_debug_type($requestHandler)),
-            );
-        }
+        $requestHandler = new class($this->onRequest, $this->context) implements RequestHandler {
+            public function __construct(private readonly \Closure $handler, private mixed &$context)
+            {
+            }
+
+            public function handleRequest(Request $request): Response
+            {
+                return ($this->handler)($request, $this->context);
+            }
+        };
 
         $module = new HttpServerModule(
-            listen: self::createListenList($this->listen),
+            listen: self::normalizeListenList($this->listen),
             requestHandler: $requestHandler,
             middleware: $this->middleware,
             connectionLimit: $this->connectionLimit,
@@ -78,7 +87,7 @@ final class HttpServer extends Plugin
     /**
      * @return list<Listen>
      */
-    public static function createListenList(self|string|array $listen): array
+    private static function normalizeListenList(self|string|array $listen): array
     {
         $listen = \is_array($listen) ? $listen : [$listen];
         $ret = [];
