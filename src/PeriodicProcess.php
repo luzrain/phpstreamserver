@@ -55,6 +55,7 @@ final class PeriodicProcess implements PeriodicProcessInterface
             \cli_set_process_title(\sprintf('%s: scheduler process  %s', Server::NAME, $this->name));
         }
 
+        ErrorHandler::register($this->logger);
         EventLoop::setDriver((new DriverFactory())->create());
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
 

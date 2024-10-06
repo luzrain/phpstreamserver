@@ -71,9 +71,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
         self::$registered = true;
 
-        StdoutHandler::register();
-        ErrorHandler::register($this->logger);
-
         $this->startFile = Functions::getStartFile();
 
         $runDirectory = $pidFile === null
@@ -120,6 +117,9 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         if ($this->isRunning()) {
             throw new ServerAlreadyRunningException();
         }
+
+        StdoutHandler::register();
+        ErrorHandler::register($this->logger);
 
         if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
@@ -335,6 +335,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         unset($this->scheduler);
         unset($this->container);
 
+        ErrorHandler::unregister();
         SIGCHLDHandler::unregister();
 
         EventLoop::queue(static function() {

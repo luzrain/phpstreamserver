@@ -30,7 +30,7 @@ final class ErrorHandler
         \E_CORE_ERROR => ['Core Error', LogLevel::CRITICAL],
     ];
 
-    private static LoggerInterface $logger;
+    private static LoggerInterface|null $logger = null;
 
     private function __construct()
     {
@@ -38,15 +38,30 @@ final class ErrorHandler
 
     public static function register(LoggerInterface $logger): void
     {
+        if (self::$logger !== null) {
+            throw new \LogicException(\sprintf('%s(): Already registered', __METHOD__));
+        }
+
         self::$logger = $logger;
         \set_error_handler(self::handleError(...));
         \set_exception_handler(self::handleException(...));
     }
 
+    public static function unregister(): void
+    {
+        if (self::$logger === null) {
+            return;
+        }
+
+        self::$logger = null;
+        \restore_error_handler();
+        \restore_exception_handler();
+    }
+
     /**
      * @throws \ErrorException
      */
-    public static function handleError(int $type, string $message, string $file, int $line): bool
+    private static function handleError(int $type, string $message, string $file, int $line): bool
     {
         $logMessage = \sprintf("%s: %s", self::ERRORS[$type][0], $message);
         $errorAsException = new \ErrorException($logMessage, 0, $type, $file, $line);
@@ -63,6 +78,10 @@ final class ErrorHandler
 
     public static function handleException(\Throwable $exception): void
     {
+        if (self::$logger === null) {
+            throw new \LogicException(\sprintf('%s(): ErrorHandler is unregistered', __METHOD__), 0, $exception);
+        }
+
         $message = match (true) {
             $exception instanceof \Error => 'Uncaught Error: ' . $exception->getMessage(),
             $exception instanceof \ErrorException => 'Uncaught: ' . $exception->getMessage(),

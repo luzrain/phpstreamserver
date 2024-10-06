@@ -72,6 +72,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $this->trafficStatus = new NetworkTrafficCounter($this->messageBus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 
+        ErrorHandler::register($this->logger);
         EventLoop::setDriver((new DriverFactory())->create());
 
         EventLoop::setErrorHandler(function (\Throwable $exception) {
@@ -163,6 +164,9 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $this->reloadStrategyTrigger->addReloadStrategy(...$reloadStrategies);
     }
 
+    /**
+     * @TODO get rid of this
+     */
     public function emitReloadEvent(mixed $event): void
     {
         $this->reloadStrategyTrigger->emitEvent($event);
