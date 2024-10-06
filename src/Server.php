@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer;
 
 use Luzrain\PHPStreamServer\Internal\Console\App;
-use Luzrain\PHPStreamServer\Internal\Logger;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\System;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 
@@ -33,7 +32,6 @@ final class Server
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
             stopTimeout: $stopTimeout,
-            logger: new Logger(null),
         );
 
         $this->app = new App();

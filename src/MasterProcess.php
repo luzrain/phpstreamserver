@@ -13,6 +13,7 @@ use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\Logger\SimpleLogger;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -26,6 +27,7 @@ use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Luzrain\PHPStreamServer\Message\ContainerGetCommand;
 use Luzrain\PHPStreamServer\Message\ContainerHasCommand;
 use Luzrain\PHPStreamServer\Message\ContainerSetCommand;
+use Luzrain\PHPStreamServer\Message\LogEntryEvent;
 use Luzrain\PHPStreamServer\Message\ReloadServerCommand;
 use Luzrain\PHPStreamServer\Message\StopServerCommand;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
@@ -51,6 +53,8 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     private Scheduler $scheduler;
     private Container $container;
 
+    private LoggerInterface $logger;
+
     /**
      * @var array<class-string<Plugin>, Plugin>
      */
@@ -59,7 +63,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     public function __construct(
         string|null $pidFile,
         int $stopTimeout,
-        private readonly LoggerInterface $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
             throw new \RuntimeException('Works in command line mode only');
@@ -119,7 +122,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         StdoutHandler::register();
-        ErrorHandler::register($this->logger);
 
         if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
@@ -144,7 +146,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
             $this->free();
             exit($workerProcess->run(new WorkerContext(
                 socketFile: $this->socketFile,
-                logger: $this->logger,
             )));
         }
 
@@ -163,6 +164,10 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         if (\function_exists('cli_set_process_title')) {
             \cli_set_process_title(\sprintf('%s: master process  start_file=%s', Server::NAME, $this->startFile));
         }
+
+        $this->logger = new SimpleLogger();
+
+        ErrorHandler::register($this->logger);
 
         // Init event loop.
         EventLoop::setDriver(new StreamSelectDriver());
@@ -189,6 +194,10 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
         $this->messageHandler->subscribe(ReloadServerCommand::class, function () {
             $this->reload();
+        });
+
+        $this->messageHandler->subscribe(LogEntryEvent::class, function (LogEntryEvent $event) {
+            $this->logger->log($event->level, $event->message, $event->context);
         });
 
         $stopCallback = function (): void { $this->stop(); };
@@ -334,6 +343,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         unset($this->supervisor);
         unset($this->scheduler);
         unset($this->container);
+        unset($this->logger);
 
         ErrorHandler::unregister();
         SIGCHLDHandler::unregister();

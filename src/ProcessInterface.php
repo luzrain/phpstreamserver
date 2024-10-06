@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Psr\Log\LoggerInterface;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 
-interface ProcessInterface
+interface ProcessInterface extends MessageBus
 {
     /**
      * Run process
@@ -60,13 +60,4 @@ interface ProcessInterface
      * Process group
      */
     public function getGroup(): string;
-
-    /**
-     * Send message to master process and get answer back
-     *
-     * @template T
-     * @param Message<T> $message
-     * @return Future<T>
-     */
-    public function dispatch(Message $message): Future;
 }

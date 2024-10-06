@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
+use Luzrain\PHPStreamServer\Internal\Logger\WorkerLogger;
 use Luzrain\PHPStreamServer\Message;
 use Luzrain\PHPStreamServer\ProcessInterface;
 use Psr\Log\LoggerInterface;
@@ -28,7 +29,7 @@ trait ProcessTrait
 
     public function run(WorkerContext $workerContext): int
     {
-        $this->logger = $workerContext->logger;
+        $this->logger = new WorkerLogger($this);
         $this->socketFile = $workerContext->socketFile;
         $this->setUserAndGroup();
         $this->initWorker();
