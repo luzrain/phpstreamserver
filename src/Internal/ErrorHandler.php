@@ -36,13 +36,13 @@ final class ErrorHandler
     {
     }
 
-    public static function register(LoggerInterface $logger): void
+    public static function register(LoggerInterface &$logger): void
     {
         if (self::$logger !== null) {
             throw new \LogicException(\sprintf('%s(): Already registered', __METHOD__));
         }
 
-        self::$logger = $logger;
+        self::$logger = &$logger;
         \set_error_handler(self::handleError(...));
         \set_exception_handler(self::handleException(...));
     }
