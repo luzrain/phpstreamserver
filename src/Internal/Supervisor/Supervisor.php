@@ -51,13 +51,13 @@ final class Supervisor
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
-        $this->masterProcess->subscribe(ProcessDetachedEvent::class, function (ProcessDetachedEvent $message): void {
+        $this->masterProcess->subscribe(ProcessDetachedEvent::class, weakClosure(function (ProcessDetachedEvent $message): void {
             $this->workerPool->markAsDetached($message->pid);
-        });
+        }));
 
-        $this->masterProcess->subscribe(ProcessHeartbeatEvent::class, function (ProcessHeartbeatEvent $message): void {
+        $this->masterProcess->subscribe(ProcessHeartbeatEvent::class, weakClosure(function (ProcessHeartbeatEvent $message): void {
             $this->workerPool->markAsHealthy($message->pid, $message->time);
-        });
+        }));
 
         $this->spawnWorkers();
     }
