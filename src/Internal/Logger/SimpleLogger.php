@@ -23,7 +23,7 @@ final readonly class SimpleLogger implements LoggerInterface
 
     public function __construct()
     {
-        $this->stream = \fopen('php://stderr', 'ab');
+        $this->stream = STDERR;
     }
 
     public function log(mixed $level, string|\Stringable $message, array $context = []): void

@@ -9,7 +9,7 @@ use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
 use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
 use Luzrain\PHPStreamServer\Internal\ArrayContainer;
-use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
+use Luzrain\PHPStreamServer\Internal\Console\IOStream;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
@@ -121,14 +121,12 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
             throw new ServerAlreadyRunningException();
         }
 
-        StdoutHandler::register();
-
         if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
             return 0;
         } elseif ($daemonize) {
             // Runs in daemonized master process
-            StdoutHandler::disableStdout();
+            IOStream::disableStdout();
         }
 
         $this->status = Status::STARTING;

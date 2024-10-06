@@ -110,14 +110,14 @@ final class App
 
     private function configureStdoutHandler(): void
     {
-        StdoutHandler::register();
+        IOStream::register();
 
         if ($this->options->hasOption('quiet')) {
-            StdoutHandler::disableStdout();
+            IOStream::disableStdout();
         }
 
         if ($this->options->hasOption('no-color')) {
-            StdoutHandler::disableColor();
+            IOStream::disableColor();
         }
     }
 
