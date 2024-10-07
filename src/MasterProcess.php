@@ -53,8 +53,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     private Scheduler $scheduler;
     private Container $container;
 
-    private LoggerInterface $logger;
-
     /**
      * @var array<class-string<Plugin>, Plugin>
      */
@@ -63,6 +61,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     public function __construct(
         string|null $pidFile,
         int $stopTimeout,
+        private LoggerInterface|null $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
             throw new \RuntimeException('Works in command line mode only');
@@ -73,6 +72,8 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         self::$registered = true;
+
+        $this->logger ??= new SimpleLogger();
 
         $this->startFile = Functions::getStartFile();
 
@@ -129,16 +130,9 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
             IOStream::disableStdout();
         }
 
-        $this->status = Status::STARTING;
-        $this->saveMasterPid();
         $this->start();
-        $this->supervisor->start($this->suspension);
-        $this->scheduler->start($this->suspension, $this->logger);
-        $this->status = Status::RUNNING;
-        $this->logger->info(Server::NAME . ' has started');
 
         $ret = $this->suspension->suspend();
-
         if ($ret instanceof ProcessInterface) {
             $workerProcess = $ret;
             $this->free();
@@ -163,7 +157,8 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
             \cli_set_process_title(\sprintf('%s: master process  start_file=%s', Server::NAME, $this->startFile));
         }
 
-        $this->logger = new SimpleLogger();
+        $this->status = Status::STARTING;
+        $this->saveMasterPid();
 
         ErrorHandler::register($this->logger);
 
@@ -216,6 +211,12 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         foreach ($this->plugins as $module) {
             $module->start();
         }
+
+        $this->supervisor->start($this->suspension, $this->logger);
+        $this->scheduler->start($this->suspension, $this->logger);
+
+        $this->status = Status::RUNNING;
+        $this->logger->info(Server::NAME . ' has started');
     }
 
     /**
@@ -355,11 +356,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
         \gc_collect_cycles();
         \gc_mem_caches();
-    }
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
     }
 
     /**

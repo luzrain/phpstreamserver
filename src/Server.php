@@ -7,6 +7,7 @@ namespace Luzrain\PHPStreamServer;
 use Luzrain\PHPStreamServer\Internal\Console\App;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\System;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Psr\Log\LoggerInterface;
 
 final class Server
 {
@@ -27,11 +28,17 @@ final class Server
         /**
          * Timeout in seconds that master process will be waiting before force kill child processes after sending stop command.
          */
-        int $stopTimeout = 6,
+        int $stopTimeout = 15,
+
+        /**
+         * PSR-3 Logger implementation
+         */
+        LoggerInterface|null $logger = null,
     ) {
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
             stopTimeout: $stopTimeout,
+            logger: $logger,
         );
 
         $this->app = new App();

@@ -43,10 +43,10 @@ final class Supervisor
         $this->workerPool->registerWorker($worker);
     }
 
-    public function start(Suspension $suspension): void
+    public function start(Suspension $suspension, LoggerInterface $logger): void
     {
         $this->suspension = $suspension;
-        $this->logger = $this->masterProcess->getLogger();
+        $this->logger = $logger;
 
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
