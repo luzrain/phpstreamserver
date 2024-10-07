@@ -67,7 +67,7 @@ final class Colorizer
             $text = \strip_tags($match[0]);
             $color = self::COLORMAP[$attr['fg'] ?? $attr['bg']] ?? $attr['fg'] ?? $attr['bg'];
             $isFg = isset($attr['fg']);
-            $formattedString = \sprintf("\e[%s:5:%sm%s\e[0m", $isFg ? '38' : '48', $color, $text);
+            $formattedString = \sprintf("\e[%s;5;%sm%s\e[0m", $isFg ? '38' : '48', $color, $text);
             $string = \substr_replace($string, $formattedString, $pos, $len);
         }
 
