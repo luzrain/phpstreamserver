@@ -64,7 +64,7 @@ final class PeriodicProcess implements PeriodicProcessInterface
 
         $this->messageBus = new SocketFileMessageBus($this->socketFile);
 
-        EventLoop::onSignal(SIGINT, fn() => null);
+        EventLoop::onSignal(SIGINT, static fn() => null);
 
         EventLoop::defer(function (): void {
             $this->onStart !== null && ($this->onStart)($this);

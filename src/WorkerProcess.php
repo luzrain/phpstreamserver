@@ -80,7 +80,7 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             $this->emitReloadEvent($exception);
         });
 
-        EventLoop::onSignal(SIGINT, fn() => null);
+        EventLoop::onSignal(SIGINT, static fn() => null);
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
