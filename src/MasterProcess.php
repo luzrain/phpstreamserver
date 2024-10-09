@@ -14,6 +14,7 @@ use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\Logger\SimpleLogger;
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -35,6 +36,7 @@ use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
+use function Amp\ByteStream\getStderr;
 use function Amp\Future\await;
 
 final class MasterProcess implements MessageHandler, MessageBus, Container
@@ -72,8 +74,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         }
 
         self::$registered = true;
-
-        $this->logger ??= new SimpleLogger();
 
         $this->startFile = Functions::getStartFile();
 
@@ -160,13 +160,13 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         $this->status = Status::STARTING;
         $this->saveMasterPid();
 
-        ErrorHandler::register($this->logger);
-
         // Init event loop.
         EventLoop::setDriver(new StreamSelectDriver());
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
+        $this->logger = new SimpleLogger(getStderr());
+        ErrorHandler::register($this->logger);
         $this->messageHandler = new SocketFileMessageHandler($this->socketFile);
 
         $this->messageHandler->subscribe(ContainerGetCommand::class, function (ContainerGetCommand $message) {
@@ -190,7 +190,9 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         });
 
         $this->messageHandler->subscribe(LogEntryEvent::class, function (LogEntryEvent $event) {
-            $this->logger->log($event->level, $event->message, $event->context);
+            EventLoop::queue(function () use ($event) {
+                $this->logger->log($event->level, $event->message, $event->context);
+            });
         });
 
         $stopCallback = function (): void { $this->stop(); };
@@ -216,7 +218,10 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         $this->scheduler->start($this->suspension, $this->logger);
 
         $this->status = Status::RUNNING;
-        $this->logger->info(Server::NAME . ' has started');
+
+        EventLoop::defer(function () {
+            $this->logger->info(Server::NAME . ' has started');
+        });
     }
 
     /**
@@ -337,15 +342,15 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
     private function free(): void
     {
+        ErrorHandler::unregister();
+        SIGCHLDHandler::unregister();
+
         unset($this->plugins);
         unset($this->messageHandler);
         unset($this->supervisor);
         unset($this->scheduler);
         unset($this->container);
         unset($this->logger);
-
-        ErrorHandler::unregister();
-        SIGCHLDHandler::unregister();
 
         EventLoop::queue(static function() {
             $identifiers = EventLoop::getDriver()->getIdentifiers();

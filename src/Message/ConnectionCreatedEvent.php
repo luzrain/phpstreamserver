@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Message;
 
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\Connection;
-use Luzrain\PHPStreamServer\Message;
 
 /**
  * @implements Message<void>

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Logger;
 
-use Amp\ByteStream\WritableResourceStream;
+use Amp\ByteStream\WritableStream;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
-use function Amp\async;
 
 /**
  * @internal
@@ -29,23 +28,14 @@ final readonly class SimpleLogger implements LoggerInterface
         'emergency' => '<color;bg=red>EMERGENCY</>',
     ];
 
-    private WritableResourceStream $stream;
-
-    /**
-     * @var $resource $resource
-     */
-    public function __construct($resource = STDERR)
+    public function __construct(private WritableStream $stream)
     {
-        $this->stream = new WritableResourceStream($resource);
     }
 
     public function log(mixed $level, string|\Stringable $message, array $context = []): void
     {
         $formattedMessage = $this->format((string) $level, (string) $message, $context);
-
-        async(function () use ($formattedMessage) {
-            $this->stream->write($formattedMessage. PHP_EOL);
-        });
+        $this->stream->write($formattedMessage. PHP_EOL);
     }
 
     private function format(string $level, string $message, array $context): string

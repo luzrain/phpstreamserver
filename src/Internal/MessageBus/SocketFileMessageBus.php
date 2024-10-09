@@ -9,7 +9,6 @@ use Amp\Socket\ConnectException;
 use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\SocketConnector;
 use Amp\Socket\StaticSocketConnector;
-use Luzrain\PHPStreamServer\Message;
 use function Amp\async;
 use function Amp\delay;
 
@@ -39,7 +38,10 @@ final class SocketFileMessageBus implements MessageBus
                 }
             }
 
-            $socket->write(\serialize($message));
+            $serializedData = \serialize($message);
+            $sizeMark = \str_pad((string) \strlen($serializedData), 10, '0', STR_PAD_LEFT);
+
+            $socket->write($sizeMark . $serializedData);
             $buffer = $socket->read(limit: PHP_INT_MAX);
 
             return \unserialize($buffer);

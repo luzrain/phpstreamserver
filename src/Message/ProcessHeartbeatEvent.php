@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Message;
 
-use Luzrain\PHPStreamServer\Message;
+use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
 /**
  * Process sends this message periodically

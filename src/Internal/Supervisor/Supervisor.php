@@ -49,6 +49,7 @@ final class Supervisor
         $this->logger = $logger;
 
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
+
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
         $this->masterProcess->subscribe(ProcessDetachedEvent::class, weakClosure(function (ProcessDetachedEvent $message): void {

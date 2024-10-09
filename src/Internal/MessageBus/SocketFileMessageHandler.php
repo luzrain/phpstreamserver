@@ -8,9 +8,9 @@ use Amp\ByteStream\StreamException;
 use Amp\Future;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
-use Luzrain\PHPStreamServer\Message;
 use Revolt\EventLoop;
 use function Amp\async;
+use function Amp\weakClosure;
 
 /**
  * @internal
@@ -24,19 +24,28 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
      */
     private array $subscribers = [];
 
+    private string $callbackId;
+
     public function __construct(string $socketFile)
     {
         $this->socket = (new ResourceServerSocketFactory(chunkSize: PHP_INT_MAX))->listen("unix://$socketFile");
         $server = &$this->socket;
         $subscribers = &$this->subscribers;
 
-        EventLoop::queue(static function () use (&$server, &$subscribers) {
+        $this->callbackId = EventLoop::defer(static function () use (&$server, &$subscribers) {
             while ($socket = $server->accept()) {
                 $data = $socket->read(limit: PHP_INT_MAX);
 
                 // if socket is not readable anymore
                 if ($data === null) {
                     continue;
+                }
+
+                $size = (int) \substr($data, 0, 10);
+                $data = \substr($data, 10);
+
+                while (\strlen($data) < $size) {
+                    $data .= $socket->read(limit: PHP_INT_MAX);
                 }
 
                 $message = \unserialize($data);
@@ -60,10 +69,17 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
                 $socket->end();
             }
         });
+
+        $this->subscribe(CompositeMessage::class, weakClosure(function (CompositeMessage $event) {
+            foreach ($event->messages as $message) {
+                $this->dispatch($message);
+            }
+        }));
     }
 
     public function __destruct()
     {
+        EventLoop::cancel($this->callbackId);
         $this->socket->close();
         unset($this->socket);
         unset($this->subscribers);

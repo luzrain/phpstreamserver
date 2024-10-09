@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\MessageBus;
 
-use Luzrain\PHPStreamServer\Message;
-
 /**
  * @internal
  */
