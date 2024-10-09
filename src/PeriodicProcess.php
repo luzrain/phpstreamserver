@@ -55,14 +55,16 @@ final class PeriodicProcess implements PeriodicProcessInterface
             \cli_set_process_title(\sprintf('%s: scheduler process  %s', Server::NAME, $this->name));
         }
 
-        ErrorHandler::register($this->logger);
         EventLoop::setDriver((new DriverFactory())->create());
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
+        ErrorHandler::register($this->logger);
 
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
         $this->messageBus = new SocketFileMessageBus($this->socketFile);
+
+        EventLoop::onSignal(SIGINT, fn() => null);
 
         EventLoop::defer(function (): void {
             $this->onStart !== null && ($this->onStart)($this);

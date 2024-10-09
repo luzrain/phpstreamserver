@@ -63,6 +63,9 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
             \cli_set_process_title(\sprintf('%s: worker process  %s', Server::NAME, $this->name));
         }
 
+        EventLoop::setDriver((new DriverFactory())->create());
+        ErrorHandler::register($this->logger);
+
         $this->startFuture = new DeferredFuture();
 
         /** @psalm-suppress InaccessibleProperty */
@@ -72,14 +75,12 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         $this->trafficStatus = new NetworkTrafficCounter($this->messageBus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 
-        ErrorHandler::register($this->logger);
-        EventLoop::setDriver((new DriverFactory())->create());
-
         EventLoop::setErrorHandler(function (\Throwable $exception) {
             ErrorHandler::handleException($exception);
             $this->emitReloadEvent($exception);
         });
 
+        EventLoop::onSignal(SIGINT, fn() => null);
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
         EventLoop::onSignal(SIGUSR1, fn() => $this->reload());
 
