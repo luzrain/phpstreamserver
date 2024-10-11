@@ -24,8 +24,15 @@ final class Colorizer
         'gray' => 8,
     ];
 
+    private static bool $color = true;
+
     private function __construct()
     {
+    }
+
+    public static function disableColor(): void
+    {
+        self::$color = false;
     }
 
     /**
@@ -38,11 +45,7 @@ final class Colorizer
             return false;
         }
 
-        return \getenv('TERM_PROGRAM') === 'Hyper'
-            || \getenv('ANSICON') !== false
-            || \getenv('ConEmuANSI') === 'ON'
-            || \str_starts_with((string) \getenv('TERM'), 'xterm')
-            || \stream_isatty($stream);
+        return self::$color && \posix_isatty($stream);
     }
 
     /**

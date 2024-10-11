@@ -35,6 +35,22 @@ final class ContextNormalizer
         return $context;
     }
 
+    /**
+     * @param array<string, string> $context
+     */
+    public static function contextreplacement(string $message, array $context): string
+    {
+        if (\str_contains($message, '{')) {
+            $replacements = [];
+            foreach ($context as $key => $val) {
+                $replacements["{{$key}}"] = \is_array($val) ? '[array]' : (string) $val;
+            }
+            $message = \strtr($message, $replacements);
+        }
+
+        return $message;
+    }
+
     private static function formatException(\Throwable $e): string
     {
         return \sprintf(

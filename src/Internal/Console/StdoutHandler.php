@@ -8,7 +8,7 @@ namespace Luzrain\PHPStreamServer\Internal\Console;
  * Handler for redirect standard output to custom stream with colorize filters
  * @internal
  */
-final class IOStream
+final class StdoutHandler
 {
     private static bool $isRegistered = false;
 
@@ -17,31 +17,26 @@ final class IOStream
     }
 
     /**
-     * @param resource $stdout
-     * @param resource $stderr
+     * @param resource|string $stream
      */
-    public static function register(mixed $stdout = STDOUT, mixed $stderr = STDERR): void
+    public static function register(mixed $stream = 'php://stdout'): void
     {
         if (self::$isRegistered) {
-            return;
+            throw new \RuntimeException('StdoutHandler already registered');
         }
 
-        \stream_filter_register(IOStreamFilter::NAME, IOStreamFilter::class);
-        \stream_filter_append($stdout, IOStreamFilter::NAME, STREAM_FILTER_WRITE);
-        \stream_filter_append($stderr, IOStreamFilter::NAME, STREAM_FILTER_WRITE);
+        if (\is_string($stream)) {
+            $stream = \fopen($stream, 'ab');
+        }
 
         self::$isRegistered = true;
-        self::restreamOutputBuffer($stdout);
+        self::restreamOutputBuffer($stream);
     }
 
     public static function disableStdout(): void
     {
-        IOStreamFilter::$enableOutput = false;
-    }
-
-    public static function disableColor(): void
-    {
-        IOStreamFilter::$enableColors = false;
+        \ob_end_clean();
+        \ob_start(static fn() => '', 1);
     }
 
     /**
@@ -49,10 +44,12 @@ final class IOStream
      */
     private static function restreamOutputBuffer(mixed $stream): void
     {
-        \ob_start(static function (string $chunk, int $phase) use ($stream): string {
+        $hasColorSupport = Colorizer::hasColorSupport($stream);
+        \ob_start(static function (string $chunk, int $phase) use ($hasColorSupport, $stream): string {
             $isWrite = ($phase & \PHP_OUTPUT_HANDLER_WRITE) === \PHP_OUTPUT_HANDLER_WRITE;
             if ($isWrite && $chunk !== '') {
-                \fwrite($stream, $chunk);
+                $buffer = $hasColorSupport ? Colorizer::colorize($chunk) : Colorizer::stripTags($chunk);
+                \fwrite($stream, $buffer);
                 \fflush($stream);
             }
 

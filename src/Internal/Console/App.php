@@ -77,10 +77,18 @@ final class App
             $this->command = $command;
         }
 
+        if ($this->options->hasOption('no-color')) {
+            Colorizer::disableColor();
+        }
+
+        StdoutHandler::register();
+        if ($this->options->hasOption('quiet')) {
+            StdoutHandler::disableStdout();
+        }
+
         foreach ($this->commands as $command) {
             if ($command::getCommand() === $this->command) {
                 $command->configure($this->options);
-                $this->configureStdoutHandler();
 
                 if ($this->options->hasOption('help')) {
                     $this->showHelpForCommand($command);
@@ -91,7 +99,6 @@ final class App
             }
         }
 
-        $this->configureStdoutHandler();
         $this->options->addOptionDefinition('version', null, 'Show version');
 
         if ($this->command !== null) {
@@ -106,19 +113,6 @@ final class App
 
         $this->showHelp();
         return 0;
-    }
-
-    private function configureStdoutHandler(): void
-    {
-        IOStream::register();
-
-        if ($this->options->hasOption('quiet')) {
-            IOStream::disableStdout();
-        }
-
-        if ($this->options->hasOption('no-color')) {
-            IOStream::disableColor();
-        }
     }
 
     private function showHelp(): void

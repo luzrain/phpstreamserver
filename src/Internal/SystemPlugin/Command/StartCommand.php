@@ -27,7 +27,8 @@ final class StartCommand extends Command
 
     public function execute(Options $options): int
     {
-        $isDaemon = (bool) $options->getOption('daemon');
+        $daemonize = (bool) $options->getOption('daemon');
+        $quiet = (bool) $options->getOption('quiet');
 
         $status = $this->masterProcess->get(ServerStatus::class);
         \assert($status instanceof ServerStatus);
@@ -64,12 +65,15 @@ final class StartCommand extends Command
             echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";
         }
 
-        if (!$isDaemon) {
+        if (!$daemonize) {
             echo "Press Ctrl+C to stop.\n";
         }
 
         try {
-            return $this->masterProcess->run($isDaemon);
+            return $this->masterProcess->run([
+                'daemonize' => $daemonize,
+                'quiet' => $quiet,
+            ]);
         } catch (ServerAlreadyRunningException $e) {
             echo \sprintf("<color;bg=red>%s</>\n", $e->getMessage());
             return 1;

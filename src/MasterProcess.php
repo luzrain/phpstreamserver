@@ -9,11 +9,12 @@ use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
 use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
 use Luzrain\PHPStreamServer\Internal\ArrayContainer;
-use Luzrain\PHPStreamServer\Internal\Console\IOStream;
+use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\Logger\SimpleLogger;
+use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
+use Luzrain\PHPStreamServer\Internal\Logger\NullLogger;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
@@ -114,23 +115,27 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     }
 
     /**
+     * @param array{daemonize?: bool, quiet?: bool} $options
      * @throws ServerAlreadyRunningException
      */
-    public function run(bool $daemonize = false): int
+    public function run(array $options = []): int
     {
         if ($this->isRunning()) {
             throw new ServerAlreadyRunningException();
         }
 
+        $daemonize = $options['daemonize'] ?? false;
+        $quiet = $options['quiet'] ?? false;
+        $isDaemonized = false;
         if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
             return 0;
         } elseif ($daemonize) {
             // Runs in daemonized master process
-            IOStream::disableStdout();
+            $isDaemonized = true;
         }
 
-        $this->start();
+        $this->start(noOutput: $isDaemonized || $quiet);
 
         $ret = $this->suspension->suspend();
         if ($ret instanceof ProcessInterface) {
@@ -150,7 +155,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     /**
      * Runs in master process
      */
-    private function start(): void
+    private function start(bool $noOutput = false): void
     {
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
@@ -165,7 +170,13 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
-        $this->logger = new SimpleLogger(getStderr());
+        if ($noOutput) {
+            StdoutHandler::disableStdout();
+            $this->logger = new NullLogger();
+        } else {
+            $this->logger = new ConsoleLogger(getStderr());
+        }
+
         ErrorHandler::register($this->logger);
         $this->messageHandler = new SocketFileMessageHandler($this->socketFile);
 
