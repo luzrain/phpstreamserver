@@ -55,6 +55,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     private Supervisor $supervisor;
     private Scheduler $scheduler;
     private Container $container;
+    private LoggerInterface $logger;
 
     /**
      * @var array<class-string<Plugin>, Plugin>
@@ -64,7 +65,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     public function __construct(
         string|null $pidFile,
         int $stopTimeout,
-        private LoggerInterface|null $logger,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
             throw new \RuntimeException('Works in command line mode only');

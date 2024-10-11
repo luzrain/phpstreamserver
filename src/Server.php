@@ -29,16 +29,10 @@ final class Server
          * Timeout in seconds that master process will be waiting before force kill child processes after sending stop command.
          */
         int $stopTimeout = 15,
-
-        /**
-         * PSR-3 Logger implementation
-         */
-        LoggerInterface|null $logger = null,
     ) {
         $this->masterProcess = new MasterProcess(
             pidFile: $pidFile,
             stopTimeout: $stopTimeout,
-            logger: $logger,
         );
 
         $this->app = new App();
