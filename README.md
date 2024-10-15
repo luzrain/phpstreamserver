@@ -43,30 +43,54 @@ use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
 use Amp\Http\Server\Response;
+use Luzrain\PHPStreamServer\PeriodicProcess;
+use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServer;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServerModule;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\Listen;
+use Luzrain\PHPStreamServer\Plugin\Scheduler\Scheduler;
+use Luzrain\PHPStreamServer\Plugin\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcess;
 
 $server = new Server();
 
-$server->addWorkerProcess(new WorkerProcess(
-    name: 'HTTP Server',
-    onStart: function (WorkerProcess $worker) {
-        $requestHandler = new ClosureRequestHandler(function (Request $request) : Response {
+$server->addPlugin(
+    new HttpServer(
+        name: 'web server',
+        count: 1,
+        listen: '0.0.0.0:8080',
+        onStart: function (WorkerProcess $worker, mixed &$context): void {
+            // initialization
+        },
+        onRequest: function (Request $request, mixed &$context): Response {
             return match ($request->getUri()->getPath()) {
                 '/' => new Response(body: 'Hello world'),
                 '/ping' => new Response(body: 'pong'),
                 default => throw new HttpErrorException(404),
             };
-        });
+        }
+    ),
+);
 
-        $worker->startWorkerModule(new HttpServerModule(
-            listen: new Listen(listen: '0.0.0.0:8087'),
-            requestHandler: $requestHandler,
-        ));
-    },
-));
+$server->addPlugin(
+    new Scheduler(
+        name: 'scheduled program',
+        schedule: '*/1 * * * *',
+        command: function (PeriodicProcess $worker): void {
+            // runs every 1 minute
+        },
+    ),
+);
+
+$server->addPlugin(
+    new Supervisor(
+        name: 'supervised program',
+        count: 1,
+        command: function (WorkerProcess $worker): void {
+            // custom long running process
+        },
+    ),
+);
 
 exit($server->run());
 ```
