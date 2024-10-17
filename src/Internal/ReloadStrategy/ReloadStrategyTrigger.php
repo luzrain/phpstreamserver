@@ -48,7 +48,8 @@ final class ReloadStrategyTrigger
 
     private function reload(): void
     {
-        EventLoop::defer(function (): void {
+        // @TODO: think how to pause reload until event bus sends all the data
+        EventLoop::delay(0.1, function (): void {
             ($this->reloadCallback)();
         });
     }
