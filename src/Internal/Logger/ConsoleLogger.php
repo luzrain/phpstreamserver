@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Logger;
 
-use Amp\ByteStream\ResourceStream;
-use Amp\ByteStream\WritableStream;
 use Luzrain\PHPStreamServer\Internal\Console\Colorizer;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
+use function Amp\ByteStream\getStderr;
 
 /**
  * @internal
@@ -17,35 +15,57 @@ final class ConsoleLogger implements LoggerInterface
 {
     use LoggerTrait;
 
-    private readonly WritableStream $stream;
-    private readonly FormatterInterface $formatter;
-    private bool $colorSupport = false;
+    public const DEFAULT_JSON_FLAGS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_FORCE_OBJECT;
 
-    public function __construct(WritableStream $stream)
+    private const LEVELS_COLOR_MAP = [
+        'debug' => 'fg=15',
+        'info' => 'fg=116',
+        'notice' => 'fg=38',
+        'warning' => 'fg=yellow',
+        'error' => 'fg=red',
+        'critical' => 'fg=red',
+        'alert' => 'fg=red',
+        'emergency' => 'bg=red',
+    ];
+
+    private ContextNormalizer $contextNormalizer;
+    private bool $colorSupport;
+    private string $channel = 'server';
+
+    public function __construct()
     {
-        $this->stream = $stream;
-        $this->formatter = new ConsoleFormatter();
+        $this->contextNormalizer = new ContextNormalizer();
+        $this->colorSupport = Colorizer::hasColorSupport(getStderr()->getResource());
+    }
 
-        if ($stream instanceof ResourceStream) {
-            $this->colorSupport = Colorizer::hasColorSupport($stream->getResource());
-        }
+    public function withChannel(string $channel): self
+    {
+        $that = clone $this;
+        $that->channel = $channel;
+
+        return $that;
     }
 
     public function log(mixed $level, string|\Stringable $message, array $context = []): void
     {
-        $this->doLog(new LogEntry(
-            time: new \DateTimeImmutable(),
-            level: $level,
-            channel: 'app',
-            message: (string) $message,
-            context: $context,
-        ));
-    }
+        $time = (new \DateTimeImmutable('now'))->format(\DateTimeInterface::RFC3339);
+        $level = (string) $level;
+        $message = (string) $message;
+        $context = $this->contextNormalizer->normalize($context);
+        $context = $context === [] ? '' : \json_encode($this->contextNormalizer->normalize($context), self::DEFAULT_JSON_FLAGS);
 
-    private function doLog(LogEntry $logEntry): void
-    {
-        $message = $this->formatter->format($logEntry);
+        $message = \rtrim(\sprintf(
+            "[%s] <color;fg=green>%s</>.<color;%s>%s</> %s %s",
+            $time,
+            $this->channel,
+            self::LEVELS_COLOR_MAP[\strtolower($level)] ?? 'fg=gray',
+            \strtoupper($level),
+            $message,
+            $context,
+        ));
+
         $message = $this->colorSupport ? Colorizer::colorize($message) : Colorizer::stripTags($message);
-        $this->stream->write($message . PHP_EOL);
+
+        getStderr()->write($message . PHP_EOL);
     }
 }

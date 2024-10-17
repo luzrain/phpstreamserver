@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Logger;
 
-use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
 /**
@@ -18,7 +17,13 @@ final class NullLogger implements LoggerInterface
     {
     }
 
+    public function withChannel(string $channel): self
+    {
+        return $this;
+    }
+
     public function log(mixed $level, string|\Stringable $message, array $context = []): void
     {
+        // do nothing
     }
 }

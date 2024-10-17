@@ -14,6 +14,7 @@ use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
+use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\Logger\NullLogger;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
@@ -29,15 +30,12 @@ use Luzrain\PHPStreamServer\Internal\WorkerContext;
 use Luzrain\PHPStreamServer\Message\ContainerGetCommand;
 use Luzrain\PHPStreamServer\Message\ContainerHasCommand;
 use Luzrain\PHPStreamServer\Message\ContainerSetCommand;
-use Luzrain\PHPStreamServer\Message\LogEntryEvent;
 use Luzrain\PHPStreamServer\Message\ReloadServerCommand;
 use Luzrain\PHPStreamServer\Message\StopServerCommand;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
-use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
-use function Amp\ByteStream\getStderr;
 use function Amp\Future\await;
 
 final class MasterProcess implements MessageHandler, MessageBus, Container
@@ -56,6 +54,7 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
     private Scheduler $scheduler;
     private Container $container;
     private LoggerInterface $logger;
+    private WorkerContext $workerContext;
 
     /**
      * @var array<class-string<Plugin>, Plugin>
@@ -89,6 +88,9 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         $this->supervisor = new Supervisor($this, $this->status, $stopTimeout);
         $this->scheduler = new Scheduler($this, $this->status);
         $this->container = new ArrayContainer();
+
+        // Init event loop.
+        EventLoop::setDriver(new StreamSelectDriver());
     }
 
     public function addWorker(WorkerProcessInterface|PeriodicProcessInterface ...$workers): void
@@ -139,11 +141,8 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
         $ret = $this->suspension->suspend();
         if ($ret instanceof ProcessInterface) {
-            $workerProcess = $ret;
             $this->free();
-            exit($workerProcess->run(new WorkerContext(
-                socketFile: $this->socketFile,
-            )));
+            exit($ret->run($this->workerContext));
         }
 
         \assert(\is_int($ret));
@@ -165,8 +164,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
         $this->status = Status::STARTING;
         $this->saveMasterPid();
 
-        // Init event loop.
-        EventLoop::setDriver(new StreamSelectDriver());
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
@@ -174,11 +171,18 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
             StdoutHandler::disableStdout();
             $this->logger = new NullLogger();
         } else {
-            $this->logger = new ConsoleLogger(getStderr());
+            $this->logger = new ConsoleLogger();
         }
 
         ErrorHandler::register($this->logger);
         $this->messageHandler = new SocketFileMessageHandler($this->socketFile);
+
+        $logger = $this->logger;
+        $this->workerContext = new WorkerContext(
+            socketFile: $this->socketFile,
+            loggerFactory: static fn () => $logger,
+        );
+        unset($logger); // ensure that logger reference properly utilized
 
         $this->messageHandler->subscribe(ContainerGetCommand::class, function (ContainerGetCommand $message) {
             return $this->container->get($message->id);
@@ -198,12 +202,6 @@ final class MasterProcess implements MessageHandler, MessageBus, Container
 
         $this->messageHandler->subscribe(ReloadServerCommand::class, function () {
             $this->reload();
-        });
-
-        $this->messageHandler->subscribe(LogEntryEvent::class, function (LogEntryEvent $event) {
-            EventLoop::queue(function () use ($event) {
-                $this->logger->log($event->level, $event->message, $event->context);
-            });
         });
 
         $stopCallback = function (): void { $this->stop(); };

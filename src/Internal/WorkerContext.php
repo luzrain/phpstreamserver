@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
+use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
+
 /**
  * @internal
  */
-final readonly class WorkerContext
+final class WorkerContext
 {
     public function __construct(
-        public string $socketFile,
+        public readonly string $socketFile,
+
+        /**
+         * @var \Closure(): LoggerInterface
+         */
+        public \Closure $loggerFactory,
     ) {
     }
 }

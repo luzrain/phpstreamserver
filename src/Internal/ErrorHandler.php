@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Psr\Log\NullLogger;
 
 /**
  * @internal
@@ -30,7 +31,8 @@ final class ErrorHandler
         \E_CORE_ERROR => ['Core Error', LogLevel::CRITICAL],
     ];
 
-    private static LoggerInterface|null $logger = null;
+    private static bool $registered = false;
+    private static LoggerInterface $logger;
 
     private function __construct()
     {
@@ -38,10 +40,11 @@ final class ErrorHandler
 
     public static function register(LoggerInterface $logger): void
     {
-        if (self::$logger !== null) {
+        if (self::$registered === true) {
             throw new \LogicException(\sprintf('%s(): Already registered', __METHOD__));
         }
 
+        self::$registered = true;
         self::$logger = $logger;
         \set_error_handler(self::handleError(...));
         \set_exception_handler(self::handleException(...));
@@ -49,13 +52,14 @@ final class ErrorHandler
 
     public static function unregister(): void
     {
-        if (self::$logger === null) {
+        if (self::$registered === false) {
             return;
         }
 
         \restore_error_handler();
         \restore_exception_handler();
-        self::$logger = null;
+        self::$registered = false;
+        self::$logger = new NullLogger();
     }
 
     /**
@@ -78,7 +82,7 @@ final class ErrorHandler
 
     public static function handleException(\Throwable $exception): void
     {
-        if (self::$logger === null) {
+        if (self::$registered === false) {
             throw new \LogicException(\sprintf('%s(): ErrorHandler is unregistered', __METHOD__), 0, $exception);
         }
 

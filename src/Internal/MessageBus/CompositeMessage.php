@@ -12,9 +12,9 @@ final readonly class CompositeMessage implements Message
 {
     public function __construct(
         /**
-         * @var array<Message>
+         * @var iterable<Message>
          */
-        public array $messages,
+        public iterable $messages,
     ) {
     }
 }

@@ -9,58 +9,74 @@ namespace Luzrain\PHPStreamServer\Internal\Logger;
  */
 final class ContextNormalizer
 {
-    private function __construct()
+    public function __construct()
     {
     }
 
-    /**
-     * @param array<string, mixed> $context
-     * @return array<string, string>
-     */
-    public static function normalize(array $context): array
+    public function normalize(mixed $data): mixed
     {
-        foreach ($context as $key => $val) {
-            $context[$key] = match(true) {
-                \is_array($val) => self::normalize($val),
-                $val instanceof \Throwable => self::formatException($val),
-                $val instanceof \DateTimeInterface => $val->format(\DateTimeInterface::RFC3339),
-                $val instanceof \JsonSerializable => \json_decode($val->jsonSerialize()),
-                $val instanceof \Stringable => (string) $val,
-                \is_scalar($val) || \is_null($val) => $val,
-                \is_object($val) => '[object ' . $val::class . ']',
-                default => '[' . \get_debug_type($val) . ']',
-            };
-        }
-
-        return $context;
-    }
-
-    /**
-     * @param array<string, string> $context
-     */
-    public static function contextreplacement(string $message, array $context): string
-    {
-        if (\str_contains($message, '{')) {
-            $replacements = [];
-            foreach ($context as $key => $val) {
-                $replacements["{{$key}}"] = \is_array($val) ? '[array]' : (string) $val;
+        if (\is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = $this->normalize($value);
             }
-            $message = \strtr($message, $replacements);
+
+            return $data;
         }
 
-        return $message;
+        if (\is_null($data) || \is_scalar($data)) {
+            return $data;
+        }
+
+        if ($data instanceof \Throwable) {
+            return $this->normalizeException($data);
+        }
+
+        if ($data instanceof \JsonSerializable) {
+            return $data->jsonSerialize();
+        }
+
+        if ($data instanceof \Stringable) {
+            return $data->__toString();
+        }
+
+        if ($data instanceof \DateTimeInterface) {
+            return $data->format(\DateTimeInterface::RFC3339);
+        }
+
+        if (\is_object($data)) {
+            return \sprintf('[object(%s)]', $data::class);
+        }
+
+        if (\is_resource($data)) {
+            return \sprintf('[resource(%s)]', \get_resource_type($data));
+        }
+
+        return \sprintf('[unknown(%s)]', \get_debug_type($data));
     }
 
-    private static function formatException(\Throwable $e): string
+    private function normalizeException(\Throwable $e): string
+    {
+        $str = $this->formatException($e, 'object');
+
+        if (null !== $previous = $e->getPrevious()) {
+            do {
+                $str .= "\n" . $this->formatException($previous, 'previous');
+            } while (null !== $previous = $previous->getPrevious());
+        }
+
+        return $str;
+    }
+
+    private function formatException(\Throwable $e, string $objectTitle): string
     {
         return \sprintf(
-            "[object] (%s(code:%d): %s at %s:%d)\n[stacktrace]\n%s",
+            "[%s(%s) code:%d]: %s at %s:%d",
+            $objectTitle,
             $e::class,
             $e->getCode(),
             $e->getMessage(),
             $e->getFile(),
             $e->getLine(),
-            $e->getTraceAsString(),
         );
     }
 }
