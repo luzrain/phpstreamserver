@@ -9,6 +9,7 @@ use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Plugin\Scheduler\Command\SchedulerCommand;
+use Revolt\EventLoop;
 
 final class Scheduler extends Plugin
 {
@@ -49,6 +50,7 @@ final class Scheduler extends Plugin
                     $worker->exec(...$this->pcntlExec);
                 } else {
                     ($this->command)($worker);
+                    EventLoop::getDriver()->stop();
                 }
             },
         ));

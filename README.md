@@ -41,12 +41,9 @@ Here is example of simple http server.
 
 use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
-use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
 use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\PeriodicProcess;
 use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServer;
-use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServerModule;
-use Luzrain\PHPStreamServer\Plugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\Plugin\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Plugin\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\Server;
@@ -58,7 +55,7 @@ $server->addPlugin(
     new HttpServer(
         name: 'web server',
         count: 1,
-        listen: '0.0.0.0:8080',
+        listen: '0.0.0.0:8088',
         onStart: function (WorkerProcess $worker, mixed &$context): void {
             // initialization
         },
