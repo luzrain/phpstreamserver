@@ -6,8 +6,8 @@ namespace Luzrain\PHPStreamServer;
 
 use Amp\DeferredFuture;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
+use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\ProcessTrait;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyTrigger;
@@ -28,9 +28,10 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
 
     private const GC_PERIOD = 180;
 
+    private LoggerInterface $logger;
+    private MessageBus $messageBus;
     private NetworkTrafficCounter $trafficStatus;
     private ReloadStrategyTrigger $reloadStrategyTrigger;
-    private MessageBus $messageBus;
     private DeferredFuture|null $startFuture = null;
 
     /**
@@ -64,6 +65,10 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         }
 
         EventLoop::setDriver((new DriverFactory())->create());
+
+        $this->messageBus = $this->workerContainer->get('bus');
+        $this->logger = $this->workerContainer->get('logger');
+
         ErrorHandler::register($this->logger);
 
         $this->startFuture = new DeferredFuture();
@@ -71,7 +76,6 @@ final class WorkerProcess implements WorkerProcessInterface, ReloadStrategyAware
         /** @psalm-suppress InaccessibleProperty */
         $this->pid = \posix_getpid();
 
-        $this->messageBus = new SocketFileMessageBus($this->socketFile);
         $this->trafficStatus = new NetworkTrafficCounter($this->messageBus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Internal\WorkerContext;
+use Luzrain\PHPStreamServer\Internal\Container;
 use Psr\Log\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 
@@ -13,7 +13,7 @@ interface ProcessInterface extends MessageBus
     /**
      * Run process
      */
-    public function run(WorkerContext $workerContext): int;
+    public function run(Container $workerContainer): int;
 
     /**
      * Process name

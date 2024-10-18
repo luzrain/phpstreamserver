@@ -23,14 +23,12 @@ trait ProcessTrait
     private string|null $user = null;
     private string|null $group = null;
     private int $exitCode = 0;
-    private LoggerInterface $logger;
-    private string $socketFile;
+    private Container $workerContainer;
 
-    public function run(WorkerContext $workerContext): int
+    public function run(Container $workerContainer): int
     {
-        $this->logger = ($workerContext->loggerFactory)();
-        $this->socketFile = $workerContext->socketFile;
         $this->setUserAndGroup();
+        $this->workerContainer = $workerContainer;
         $this->initWorker();
         EventLoop::run();
 

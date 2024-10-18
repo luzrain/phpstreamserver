@@ -28,7 +28,7 @@ final class SchedulerCommand extends Command
             return 0;
         }
 
-        $status = $this->masterProcess->get(ServerStatus::class);
+        $status = $this->masterProcess->masterContainer->get(ServerStatus::class);
         \assert($status instanceof ServerStatus);
 
         if ($status->getPeriodicTasksCount() > 0) {

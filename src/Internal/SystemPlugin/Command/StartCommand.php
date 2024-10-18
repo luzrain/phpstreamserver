@@ -30,7 +30,7 @@ final class StartCommand extends Command
         $daemonize = (bool) $options->getOption('daemon');
         $quiet = (bool) $options->getOption('quiet');
 
-        $status = $this->masterProcess->get(ServerStatus::class);
+        $status = $this->masterProcess->masterContainer->get(ServerStatus::class);
         \assert($status instanceof ServerStatus);
 
         echo "❯ " . Server::TITLE . "\n";

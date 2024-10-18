@@ -10,6 +10,7 @@ use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
+use Luzrain\PHPStreamServer\Message\ContainerGetCommand;
 
 /**
  * @internal
@@ -29,7 +30,7 @@ final class ConnectionsCommand extends Command
             return 0;
         }
 
-        $status = $this->masterProcess->get(ServerStatus::class);
+        $status = $this->masterProcess->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
         \assert($status instanceof ServerStatus);
 
         $connections = [];

@@ -21,6 +21,7 @@ use Luzrain\PHPStreamServer\Plugin\Plugin;
 final class System extends Plugin
 {
     private MasterProcess $masterProcess;
+    private ServerStatus $serverStatus;
 
     public function __construct()
     {
@@ -31,16 +32,15 @@ final class System extends Plugin
         $this->masterProcess = $masterProcess;
 
         if (!$this->masterProcess->isRunning()) {
-            $this->masterProcess->set(ServerStatus::class, new ServerStatus());
+            $this->serverStatus = new ServerStatus();
+            $this->masterProcess->masterContainer->set(ServerStatus::class, $this->serverStatus);
         }
     }
 
     public function start(): void
     {
-        /** @var ServerStatus $serverStatus */
-        $serverStatus = $this->masterProcess->get(ServerStatus::class);
-        $serverStatus->setRunning();
-        $serverStatus->subscribeToWorkerMessages($this->masterProcess);
+        $this->serverStatus->setRunning();
+        $this->serverStatus->subscribeToWorkerMessages($this->masterProcess);
     }
 
     public function commands(): array
