@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
-use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
-use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -35,14 +31,12 @@ use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
 use function Amp\Future\await;
 
-final class MasterProcess implements MessageHandler, MessageBus
+final class MasterProcess
 {
     private const GC_PERIOD = 300;
 
     private static bool $registered = false;
     private string $startFile;
-    private string $pidFile;
-    private string $socketFile;
     private Suspension $suspension;
     private Status $status = Status::SHUTDOWN;
     private MessageHandler $messageHandler;
@@ -50,6 +44,10 @@ final class MasterProcess implements MessageHandler, MessageBus
     private Supervisor $supervisor;
     private Scheduler $scheduler;
     private LoggerInterface $logger;
+    /**
+     * @readonly
+     * @psalm-allow-private-mutation
+     */
     public Container $masterContainer;
     public readonly Container $workerContainer;
 
@@ -58,8 +56,15 @@ final class MasterProcess implements MessageHandler, MessageBus
      */
     private array $plugins = [];
 
+    /**
+     * @param array<Plugin> $plugins
+     * @param array<ProcessInterface> $workers
+     */
     public function __construct(
-        string|null $pidFile,
+        private readonly string $pidFile,
+        private readonly string $socketFile,
+        array $plugins,
+        array $workers,
         int $stopTimeout,
     ) {
         if (!\in_array(PHP_SAPI, ['cli', 'phpdbg', 'micro'], true)) {
@@ -71,41 +76,50 @@ final class MasterProcess implements MessageHandler, MessageBus
         }
 
         self::$registered = true;
-
         $this->startFile = Functions::getStartFile();
-
-        $runDirectory = $pidFile === null
-            ? (\posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir())
-            : \pathinfo($pidFile, PATHINFO_DIRNAME)
-        ;
-
-        $this->pidFile = $pidFile ?? \sprintf('%s/phpss%s.pid', $runDirectory, \hash('xxh32', $this->startFile));
-        $this->socketFile = \sprintf('%s/phpss%s.socket', $runDirectory, \hash('xxh32', $this->startFile . 'rx'));
 
         $this->masterContainer = new Container();
         $this->workerContainer = new Container();
-        $this->supervisor = new Supervisor($this, $this->status, $stopTimeout);
-        $this->scheduler = new Scheduler($this, $this->status);
+        $this->supervisor = new Supervisor($this->status, $stopTimeout);
+        $this->scheduler = new Scheduler($this->status);
 
         // Init event loop.
         EventLoop::setDriver(new StreamSelectDriver());
         $this->suspension = EventLoop::getDriver()->getSuspension();
 
-        $defaultLogger = static fn() => new ConsoleLogger();
-        $masterMessageHandler = fn() => new SocketFileMessageHandler($this->socketFile);
-        $ipcMessageBus = fn() => new SocketFileMessageBus($this->socketFile);
-
         $this->masterContainer->set('suspension', $this->suspension);
-        $this->masterContainer->register('handler', $masterMessageHandler);
+        $this->masterContainer->register('handler', fn() => new SocketFileMessageHandler($this->socketFile));
         $this->masterContainer->alias('bus', 'handler');
-        $this->masterContainer->register('ipc_bus', $ipcMessageBus);
-        $this->masterContainer->register('logger', $defaultLogger);
-        $this->workerContainer->register('bus', $ipcMessageBus);
+        $this->masterContainer->register('logger', $defaultLogger = static fn() => new ConsoleLogger());
+        $this->masterContainer->set('pid_file', $this->pidFile);
+        $this->masterContainer->set('socket_file', $this->socketFile);
+        $this->workerContainer->register('bus', fn() => new SocketFileMessageBus($this->socketFile));
         $this->workerContainer->register('logger', $defaultLogger);
+        $this->workerContainer->set('pid_file', $this->pidFile);
+        $this->workerContainer->set('socket_file', $this->socketFile);
+
+        $this->addPlugin(...$plugins);
+        $this->addWorker(...$workers);
     }
 
-    public function addWorker(WorkerProcessInterface|PeriodicProcessInterface ...$workers): void
+    public function addPlugin(Plugin ...$plugins): void
     {
+        if ($this->status !== Status::SHUTDOWN) {
+            throw new PHPStreamServerException('Cannot add plugin on running server');
+        }
+
+        foreach ($plugins as $plugin) {
+            $plugin->init($this);
+            $this->plugins[] = $plugin;
+        }
+    }
+
+    public function addWorker(ProcessInterface ...$workers): void
+    {
+        if ($this->status !== Status::SHUTDOWN) {
+            throw new PHPStreamServerException('Cannot add worker on running server');
+        }
+
         /** @var ServerStatus|null $status */
         try {
             $status = $this->masterContainer->get(ServerStatus::class);
@@ -123,22 +137,13 @@ final class MasterProcess implements MessageHandler, MessageBus
         }
     }
 
-    public function addPlugin(Plugin ...$plugins): void
-    {
-        foreach ($plugins as $plugin) {
-            $plugin->init($this);
-            $this->plugins[] = $plugin;
-        }
-    }
-
     /**
      * @param array{daemonize?: bool, quiet?: bool} $options
-     * @throws ServerAlreadyRunningException
      */
     public function run(array $options = []): int
     {
         if ($this->isRunning()) {
-            throw new ServerAlreadyRunningException();
+            throw new PHPStreamServerException(\sprintf('%s already running', Server::NAME));
         }
 
         $daemonize = $options['daemonize'] ?? false;
@@ -153,7 +158,6 @@ final class MasterProcess implements MessageHandler, MessageBus
         }
 
         $this->start(noOutput: $isDaemonized || $quiet);
-
         $ret = $this->suspension->suspend();
 
         // child process start
@@ -179,7 +183,6 @@ final class MasterProcess implements MessageHandler, MessageBus
         }
 
         $this->status = Status::STARTING;
-
         $this->saveMasterPid();
 
 //        if ($noOutput) {
@@ -215,8 +218,8 @@ final class MasterProcess implements MessageHandler, MessageBus
             $module->start();
         }
 
-        $this->supervisor->start($this->suspension, $this->logger);
-        $this->scheduler->start($this->suspension, $this->logger);
+        $this->supervisor->start($this->suspension, $this->logger, $this->messageHandler, $this->messageBus);
+        $this->scheduler->start($this->suspension, $this->logger, $this->messageBus);
 
         $this->messageHandler->subscribe(ContainerGetCommand::class, function (ContainerGetCommand $message) {
             return $this->masterContainer->get($message->id);
@@ -238,15 +241,11 @@ final class MasterProcess implements MessageHandler, MessageBus
             $this->reload();
         });
 
-        $this->status = Status::RUNNING;
-
         EventLoop::defer(function () {
             $this->logger->info(Server::NAME . ' has started');
         });
 
-        EventLoop::delay(3, function (){
-            $this->logger->debug('TEST TEST TEST');
-        });
+        $this->status = Status::RUNNING;
     }
 
     /**
@@ -275,6 +274,10 @@ final class MasterProcess implements MessageHandler, MessageBus
             \mkdir(directory: $pidFileDir, recursive: true);
         }
 
+        if (!\is_dir($socketFileDir = \dirname($this->socketFile))) {
+            \mkdir(directory: $socketFileDir, recursive: true);
+        }
+
         if (\file_exists($this->socketFile)) {
             \unlink($this->socketFile);
         }
@@ -295,22 +298,8 @@ final class MasterProcess implements MessageHandler, MessageBus
         }
     }
 
-    /**
-     * @throws ServerIsShutdownException
-     */
-    public function stop(int $code = 0): void
+    private function stop(int $code = 0): void
     {
-        if (!$this->isRunning()) {
-            throw new ServerIsShutdownException();
-        }
-
-        // If it called from outside working process
-        if ($this->getPid() !== \posix_getpid()) {
-            echo Server::NAME ." stopping ...\n";
-            $this->dispatch(new StopServerCommand($code))->await();
-            return;
-        }
-
         if ($this->status === Status::SHUTDOWN) {
             return;
         }
@@ -331,38 +320,15 @@ final class MasterProcess implements MessageHandler, MessageBus
         $this->suspension->resume($code);
     }
 
-    /**
-     * @throws ServerIsShutdownException
-     */
-    public function reload(): void
+    private function reload(): void
     {
-        if (!$this->isRunning()) {
-            throw new ServerIsShutdownException();
-        }
-
-        // If it called from outside working process
-        if ($this->getPid() !== \posix_getpid()) {
-            echo Server::NAME . " reloading ...\n";
-            $this->dispatch(new ReloadServerCommand())->await();
-            return;
-        }
-
         $this->logger->info(Server::NAME . ' reloading ...');
         $this->supervisor->reload();
     }
 
-    private function getPid(): int
-    {
-        return \is_file($this->pidFile) ? (int) \file_get_contents($this->pidFile) : 0;
-    }
-
     public function isRunning(): bool
     {
-        if ($this->status === Status::RUNNING) {
-            return true;
-        }
-
-        return (0 !== $pid = $this->getPid()) && \posix_kill($pid, 0);
+        return $this->status === Status::RUNNING || Functions::isRunning($this->pidFile);
     }
 
     private function free(): void
@@ -387,55 +353,5 @@ final class MasterProcess implements MessageHandler, MessageBus
 
         \gc_collect_cycles();
         \gc_mem_caches();
-    }
-
-    /**
-     * @template T of Message
-     * @param class-string<T> $class
-     * @param \Closure(T): mixed $closure
-     */
-    public function subscribe(string $class, \Closure $closure): void
-    {
-        if ($this->status !== Status::STARTING && $this->status !== Status::RUNNING) {
-            throw new \RuntimeException(\sprintf('%s() can not be used from outside running process', __METHOD__));
-        }
-
-        $this->messageHandler->subscribe($class, $closure);
-    }
-
-    /**
-     * @template T of Message
-     * @param class-string<T> $class
-     * @param \Closure(T): mixed $closure
-     */
-    public function unsubscribe(string $class, \Closure $closure): void
-    {
-        if ($this->status !== Status::STARTING && $this->status !== Status::RUNNING) {
-            throw new \RuntimeException(\sprintf('%s() can not be used from outside running process', __METHOD__));
-        }
-
-        $this->messageHandler->unsubscribe($class, $closure);
-    }
-
-    /**
-     * @template T
-     * @param Message<T> $message
-     * @return Future<T>
-     * @throws ServerIsShutdownException
-     */
-    public function dispatch(Message $message): Future
-    {
-        if (!$this->isRunning()) {
-            throw new ServerIsShutdownException();
-        }
-
-        if ($this->status === Status::RUNNING) {
-            return $this->messageBus->dispatch($message);
-        }
-
-        /** @var MessageBus $ipcMessageBus */
-        $ipcMessageBus = $this->masterContainer->get('ipc_bus');
-
-        return $ipcMessageBus->dispatch($message);
     }
 }

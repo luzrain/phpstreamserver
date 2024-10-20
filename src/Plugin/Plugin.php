@@ -12,14 +12,14 @@ use function Amp\async;
 abstract class Plugin
 {
     /**
-     * Initialize module before start
+     * Initialize. Ecexutes before start
      */
     public function init(MasterProcess $masterProcess): void
     {
     }
 
     /**
-     * Start module
+     * Start module. Ecexutes after start
      */
     public function start(): void
     {

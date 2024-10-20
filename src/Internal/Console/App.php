@@ -22,7 +22,7 @@ final class App
 
     private Options $options;
 
-    public function __construct()
+    public function __construct(Command ...$commands)
     {
         $this->options = new Options(
             parsedOptions: $this->parsedOptions,
@@ -32,6 +32,12 @@ final class App
                 new OptionDefinition('no-color', null, 'Disable color output'),
             ]
         );
+
+        foreach ($commands as $command) {
+            if (!isset($this->commands[$command::class])) {
+                $this->commands[$command::class] = $command;
+            }
+        }
     }
 
     private function getArgvs(): array
@@ -61,20 +67,13 @@ final class App
         return $options;
     }
 
-    public function register(Command $command): void
+    public function run(array $args): int
     {
-        if (!isset($this->commands[$command::class])) {
-            $this->commands[$command::class] = $command;
-        }
-    }
-
-    public function run(array|null $argv = null): int
-    {
-        $argv ??= $this->getArgvs();
+        $argv = $this->getArgvs();
         $this->parsedOptions = $this->parseArgvs($argv);
-        $command = $argv[0] ?? null;
-        if ($command !== null && !\str_starts_with($command, '-')) {
-            $this->command = $command;
+        $cmdCommand = $argv[0] ?? null;
+        if ($cmdCommand !== null && !\str_starts_with($cmdCommand, '-')) {
+            $this->command = $cmdCommand;
         }
 
         if ($this->options->hasOption('no-color')) {
@@ -88,14 +87,15 @@ final class App
 
         foreach ($this->commands as $command) {
             if ($command::getCommand() === $this->command) {
-                $command->configure($this->options);
+                $command->options = $this->options;
+                $command->configure();
 
                 if ($this->options->hasOption('help')) {
                     $this->showHelpForCommand($command);
                     return 0;
                 }
 
-                return $command->execute($this->options);
+                return $command->execute($args);
             }
         }
 

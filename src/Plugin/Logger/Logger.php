@@ -16,7 +16,7 @@ use Revolt\EventLoop;
 
 final class Logger extends Plugin
 {
-    private MasterProcess $masterProcess;
+    private Container $masterContainer;
 
     public function __construct()
     {
@@ -24,7 +24,8 @@ final class Logger extends Plugin
 
     public function init(MasterProcess $masterProcess): void
     {
-        $this->masterProcess = $masterProcess;
+        $this->masterContainer = $masterProcess->masterContainer;
+        $workerContainer = $masterProcess->workerContainer;
 
         $masterLoggerFactory = static function () {
             return new MasterLogger();
@@ -34,17 +35,17 @@ final class Logger extends Plugin
             return new WorkerLogger($container->get('bus'));
         };
 
-        $this->masterProcess->masterContainer->register('logger', $masterLoggerFactory);
-        $this->masterProcess->workerContainer->register('logger', $workerLoggerFactory);
+        $this->masterContainer->register('logger', $masterLoggerFactory);
+        $workerContainer->register('logger', $workerLoggerFactory);
     }
 
     public function start(): void
     {
         /** @var LoggerInterface $logger */
-        $logger = $this->masterProcess->masterContainer->get('logger');
+        $logger = $this->masterContainer->get('logger');
 
         /** @var MessageBus $bus */
-        $bus = $this->masterProcess->masterContainer->get('bus');
+        $bus = $this->masterContainer->get('bus');
 
         $bus->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {
             EventLoop::queue(static function () use ($event, $logger) {

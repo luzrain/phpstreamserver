@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
 
-use Luzrain\PHPStreamServer\Exception\ServerAlreadyRunningException;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
+use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\WorkerInfo;
+use Luzrain\PHPStreamServer\MasterProcess;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\ProcessInterface;
 use Luzrain\PHPStreamServer\Server;
 
 /**
@@ -20,17 +22,40 @@ final class StartCommand extends Command
     protected const COMMAND = 'start';
     protected const DESCRIPTION = 'Start server';
 
-    public function configure(Options $options): void
+    public function configure(): void
     {
-        $options->addOptionDefinition('daemon', 'd', 'Run in daemon mode');
+        $this->options->addOptionDefinition('daemon', 'd', 'Run in daemon mode');
     }
 
-    public function execute(Options $options): int
+    public function execute(array $args): int
     {
-        $daemonize = (bool) $options->getOption('daemon');
-        $quiet = (bool) $options->getOption('quiet');
+        /**
+         * @var array{
+         *     pidFile: string,
+         *     socketFile: string,
+         *     plugins: array<Plugin>,
+         *     workers: array<ProcessInterface>,
+         *     stopTimeout: int
+         * } $args
+         */
 
-        $status = $this->masterProcess->masterContainer->get(ServerStatus::class);
+        if (Functions::isRunning($args['pidFile'])) {
+            echo \sprintf("<color;bg=red>%s already running</>\n", Server::NAME);
+            return 1;
+        }
+
+        $daemonize = (bool) $this->options->getOption('daemon');
+        $quiet = (bool) $this->options->getOption('quiet');
+
+        $masterProcess = new MasterProcess(
+            pidFile: $args['pidFile'],
+            socketFile: $args['socketFile'],
+            plugins: $args['plugins'],
+            workers: $args['workers'],
+            stopTimeout: $args['stopTimeout'],
+        );
+
+        $status = $masterProcess->masterContainer->get(ServerStatus::class);
         \assert($status instanceof ServerStatus);
 
         echo "❯ " . Server::TITLE . "\n";
@@ -69,14 +94,9 @@ final class StartCommand extends Command
             echo "Press Ctrl+C to stop.\n";
         }
 
-        try {
-            return $this->masterProcess->run([
-                'daemonize' => $daemonize,
-                'quiet' => $quiet,
-            ]);
-        } catch (ServerAlreadyRunningException $e) {
-            echo \sprintf("<color;bg=red>%s</>\n", $e->getMessage());
-            return 1;
-        }
+        return $masterProcess->run([
+            'daemonize' => $daemonize,
+            'quiet' => $quiet,
+        ]);
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\SystemPlugin;
 
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ConnectionsCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ProcessesCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ReloadCommand;
@@ -39,20 +41,23 @@ final class System extends Plugin
 
     public function start(): void
     {
+        /** @var MessageHandler $handler */
+        $handler = $this->masterProcess->masterContainer->get('handler');
+
         $this->serverStatus->setRunning();
-        $this->serverStatus->subscribeToWorkerMessages($this->masterProcess);
+        $this->serverStatus->subscribeToWorkerMessages($handler);
     }
 
     public function commands(): array
     {
         return [
-            new StartCommand($this->masterProcess),
-            new StopCommand($this->masterProcess),
-            new ReloadCommand($this->masterProcess),
-            new StatusCommand($this->masterProcess),
-            new WorkersCommand($this->masterProcess),
-            new ProcessesCommand($this->masterProcess),
-            new ConnectionsCommand($this->masterProcess),
+            new StartCommand(),
+//            new StopCommand($this->masterProcess),
+//            new ReloadCommand($this->masterProcess),
+//            new StatusCommand($this->masterProcess),
+//            new WorkersCommand($this->masterProcess),
+//            new ProcessesCommand($this->masterProcess),
+//            new ConnectionsCommand($this->masterProcess),
         ];
     }
 }

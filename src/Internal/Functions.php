@@ -15,14 +15,14 @@ final class Functions
     {
     }
 
-    /**
-     * @psalm-suppress PossiblyUndefinedArrayOffset
-     */
     public static function getStartFile(): string
     {
-        $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-
-        return \end($backtrace)['file'];
+        static $file;
+        if (!isset($file)) {
+            $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+            $file = \end($backtrace)['file'];
+        }
+        return $file;
     }
 
     public static function getCurrentUser(): string
@@ -98,5 +98,31 @@ final class Functions
     public static function reportErrors(): bool
     {
         return (\error_reporting() & \E_ERROR) === \E_ERROR;
+    }
+
+    public static function isRunning(string $pidFile): bool
+    {
+        return (0 !== $pid = self::getPid($pidFile)) && \posix_kill($pid, 0);
+    }
+
+    public static function getPid(string $pidFile): int
+    {
+        return \is_file($pidFile) ? (int) \file_get_contents($pidFile) : 0;
+    }
+
+    public static function getRunDirectory(): string
+    {
+        static $dir;
+        return $dir ??= \posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir();
+    }
+
+    public static function getDefaultPidFile(): string
+    {
+        return \sprintf('%s/phpss%s.pid', self::getRunDirectory(), \hash('xxh32', self::getStartFile()));
+    }
+
+    public static function getDefaultSocketFile(): string
+    {
+        return \sprintf('%s/phpss%s.socket', self::getRunDirectory(), \hash('xxh32', self::getStartFile()));
     }
 }

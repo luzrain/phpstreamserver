@@ -7,11 +7,11 @@ namespace Luzrain\PHPStreamServer\Internal\Scheduler;
 use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Message\ProcessScheduledEvent;
 use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Psr\Log\LoggerInterface;
@@ -24,13 +24,13 @@ use function Amp\weakClosure;
  */
 final class Scheduler
 {
+    private MessageBus $messageBus;
     private WorkerPool $pool;
     private LoggerInterface $logger;
     private Suspension $suspension;
     private DeferredFuture|null $stopFuture = null;
 
     public function __construct(
-        private readonly MasterProcess $masterProcess,
         private Status &$status,
     ) {
         $this->pool = new WorkerPool();
@@ -41,10 +41,11 @@ final class Scheduler
         $this->pool->addWorker($worker);
     }
 
-    public function start(Suspension $suspension, LoggerInterface $logger): void
+    public function start(Suspension $suspension, LoggerInterface $logger, MessageBus $messageBus): void
     {
         $this->suspension = $suspension;
         $this->logger = $logger;
+        $this->messageBus = $messageBus;
 
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
 
@@ -78,7 +79,7 @@ final class Scheduler
         }
 
         EventLoop::defer(function () use ($worker, $nextRunDate): void {
-            $this->masterProcess->dispatch(new ProcessScheduledEvent($worker->getId(), $nextRunDate));
+            $this->messageBus->dispatch(new ProcessScheduledEvent($worker->getId(), $nextRunDate));
         });
 
         return true;

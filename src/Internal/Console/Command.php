@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Console;
 
-use Luzrain\PHPStreamServer\MasterProcess;
-
 /**
  * @internal
  */
@@ -14,9 +12,7 @@ abstract class Command
     protected const COMMAND = '';
     protected const DESCRIPTION = '';
 
-    public function __construct(protected readonly MasterProcess $masterProcess)
-    {
-    }
+    public Options $options;
 
     public static function getCommand(): string
     {
@@ -28,9 +24,9 @@ abstract class Command
         return static::DESCRIPTION;
     }
 
-    public function configure(Options $options): void
+    public function configure(): void
     {
     }
 
-    abstract public function execute(Options $options): int;
+    abstract public function execute(array $args): int;
 }

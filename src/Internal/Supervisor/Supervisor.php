@@ -7,9 +7,10 @@ namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Message\ProcessBlockedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessDetachedEvent;
 use Luzrain\PHPStreamServer\Message\ProcessExitEvent;
@@ -25,13 +26,14 @@ use function Amp\weakClosure;
  */
 final class Supervisor
 {
+    public MessageHandler $messageHandler;
+    public MessageBus $messageBus;
     private WorkerPool $workerPool;
     private LoggerInterface $logger;
     private Suspension $suspension;
     private DeferredFuture $stopFuture;
 
     public function __construct(
-        private readonly MasterProcess $masterProcess,
         private Status &$status,
         private readonly int $stopTimeout,
     ) {
@@ -43,20 +45,22 @@ final class Supervisor
         $this->workerPool->registerWorker($worker);
     }
 
-    public function start(Suspension $suspension, LoggerInterface $logger): void
+    public function start(Suspension $suspension, LoggerInterface $logger, MessageHandler $messageHandler, MessageBus $messageBus): void
     {
         $this->suspension = $suspension;
         $this->logger = $logger;
+        $this->messageHandler = $messageHandler;
+        $this->messageBus = $messageBus;
 
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
 
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
-        $this->masterProcess->subscribe(ProcessDetachedEvent::class, weakClosure(function (ProcessDetachedEvent $message): void {
+        $this->messageHandler->subscribe(ProcessDetachedEvent::class, weakClosure(function (ProcessDetachedEvent $message): void {
             $this->workerPool->markAsDetached($message->pid);
         }));
 
-        $this->masterProcess->subscribe(ProcessHeartbeatEvent::class, weakClosure(function (ProcessHeartbeatEvent $message): void {
+        $this->messageHandler->subscribe(ProcessHeartbeatEvent::class, weakClosure(function (ProcessHeartbeatEvent $message): void {
             $this->workerPool->markAsHealthy($message->pid, $message->time);
         }));
 
@@ -99,7 +103,7 @@ final class Supervisor
             if ($process->blocked === false && $blockTime > $this->workerPool::BLOCK_WARNING_TRESHOLD) {
                 $this->workerPool->markAsBlocked($process->pid);
                 EventLoop::defer(function () use ($process): void {
-                    $this->masterProcess->dispatch(new ProcessBlockedEvent($process->pid));
+                    $this->messageBus->dispatch(new ProcessBlockedEvent($process->pid));
                 });
                 $this->logger->warning(\sprintf(
                     'Worker %s[pid:%d] blocked event loop for more than %s seconds',
@@ -120,7 +124,7 @@ final class Supervisor
         $this->workerPool->markAsDeleted($pid);
 
         EventLoop::defer(function () use ($pid, $exitCode): void {
-            $this->masterProcess->dispatch(new ProcessExitEvent($pid, $exitCode));
+            $this->messageBus->dispatch(new ProcessExitEvent($pid, $exitCode));
         });
 
         switch ($this->status) {
