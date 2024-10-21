@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
 
 use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\Connection;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Message\ContainerGetCommand;
@@ -20,17 +20,18 @@ final class ConnectionsCommand extends Command
     protected const COMMAND = 'connections';
     protected const DESCRIPTION = 'Show active connections';
 
-    public function execute(Options $options): int
+    public function execute(array $args): int
     {
+        /**
+         * @var array{pidFile: string, socketFile: string} $args
+         */
+
+        $this->assertServerIsRunning($args['pidFile']);
+
         echo "❯ Connections\n";
 
-        if(!$this->masterProcess->isRunning()) {
-            echo "  <color;bg=yellow> ! </> <color;fg=yellow>Server is not running</>\n";
-
-            return 0;
-        }
-
-        $status = $this->masterProcess->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
+        $bus = new SocketFileMessageBus($args['socketFile']);
+        $status = $bus->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
         \assert($status instanceof ServerStatus);
 
         $connections = [];

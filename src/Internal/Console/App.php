@@ -95,7 +95,15 @@ final class App
                     return 0;
                 }
 
-                return $command->execute($args);
+                try {
+                    return $command->execute($args);
+                } catch (ServerIsNotRunning) {
+                    echo \sprintf("<color;bg=red>%s is not running</>\n", Server::NAME);
+                    return 1;
+                } catch (ServerIsRunning) {
+                    echo \sprintf("<color;bg=red>%s already running</>\n", Server::NAME);
+                    return 1;
+                }
             }
         }
 

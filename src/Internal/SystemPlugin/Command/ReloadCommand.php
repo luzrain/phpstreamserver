@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
 
-use Luzrain\PHPStreamServer\Exception\ServerIsShutdownException;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Options;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\Message\ReloadServerCommand;
+use Luzrain\PHPStreamServer\Server;
 
 /**
  * @internal
@@ -16,14 +17,18 @@ final class ReloadCommand extends Command
     protected const COMMAND = 'reload';
     protected const DESCRIPTION = 'Reload server';
 
-    public function execute(Options $options): int
+    public function execute(array $args): int
     {
-        try {
-            $this->masterProcess->reload();
-        } catch (ServerIsShutdownException $e) {
-            echo \sprintf("<color;bg=red>%s</>\n", $e->getMessage());
-            return 1;
-        }
+        /**
+         * @var array{pidFile: string, socketFile: string} $args
+         */
+
+        $this->assertServerIsRunning($args['pidFile']);
+
+        $bus = new SocketFileMessageBus($args['socketFile']);
+        echo Server::NAME ." reloading ...\n";
+        $bus->dispatch(new ReloadServerCommand())->await();
+        echo Server::NAME ." reloaded\n";
 
         return 0;
     }

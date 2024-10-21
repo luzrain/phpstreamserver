@@ -11,7 +11,7 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
  */
 final readonly class StopServerCommand implements Message
 {
-    public function __construct(public int $code)
+    public function __construct(public int $code = 0)
     {
     }
 }

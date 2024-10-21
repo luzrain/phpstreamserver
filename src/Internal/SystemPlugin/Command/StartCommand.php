@@ -6,7 +6,6 @@ namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
 
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\WorkerInfo;
 use Luzrain\PHPStreamServer\MasterProcess;
@@ -39,10 +38,7 @@ final class StartCommand extends Command
          * } $args
          */
 
-        if (Functions::isRunning($args['pidFile'])) {
-            echo \sprintf("<color;bg=red>%s already running</>\n", Server::NAME);
-            return 1;
-        }
+        $this->assertServerIsNotRunning($args['pidFile']);
 
         $daemonize = (bool) $this->options->getOption('daemon');
         $quiet = (bool) $this->options->getOption('quiet');
@@ -62,8 +58,8 @@ final class StartCommand extends Command
 
         echo (new Table(indent: 1))
             ->addRows([
-                ['PHP version:', $status->phpVersion],
-                [Server::NAME . ' version:', $status->version],
+                [Server::NAME . ' version:', Server::VERSION],
+                ['PHP version:', PHP_VERSION],
                 ['Event loop driver:', $status->eventLoop],
                 ['Workers count:', $status->getWorkersCount()],
             ])

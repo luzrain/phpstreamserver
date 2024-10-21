@@ -19,7 +19,6 @@ use Luzrain\PHPStreamServer\Message\RxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\Message\TxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Luzrain\PHPStreamServer\ProcessInterface;
-use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Revolt\EventLoop\DriverFactory;
 use function Amp\weakClosure;
@@ -30,12 +29,9 @@ use function Amp\weakClosure;
  */
 final class ServerStatus
 {
-    public readonly string $version;
-    public readonly string $phpVersion;
     public readonly string $eventLoop;
     public readonly string $startFile;
-    public \DateTimeImmutable|null $startedAt;
-    public bool $isRunning;
+    public readonly \DateTimeImmutable $startedAt;
 
     /**
      * @var array<int, WorkerInfo>
@@ -54,12 +50,9 @@ final class ServerStatus
 
     public function __construct()
     {
-        $this->version = Server::VERSION;
-        $this->phpVersion = PHP_VERSION;
         $this->eventLoop = (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
         $this->startFile = Functions::getStartFile();
-        $this->startedAt = null;
-        $this->isRunning = false;
+        $this->startedAt = new \DateTimeImmutable('now');
     }
 
     public function subscribeToWorkerMessages(MessageHandler $handler): void
@@ -151,12 +144,6 @@ final class ServerStatus
                 schedule: $worker->getSchedule(),
             );
         }
-    }
-
-    public function setRunning(bool $isRunning = true): void
-    {
-        $this->startedAt = $isRunning ? new \DateTimeImmutable('now') : null;
-        $this->isRunning = $isRunning;
     }
 
     public function getWorkersCount(): int

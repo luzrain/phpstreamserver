@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin\Scheduler\Command;
 
 use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\PeriodicWorkerInfo;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
+use Luzrain\PHPStreamServer\Message\ContainerGetCommand;
 
 /**
  * @internal
@@ -18,17 +19,18 @@ final class SchedulerCommand extends Command
     protected const COMMAND = 'scheduler';
     protected const DESCRIPTION = 'Show scheduler map';
 
-    public function execute(Options $options): int
+    public function execute(array $args): int
     {
+        /**
+         * @var array{pidFile: string, socketFile: string} $args
+         */
+
+        $this->assertServerIsRunning($args['pidFile']);
+
         echo "❯ Scheduler\n";
 
-        if(!$this->masterProcess->isRunning()) {
-            echo "  <color;bg=yellow> ! </> <color;fg=yellow>Server is not running</>\n";
-
-            return 0;
-        }
-
-        $status = $this->masterProcess->masterContainer->get(ServerStatus::class);
+        $bus = new SocketFileMessageBus($args['socketFile']);
+        $status = $bus->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
         \assert($status instanceof ServerStatus);
 
         if ($status->getPeriodicTasksCount() > 0) {

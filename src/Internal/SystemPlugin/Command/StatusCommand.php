@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\SystemPlugin\Command;
 
 use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Options;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Functions;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\ServerStatus\ServerStatus;
+use Luzrain\PHPStreamServer\Message\ContainerGetCommand;
 use Luzrain\PHPStreamServer\Server;
+use Revolt\EventLoop\DriverFactory;
 
 /**
  * @internal
@@ -19,30 +21,48 @@ final class StatusCommand extends Command
     protected const COMMAND = 'status';
     protected const DESCRIPTION = 'Show server status';
 
-    public function execute(Options $options): int
+    public function execute(array $args): int
     {
-        $status = $this->masterProcess->get(ServerStatus::class);
-        \assert($status instanceof ServerStatus);
+        /**
+         * @var array{pidFile: string, socketFile: string} $args
+         */
 
-        $processesCount = $status->getProcessesCount();
-        $totalMemory = $status->getTotalMemory();
+        $isRunning = Functions::isRunning($args['pidFile']);
+        $eventLoop = (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
+        $startFile = Functions::getStartFile();
 
-        echo ($status->isRunning ? '<color;fg=green>●</> ' : '● ') . Server::TITLE . "\n";
+        if ($isRunning) {
+            $bus = new SocketFileMessageBus($args['socketFile']);
+            $status = $bus->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
+            \assert($status instanceof ServerStatus);
+            $startedAt = $status->startedAt;
+            $workersCount = $status->getWorkersCount();
+            $processesCount = $status->getProcessesCount();
+            $totalMemory = $status->getTotalMemory();
+        }
 
-        echo (new Table(indent: 1))
-            ->addRows([
-                [Server::NAME . ' version:', $status->version],
-                ['PHP version:', $status->phpVersion],
-                ['Event loop driver:', $status->eventLoop],
-                ['Start file:', $status->startFile],
-                ['Status:', $status->isRunning
-                    ? '<color;fg=green>active</> since ' . ($status->startedAt?->format(\DateTimeInterface::RFC7231) ?? '?')
-                    : 'inactive',
-                ],
-                ['Workers count:', $status->getWorkersCount()],
-                ['Processes count:', $processesCount > 0 || $status->isRunning ? $processesCount : '<color;fg=gray>0</>'],
-                ['Memory usage:', $totalMemory > 0 || $status->isRunning ? Functions::humanFileSize($totalMemory) : '<color;fg=gray>0</>'],
-            ]);
+        echo ($isRunning ? '<color;fg=green>●</> ' : '● ') . Server::TITLE . "\n";
+
+        $rows = [
+            [Server::NAME . ' version:', Server::VERSION],
+            ['PHP version:', PHP_VERSION],
+            ['Event loop driver:', $eventLoop],
+            ['Start file:', $startFile],
+            ['Status:', $isRunning
+                ? '<color;fg=green>active</> since ' . $startedAt->format(\DateTimeInterface::RFC7231)
+                : 'inactive',
+            ],
+        ];
+
+        if ($isRunning) {
+            $rows = [...$rows, ...[
+                ['Workers count:', $workersCount],
+                ['Processes count:', $processesCount],
+                ['Memory usage:', Functions::humanFileSize($totalMemory)],
+            ]];
+        }
+
+        echo (new Table(indent: 1))->addRows($rows);
 
         return 0;
     }

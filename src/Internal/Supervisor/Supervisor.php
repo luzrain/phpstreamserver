@@ -52,7 +52,11 @@ final class Supervisor
         $this->messageHandler = $messageHandler;
         $this->messageBus = $messageBus;
 
-        SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
+        SIGCHLDHandler::onChildProcessExit(weakClosure(function (int $pid, int $exitCode) {
+            if (null !== $worker = $this->workerPool->getWorkerByPid($pid)) {
+                $this->onWorkerStop($worker, $pid, $exitCode);
+            }
+        }));
 
         EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
@@ -85,7 +89,7 @@ final class Supervisor
         $pid = \pcntl_fork();
         if ($pid > 0) {
             // Master process
-            $this->workerPool->addChild($worker, $pid);
+            $this->onWorkerStart($worker, $pid);
             return false;
         } elseif ($pid === 0) {
             // Child process
@@ -115,12 +119,13 @@ final class Supervisor
         }
     }
 
-    private function onChildStop(int $pid, int $exitCode): void
+    private function onWorkerStart(WorkerProcessInterface $worker, int $pid): void
     {
-        if (null === $worker = $this->workerPool->getWorkerByPid($pid)) {
-            return;
-        }
+        $this->workerPool->addChild($worker, $pid);
+    }
 
+    private function onWorkerStop(WorkerProcessInterface $worker, int $pid, int $exitCode): void
+    {
         $this->workerPool->markAsDeleted($pid);
 
         EventLoop::defer(function () use ($pid, $exitCode): void {

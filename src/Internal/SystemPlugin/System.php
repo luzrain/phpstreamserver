@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\SystemPlugin;
 
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ConnectionsCommand;
 use Luzrain\PHPStreamServer\Internal\SystemPlugin\Command\ProcessesCommand;
@@ -22,7 +22,7 @@ use Luzrain\PHPStreamServer\Plugin\Plugin;
  */
 final class System extends Plugin
 {
-    private MasterProcess $masterProcess;
+    private Container $masterContainer;
     private ServerStatus $serverStatus;
 
     public function __construct()
@@ -31,20 +31,15 @@ final class System extends Plugin
 
     public function init(MasterProcess $masterProcess): void
     {
-        $this->masterProcess = $masterProcess;
-
-        if (!$this->masterProcess->isRunning()) {
-            $this->serverStatus = new ServerStatus();
-            $this->masterProcess->masterContainer->set(ServerStatus::class, $this->serverStatus);
-        }
+        $this->serverStatus = new ServerStatus();
+        $this->masterContainer = $masterProcess->masterContainer;
+        $this->masterContainer->set(ServerStatus::class, $this->serverStatus);
     }
 
     public function start(): void
     {
         /** @var MessageHandler $handler */
-        $handler = $this->masterProcess->masterContainer->get('handler');
-
-        $this->serverStatus->setRunning();
+        $handler = $this->masterContainer->get('handler');
         $this->serverStatus->subscribeToWorkerMessages($handler);
     }
 
@@ -52,12 +47,12 @@ final class System extends Plugin
     {
         return [
             new StartCommand(),
-//            new StopCommand($this->masterProcess),
-//            new ReloadCommand($this->masterProcess),
-//            new StatusCommand($this->masterProcess),
-//            new WorkersCommand($this->masterProcess),
-//            new ProcessesCommand($this->masterProcess),
-//            new ConnectionsCommand($this->masterProcess),
+            new StopCommand(),
+            new ReloadCommand(),
+            new StatusCommand(),
+            new WorkersCommand(),
+            new ProcessesCommand(),
+            new ConnectionsCommand(),
         ];
     }
 }

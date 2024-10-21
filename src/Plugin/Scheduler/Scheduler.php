@@ -64,7 +64,7 @@ final class Scheduler extends Plugin
     public function commands(): iterable
     {
         return [
-            new SchedulerCommand($this->masterProcess),
+            new SchedulerCommand(),
         ];
     }
 }

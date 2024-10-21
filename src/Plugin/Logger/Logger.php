@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\Plugin\Logger;
 
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use Luzrain\PHPStreamServer\Plugin\Logger\Internal\MasterLogger;
@@ -31,7 +31,7 @@ final class Logger extends Plugin
             return new MasterLogger();
         };
 
-        $workerLoggerFactory = function (Container $container) {
+        $workerLoggerFactory = static function (Container $container) {
             return new WorkerLogger($container->get('bus'));
         };
 
@@ -44,10 +44,10 @@ final class Logger extends Plugin
         /** @var LoggerInterface $logger */
         $logger = $this->masterContainer->get('logger');
 
-        /** @var MessageBus $bus */
-        $bus = $this->masterContainer->get('bus');
+        /** @var MessageHandler $handler */
+        $handler = $this->masterContainer->get('handler');
 
-        $bus->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {
+        $handler->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {
             EventLoop::queue(static function () use ($event, $logger) {
                 $logger->logEntry($event);
             });
