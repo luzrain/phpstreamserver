@@ -4,58 +4,56 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
 
-use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
-use Luzrain\PHPStreamServer\WorkerProcess_OLD;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\AmpHttpServer;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 
-final class HttpServer extends Plugin
+final class HttpServerProcess extends WorkerProcess
 {
     private mixed $context = null;
 
     /**
      * @param Listen|string|array<Listen> $listen
-     * @param \Closure(WorkerProcess_OLD, mixed): void $onStart
+     * @param null|\Closure(self, mixed):void $onStart
+     * @param null|\Closure(self):void $onStop
+     * @param null|\Closure(self):void $onReload
      * @param \Closure(Request, mixed): Response $onRequest
      */
     public function __construct(
         private Listen|string|array $listen,
-        private \Closure $onStart,
         private \Closure $onRequest,
-        private string $name = 'HTTP Server',
-        private int $count = 1,
-        private bool $reloadable = true,
-        private string|null $user = null,
-        private string|null $group = null,
+        string $name = 'HTTP Server',
+        int $count = 1,
+        bool $reloadable = true,
+        string|null $user = null,
+        string|null $group = null,
+        private \Closure|null $onStart = null,
+        \Closure|null $onStop = null,
+        \Closure|null $onReload = null,
         private array $middleware = [],
         private int|null $connectionLimit = null,
         private int|null $connectionLimitPerIp = null,
         private int|null $concurrencyLimit = null,
-        private bool $http2Enabled = true,
-        private int $connectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
-        private int $headerSizeLimit = HttpDriver::DEFAULT_HEADER_SIZE_LIMIT,
-        private int $bodySizeLimit = HttpDriver::DEFAULT_BODY_SIZE_LIMIT,
     ) {
+        parent::__construct(
+            name: $name,
+            count: $count,
+            reloadable: $reloadable,
+            user: $user,
+            group: $group,
+            onStart: $this->onStart(...),
+            onStop: $onStop,
+            onReload: $onReload,
+        );
     }
 
-    public function init(MasterProcess $masterProcess): void
+    private function onStart(): void
     {
-        $masterProcess->addWorker(new WorkerProcess_OLD(
-            name: $this->name,
-            count: $this->count,
-            reloadable: $this->reloadable,
-            user: $this->user,
-            group: $this->group,
-            onStart: $this->onWorkerStart(...),
-        ));
-    }
-
-    private function onWorkerStart(WorkerProcess_OLD $worker): void
-    {
-        ($this->onStart)($worker, $this->context);
+        if ($this->onStart !== null) {
+            ($this->onStart)($this, $this->context);
+        }
 
         $requestHandler = new class($this->onRequest, $this->context) implements RequestHandler {
             public function __construct(private readonly \Closure $handler, private mixed &$context)
@@ -68,20 +66,20 @@ final class HttpServer extends Plugin
             }
         };
 
-        $module = new HttpServerModule(
+        $httpServer = new AmpHttpServer(
             listen: self::normalizeListenList($this->listen),
             requestHandler: $requestHandler,
             middleware: $this->middleware,
             connectionLimit: $this->connectionLimit,
             connectionLimitPerIp: $this->connectionLimitPerIp,
             concurrencyLimit: $this->concurrencyLimit,
-            http2Enabled: $this->http2Enabled,
-            connectionTimeout: $this->connectionTimeout,
-            headerSizeLimit: $this->headerSizeLimit,
-            bodySizeLimit: $this->bodySizeLimit,
+            http2Enabled: $this->container->get('httpServerPlugin.http2Enabled'),
+            connectionTimeout: $this->container->get('httpServerPlugin.connectionTimeout'),
+            headerSizeLimit: $this->container->get('httpServerPlugin.headerSizeLimit'),
+            bodySizeLimit: $this->container->get('httpServerPlugin.bodySizeLimit'),
         );
 
-        $module->start($worker);
+        $httpServer->start($this->logger, $this);
     }
 
     /**

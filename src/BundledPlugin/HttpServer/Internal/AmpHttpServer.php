@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
+namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
 use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
-use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Middleware\ConcurrencyLimitingMiddleware;
 use Amp\Http\Server\RequestHandler;
@@ -17,54 +16,55 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpClientFactory;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\AddServerHeadersMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ClientExceptionHandleMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ReloadStrategyTriggerMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\TrafficCountingClientFactory;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\TrafficCountingSocketFactory;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\Internal\ConnectionStatus\NetworkTrafficCounterAwareInterface;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
-use Luzrain\PHPStreamServer\WorkerProcessInterface;
+use Psr\Log\LoggerInterface;
 
-final readonly class HttpServerModule
+/**
+ * @internal
+ */
+final readonly class AmpHttpServer
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 
     /**
-     * @param Listen|array<Listen> $listen
+     * @param array<Listen> $listen
      * @param array<Middleware> $middleware
      * @param positive-int|null $connectionLimit
      * @param positive-int|null $connectionLimitPerIp
      * @param positive-int|null $concurrencyLimit
      */
     public function __construct(
-        private Listen|array $listen,
+        private array $listen,
         private RequestHandler $requestHandler,
-        private array $middleware = [],
-        private int|null $connectionLimit = null,
-        private int|null $connectionLimitPerIp = null,
-        private int|null $concurrencyLimit = null,
-        private bool $http2Enabled = true,
-        private int $connectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
-        private int $headerSizeLimit = HttpDriver::DEFAULT_HEADER_SIZE_LIMIT,
-        private int $bodySizeLimit = HttpDriver::DEFAULT_BODY_SIZE_LIMIT,
+        private array $middleware,
+        private int|null $connectionLimit,
+        private int|null $connectionLimitPerIp,
+        private int|null $concurrencyLimit,
+        private bool $http2Enabled,
+        private int $connectionTimeout,
+        private int $headerSizeLimit,
+        private int $bodySizeLimit,
         private \Closure|null $onConnect = null,
         private \Closure|null $onClose = null,
     ) {
     }
 
-    public function start(WorkerProcessInterface $worker): void
+    public function start(LoggerInterface $logger, HttpServerProcess $worker): void
     {
         $middleware = [];
 
         $serverSocketFactory = new ResourceServerSocketFactory();
 
         $clientFactory = new HttpClientFactory(
-            logger: $worker->getLogger(),
+            logger: $logger,
             connectionLimitPerIp: $this->connectionLimitPerIp,
             onConnectCallback: $this->onConnect,
             onCloseCallback: $this->onClose,
@@ -98,13 +98,13 @@ final readonly class HttpServerModule
         \usort($middleware, static fn (mixed $a): int => $a instanceof StaticMiddleware ? 1 : -1);
 
         $socketHttpServer = new SocketHttpServer(
-            logger: $worker->getLogger(),
+            logger: $logger,
             serverSocketFactory: $serverSocketFactory,
             clientFactory: $clientFactory,
             middleware: $middleware,
             allowedMethods: null,
             httpDriverFactory: new DefaultHttpDriverFactory(
-                logger: $worker->getLogger(),
+                logger: $logger,
                 streamTimeout: $this->connectionTimeout,
                 connectionTimeout: $this->connectionTimeout,
                 headerSizeLimit: $this->headerSizeLimit,
@@ -114,7 +114,7 @@ final readonly class HttpServerModule
             ),
         );
 
-        foreach (\is_array($this->listen) ? $this->listen : [$this->listen] as $listen) {
+        foreach ($this->listen as $listen) {
             $socketHttpServer->expose(...$this->createInternetAddressAndContext($listen));
         }
 

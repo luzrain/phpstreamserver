@@ -39,16 +39,31 @@ Here is example of simple http server.
 ```php
 // server.php
 
-use Amp\Http\Server\HttpErrorException;use Amp\Http\Server\Request;use Amp\Http\Server\Response;use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServer;use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;use Luzrain\PHPStreamServer\PeriodicProcess_OLD;use Luzrain\PHPStreamServer\Server;use Luzrain\PHPStreamServer\WorkerProcess_OLD;
+use Amp\Http\Server\HttpErrorException;
+use Amp\Http\Server\Request;
+use Amp\Http\Server\Response;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerPlugin;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
+use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
 
 $server = new Server();
 
 $server->addPlugin(
-    new HttpServer(
+    new HttpServerPlugin(),
+    new SupervisorPlugin(),
+    new SchedulerPlugin(),
+);
+
+$server->addWorker(
+    new HttpServerProcess(
         name: 'web server',
         count: 1,
         listen: '0.0.0.0:8088',
-        onStart: function (WorkerProcess_OLD $worker, mixed &$context): void {
+        onStart: function (HttpServerProcess $worker, mixed &$context): void {
             // initialization
         },
         onRequest: function (Request $request, mixed &$context): Response {
@@ -59,24 +74,18 @@ $server->addPlugin(
             };
         }
     ),
-);
-
-$server->addPlugin(
-    new SchedulerPlugin(
-        name: 'scheduled program',
-        schedule: '*/1 * * * *',
-        command: function (PeriodicProcess_OLD $worker): void {
-            // runs every 1 minute
-        },
-    ),
-);
-
-$server->addPlugin(
-    new SupervisorPlugin(
+    new WorkerProcess(
         name: 'supervised program',
         count: 1,
         command: function (WorkerProcess_OLD $worker): void {
             // custom long running process
+        },
+    ),
+    new PeriodicProcess(
+        name: 'scheduled program',
+        schedule: '*/1 * * * *',
+        command: function (PeriodicProcess_OLD $worker): void {
+            // runs every 1 minute
         },
     ),
 );
