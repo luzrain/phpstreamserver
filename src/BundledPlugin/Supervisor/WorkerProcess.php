@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
 use Revolt\EventLoop;
 
 class WorkerProcess extends Process implements ReloadStrategyAwareInterface

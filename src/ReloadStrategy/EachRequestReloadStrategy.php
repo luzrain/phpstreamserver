@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
 use Amp\Http\Server\Request;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker after each request.

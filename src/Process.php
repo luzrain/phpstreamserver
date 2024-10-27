@@ -147,12 +147,12 @@ abstract class Process implements MessageBus
         exit(0);
     }
 
-    public function getUser(): string
+    final public function getUser(): string
     {
         return $this->user ?? Functions::getCurrentUser();
     }
 
-    public function getGroup(): string
+    final public function getGroup(): string
     {
         return $this->group ?? Functions::getCurrentGroup();
     }
@@ -165,11 +165,6 @@ abstract class Process implements MessageBus
     public function dispatch(Message $message): Future
     {
         return $this->messageBus->dispatch($message);
-    }
-
-    public function getStatus(): Status
-    {
-        return $this->status;
     }
 
     public function stop(int $code = 0): void

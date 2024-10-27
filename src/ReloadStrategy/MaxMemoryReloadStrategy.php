@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\TimerReloadStrategyInterface;
+
 /**
  * Reload worker if worker memory usage has increased $maxMemory value
  */

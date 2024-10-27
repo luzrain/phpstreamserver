@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\TimerReloadStrategyInterface;
+
 /**
  * Reload worker after $ttl working time
  */

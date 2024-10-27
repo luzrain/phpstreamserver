@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\ReloadStrategy;
 
-use Luzrain\PHPStreamServer\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\ReloadStrategy\TimerReloadStrategyInterface;
 use Revolt\EventLoop;
 
 /**

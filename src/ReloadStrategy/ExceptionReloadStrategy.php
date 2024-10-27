@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\ReloadStrategy;
 
 use Amp\Http\Server\ClientException;
 use Amp\Http\Server\HttpErrorException;
+use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker each time after exception occurs
