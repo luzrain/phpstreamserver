@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
+use Luzrain\PHPStreamServer\BundledPlugin\System\System;
 use Luzrain\PHPStreamServer\Internal\Console\App;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Internal\SystemPlugin\System;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 
 final class Server
@@ -18,13 +18,12 @@ final class Server
 
     /** @var array<Plugin> */
     private array $plugins = [];
-    /** @var array<ProcessInterface> */
+    /** @var array<Process> */
     private array $workers = [];
 
     public function __construct(
         private string|null $pidFile = null,
         private string|null $socketFile = null,
-        private readonly int $stopTimeout = 5,
     ) {
         $this->pidFile ??= Functions::getDefaultPidFile();
         $this->socketFile ??= Functions::getDefaultSocketFile();
@@ -38,7 +37,7 @@ final class Server
         return $this;
     }
 
-    public function addWorker(ProcessInterface ...$workers): self
+    public function addWorker(Process ...$workers): self
     {
         \array_push($this->workers, ...$workers);
 

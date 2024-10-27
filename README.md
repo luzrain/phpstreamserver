@@ -39,15 +39,7 @@ Here is example of simple http server.
 ```php
 // server.php
 
-use Amp\Http\Server\HttpErrorException;
-use Amp\Http\Server\Request;
-use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\PeriodicProcess;
-use Luzrain\PHPStreamServer\Plugin\HttpServer\HttpServer;
-use Luzrain\PHPStreamServer\Plugin\Scheduler\Scheduler;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Supervisor;
-use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Amp\Http\Server\HttpErrorException;use Amp\Http\Server\Request;use Amp\Http\Server\Response;use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServer;use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;use Luzrain\PHPStreamServer\PeriodicProcess_OLD;use Luzrain\PHPStreamServer\Server;use Luzrain\PHPStreamServer\WorkerProcess_OLD;
 
 $server = new Server();
 
@@ -56,7 +48,7 @@ $server->addPlugin(
         name: 'web server',
         count: 1,
         listen: '0.0.0.0:8088',
-        onStart: function (WorkerProcess $worker, mixed &$context): void {
+        onStart: function (WorkerProcess_OLD $worker, mixed &$context): void {
             // initialization
         },
         onRequest: function (Request $request, mixed &$context): Response {
@@ -70,20 +62,20 @@ $server->addPlugin(
 );
 
 $server->addPlugin(
-    new Scheduler(
+    new SchedulerPlugin(
         name: 'scheduled program',
         schedule: '*/1 * * * *',
-        command: function (PeriodicProcess $worker): void {
+        command: function (PeriodicProcess_OLD $worker): void {
             // runs every 1 minute
         },
     ),
 );
 
 $server->addPlugin(
-    new Supervisor(
+    new SupervisorPlugin(
         name: 'supervised program',
         count: 1,
-        command: function (WorkerProcess $worker): void {
+        command: function (WorkerProcess_OLD $worker): void {
             // custom long running process
         },
     ),

@@ -6,16 +6,16 @@ namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
 use Amp\DeferredFuture;
 use Amp\Future;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessBlockedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessExitEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessHeartbeatEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\Message\ProcessBlockedEvent;
-use Luzrain\PHPStreamServer\Message\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\Message\ProcessExitEvent;
-use Luzrain\PHPStreamServer\Message\ProcessHeartbeatEvent;
-use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -36,11 +36,12 @@ final class Supervisor
     public function __construct(
         private Status &$status,
         private readonly int $stopTimeout,
+        private readonly float $restartDelay,
     ) {
         $this->workerPool = new WorkerPool();
     }
 
-    public function addWorker(WorkerProcessInterface $worker): void
+    public function addWorker(WorkerProcess $worker): void
     {
         $this->workerPool->registerWorker($worker);
     }
@@ -58,7 +59,7 @@ final class Supervisor
             }
         }));
 
-        EventLoop::repeat(WorkerProcessInterface::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
+        EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, weakClosure($this->monitorWorkerStatus(...)));
 
         $this->messageHandler->subscribe(ProcessDetachedEvent::class, weakClosure(function (ProcessDetachedEvent $message): void {
             $this->workerPool->markAsDetached($message->pid);
@@ -75,7 +76,7 @@ final class Supervisor
     {
         EventLoop::queue(function (): void {
             foreach ($this->workerPool->getRegisteredWorkers() as $worker) {
-                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->getProcessCount()) {
+                while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->count) {
                     if ($this->spawnWorker($worker)) {
                         return;
                     }
@@ -84,7 +85,7 @@ final class Supervisor
         });
     }
 
-    private function spawnWorker(WorkerProcessInterface $worker): bool
+    private function spawnWorker(WorkerProcess $worker): bool
     {
         $pid = \pcntl_fork();
         if ($pid > 0) {
@@ -111,7 +112,7 @@ final class Supervisor
                 });
                 $this->logger->warning(\sprintf(
                     'Worker %s[pid:%d] blocked event loop for more than %s seconds',
-                    $worker->getName(),
+                    $worker->name,
                     $process->pid,
                     $blockTime,
                 ));
@@ -119,12 +120,12 @@ final class Supervisor
         }
     }
 
-    private function onWorkerStart(WorkerProcessInterface $worker, int $pid): void
+    private function onWorkerStart(WorkerProcess $worker, int $pid): void
     {
         $this->workerPool->addChild($worker, $pid);
     }
 
-    private function onWorkerStop(WorkerProcessInterface $worker, int $pid, int $exitCode): void
+    private function onWorkerStop(WorkerProcess $worker, int $pid, int $exitCode): void
     {
         $this->workerPool->markAsDeleted($pid);
 
@@ -132,26 +133,24 @@ final class Supervisor
             $this->messageBus->dispatch(new ProcessExitEvent($pid, $exitCode));
         });
 
-        switch ($this->status) {
-            case Status::RUNNING:
-                match ($exitCode) {
-                    0 => $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
-                    $worker::RELOAD_EXIT_CODE => $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->getName(), $pid)),
-                    default => $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->getName(), $pid, $exitCode)),
-                };
-                // Restart worker
-                if (0 < $delay = $worker->getProcessRestartDelay()) {
-                    EventLoop::delay($delay, function () use ($worker) { $this->spawnWorker($worker); });
-                } else {
-                    $this->spawnWorker($worker);
-                }
-                break;
-            case Status::SHUTDOWN:
-                if ($this->workerPool->getProcessesCount() === 0) {
-                    // All processes are stopped now
-                    $this->stopFuture->complete();
-                }
-                break;
+        if ($this->status === Status::RUNNING) {
+            if ($exitCode === 0) {
+                $this->logger->info(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode));
+            } elseif($exitCode === $worker::RELOAD_EXIT_CODE && $worker->reloadable) {
+                $this->logger->info(\sprintf('Worker %s[pid:%d] reloaded', $worker->name, $pid));
+            } else {
+                $this->logger->warning(\sprintf('Worker %s[pid:%d] exit with code %s', $worker->name, $pid, $exitCode));
+            }
+
+            // Restart worker
+            EventLoop::delay(\max($this->restartDelay, 0), function () use($worker): void {
+                $this->spawnWorker($worker);
+            });
+        } else {
+            if ($this->workerPool->getProcessesCount() === 0) {
+                // All processes are stopped now
+                $this->stopFuture->complete();
+            }
         }
     }
 
@@ -170,7 +169,7 @@ final class Supervisor
                 // Send SIGKILL signal to all child processes ater timeout
                 foreach ($this->workerPool->getProcesses() as $worker => $process) {
                     \posix_kill($process->pid, SIGKILL);
-                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->getName(), $process->pid, $this->stopTimeout));
+                    $this->logger->notice(\sprintf('Worker %s[pid:%s] killed after %ss timeout', $worker->name, $process->pid, $this->stopTimeout));
                 }
                 $this->stopFuture->complete();
             });

@@ -6,14 +6,14 @@ namespace Luzrain\PHPStreamServer\Internal\Scheduler;
 
 use Amp\DeferredFuture;
 use Amp\Future;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\ProcessScheduledEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
-use Luzrain\PHPStreamServer\Message\ProcessScheduledEvent;
-use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -30,13 +30,12 @@ final class Scheduler
     private Suspension $suspension;
     private DeferredFuture|null $stopFuture = null;
 
-    public function __construct(
-        private Status &$status,
-    ) {
+    public function __construct(private Status &$status)
+    {
         $this->pool = new WorkerPool();
     }
 
-    public function addWorker(PeriodicProcessInterface $worker): void
+    public function addWorker(PeriodicProcess $worker): void
     {
         $this->pool->addWorker($worker);
     }
@@ -50,11 +49,11 @@ final class Scheduler
         SIGCHLDHandler::onChildProcessExit(weakClosure($this->onChildStop(...)));
 
         foreach ($this->pool->getWorkers() as $worker) {
-            /** @var PeriodicProcessInterface $worker */
+            /** @var PeriodicProcess $worker */
             try {
-                $trigger = TriggerFactory::create($worker->getSchedule(), $worker->getJitter());
+                $trigger = TriggerFactory::create($worker->schedule, $worker->jitter);
             } catch (\InvalidArgumentException) {
-                $this->logger->warning(\sprintf('Periodic process "%s" skipped. Schedule "%s" is not in valid format', $worker->getName(), $worker->getSchedule()));
+                $this->logger->warning(\sprintf('Periodic process "%s" skipped. Schedule "%s" is not in valid format', $worker->name, $worker->schedule));
                 continue;
             }
 
@@ -62,7 +61,7 @@ final class Scheduler
         }
     }
 
-    private function scheduleWorker(PeriodicProcessInterface $worker, TriggerInterface $trigger): bool
+    private function scheduleWorker(PeriodicProcess $worker, TriggerInterface $trigger): bool
     {
         if ($this->status === Status::SHUTDOWN) {
             return false;
@@ -79,18 +78,18 @@ final class Scheduler
         }
 
         EventLoop::defer(function () use ($worker, $nextRunDate): void {
-            $this->messageBus->dispatch(new ProcessScheduledEvent($worker->getId(), $nextRunDate));
+            $this->messageBus->dispatch(new ProcessScheduledEvent($worker->id, $nextRunDate));
         });
 
         return true;
     }
 
-    private function startWorker(PeriodicProcessInterface $worker, TriggerInterface $trigger): void
+    private function startWorker(PeriodicProcess $worker, TriggerInterface $trigger): void
     {
         // Reschedule a task without running it if the previous task is still running
         if ($this->pool->isWorkerRun($worker)) {
             if($this->scheduleWorker($worker, $trigger)) {
-                $this->logger->info(\sprintf('Periodic process "%s" is already running. Rescheduled', $worker->getName()));
+                $this->logger->info(\sprintf('Periodic process "%s" is already running. Rescheduled', $worker->name));
             }
             return;
         }
@@ -100,11 +99,11 @@ final class Scheduler
             return;
         }
 
-        $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] started', $worker->getName(), $pid));
+        $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] started', $worker->name, $pid));
         $this->scheduleWorker($worker, $trigger);
     }
 
-    private function spawnWorker(PeriodicProcessInterface $worker): int
+    private function spawnWorker(PeriodicProcess $worker): int
     {
         $pid = \pcntl_fork();
         if ($pid > 0) {
@@ -127,7 +126,7 @@ final class Scheduler
         }
 
         $this->pool->deleteChild($worker);
-        $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] exit with code %s', $worker->getName(), $pid, $exitCode));
+        $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] exit with code %s', $worker->name, $pid, $exitCode));
 
         if ($this->stopFuture !== null && !$this->stopFuture->isComplete() && $this->pool->getProcessesCount() === 0) {
             $this->stopFuture->complete();

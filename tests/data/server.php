@@ -5,7 +5,7 @@ declare(strict_types=1);
 include __DIR__ . '/../../vendor/autoload.php';
 
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess;
+use Luzrain\PHPStreamServer\WorkerProcess_OLD;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
@@ -14,18 +14,18 @@ $streamResponse = \fopen('php://temp', 'rw');
 \fwrite($streamResponse, 'ok-answer from stream');
 $server = new Server();
 $server->addWorkerProcess(
-    new WorkerProcess(
+    new WorkerProcess_OLD(
         name: 'Worker 1',
         count: 1,
     ),
-    new WorkerProcess(
+    new WorkerProcess_OLD(
         name: 'Worker 2',
         count: 2,
     ),
-    new WorkerProcess(
+    new WorkerProcess_OLD(
         name: 'HTTP Server',
         count: 2,
-        onStart: static function (WorkerProcess $worker) use (&$tempFiles, $streamResponse) {
+        onStart: static function (WorkerProcess_OLD $worker) use (&$tempFiles, $streamResponse) {
             $worker->startListener(new Listener(
                 listen: 'tcp://0.0.0.0:9080',
                 protocol: new Http(),
@@ -84,10 +84,10 @@ $server->addWorkerProcess(
             ));
         },
     ),
-    new WorkerProcess(
+    new WorkerProcess_OLD(
         name: 'HTTPS Server',
         count: 1,
-        onStart: static function (WorkerProcess $worker) {
+        onStart: static function (WorkerProcess_OLD $worker) {
             $worker->startListener(new Listener(
                 listen: 'tcp://127.0.0.1:9081',
                 tls: true,

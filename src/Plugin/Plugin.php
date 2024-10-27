@@ -6,11 +6,29 @@ namespace Luzrain\PHPStreamServer\Plugin;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\MasterProcess;
+use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Process;
 use function Amp\async;
 
 abstract class Plugin
 {
+    /**
+     * List of worker classes that plugin can handle
+     *
+     * @return list<class-string<Process>>
+     */
+    public function workerSupports(): array
+    {
+        return [];
+    }
+
+    /**
+     * Hanlde workers which classes is described in workerSupports
+     */
+    public function addWorker(Process $worker): void
+    {
+    }
+
     /**
      * Initialize. Ecexutes before start
      */
@@ -31,6 +49,13 @@ abstract class Plugin
     public function stop(): Future
     {
         return async(static fn() => null);
+    }
+
+    /**
+     * Reload command
+     */
+    public function reload(): void
+    {
     }
 
     /**

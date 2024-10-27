@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Supervisor;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\WorkerProcessInterface;
 use Revolt\EventLoop;
 
 /**
@@ -17,55 +17,55 @@ final class WorkerPool
     public const BLOCK_WARNING_TRESHOLD = 6;
 
     /**
-     * @var array<int, WorkerProcessInterface>
+     * @var array<int, WorkerProcess>
      */
     private array $workerPool = [];
 
     /**
-     * @var array<int, array<int, Process>>
+     * @var array<int, array<int, ProcessStatus>>
      */
-    private array $processMap;
+    private array $processStatusMap = [];
 
     public function __construct()
     {
     }
 
-    public function registerWorker(WorkerProcessInterface $worker): void
+    public function registerWorker(WorkerProcess $worker): void
     {
-        $this->workerPool[$worker->getId()] = $worker;
-        $this->processMap[$worker->getId()] = [];
+        $this->workerPool[$worker->id] = $worker;
+        $this->processStatusMap[$worker->id] = [];
     }
 
-    public function addChild(WorkerProcessInterface $worker, int $pid): void
+    public function addChild(WorkerProcess $worker, int $pid): void
     {
-        if (!isset($this->workerPool[$worker->getId()])) {
+        if (!isset($this->workerPool[$worker->id])) {
             throw new PHPStreamServerException('Worker is not found in pool');
         }
 
-        $this->processMap[$worker->getId()][$pid] = new Process($pid);
+        $this->processStatusMap[$worker->id][$pid] = new ProcessStatus($pid);
     }
 
     public function markAsDeleted(int $pid): void
     {
         if (null !== $worker = $this->getWorkerByPid($pid)) {
-            unset($this->processMap[$worker->getId()][$pid]);
+            unset($this->processStatusMap[$worker->id][$pid]);
         }
     }
 
     public function markAsDetached(int $pid): void
     {
         if (null !== $worker = $this->getWorkerByPid($pid)) {
-            $this->processMap[$worker->getId()][$pid]->detached = true;
+            $this->processStatusMap[$worker->id][$pid]->detached = true;
         }
     }
 
     public function markAsBlocked(int $pid): void
     {
         if (null !== $worker = $this->getWorkerByPid($pid)) {
-            $this->processMap[$worker->getId()][$pid]->blocked = true;
+            $this->processStatusMap[$worker->id][$pid]->blocked = true;
             EventLoop::delay(self::BLOCKED_LABEL_PERSISTENCE, function () use ($worker, $pid) {
-                if (isset($this->processMap[$worker->getId()][$pid])) {
-                    $this->processMap[$worker->getId()][$pid]->blocked = false;
+                if (isset($this->processStatusMap[$worker->id][$pid])) {
+                    $this->processStatusMap[$worker->id][$pid]->blocked = false;
                 }
             });
         }
@@ -74,14 +74,14 @@ final class WorkerPool
     public function markAsHealthy(int $pid, int $time): void
     {
         if (null !== $worker = $this->getWorkerByPid($pid)) {
-            $this->processMap[$worker->getId()][$pid]->blocked = false;
-            $this->processMap[$worker->getId()][$pid]->time = $time;
+            $this->processStatusMap[$worker->id][$pid]->blocked = false;
+            $this->processStatusMap[$worker->id][$pid]->time = $time;
         }
     }
 
-    public function getWorkerByPid(int $pid): WorkerProcessInterface|null
+    public function getWorkerByPid(int $pid): WorkerProcess|null
     {
-        foreach ($this->processMap as $workerId => $processes) {
+        foreach ($this->processStatusMap as $workerId => $processes) {
             if (\in_array($pid, \array_keys($processes), true)) {
                 return $this->workerPool[$workerId];
             }
@@ -91,8 +91,8 @@ final class WorkerPool
     }
 
     /**
-     * @return \Iterator<WorkerProcessInterface>
-     * @psalm-return iterable<WorkerProcessInterface>
+     * @return \Iterator<WorkerProcess>
+     * @psalm-return iterable<WorkerProcess>
      */
     public function getRegisteredWorkers(): \Iterator
     {
@@ -102,17 +102,17 @@ final class WorkerPool
     /**
      * @return \Iterator<int>
      */
-    public function getAliveWorkerPids(WorkerProcessInterface $worker): \Iterator
+    public function getAliveWorkerPids(WorkerProcess $worker): \Iterator
     {
-        return new \ArrayIterator(\array_keys($this->processMap[$worker->getId()] ?? []));
+        return new \ArrayIterator(\array_keys($this->processStatusMap[$worker->id] ?? []));
     }
 
     /**
-     * @return \Iterator<WorkerProcessInterface, Process>
+     * @return \Iterator<WorkerProcess, ProcessStatus>
      */
     public function getProcesses(): \Iterator
     {
-        foreach ($this->processMap as $workerId => $processes) {
+        foreach ($this->processStatusMap as $workerId => $processes) {
             foreach ($processes as $process) {
                 yield $this->workerPool[$workerId] => $process;
             }

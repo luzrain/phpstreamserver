@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Scheduler;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 
 /**
  * @internal
@@ -13,12 +13,12 @@ use Luzrain\PHPStreamServer\PeriodicProcessInterface;
 final class WorkerPool
 {
     /**
-     * @var array<int, PeriodicProcessInterface>
+     * @var array<int, PeriodicProcess>
      */
     private array $pool = [];
 
     /**
-     * @var \WeakMap<PeriodicProcessInterface, int>
+     * @var \WeakMap<PeriodicProcess, int>
      */
     private \WeakMap $pidMap;
 
@@ -27,12 +27,12 @@ final class WorkerPool
         $this->pidMap = new \WeakMap();
     }
 
-    public function addWorker(PeriodicProcessInterface $worker): void
+    public function addWorker(PeriodicProcess $worker): void
     {
         $this->pool[\spl_object_id($worker)] = $worker;
     }
 
-    public function addChild(PeriodicProcessInterface $worker, int $pid): void
+    public function addChild(PeriodicProcess $worker, int $pid): void
     {
         if (!isset($this->pool[\spl_object_id($worker)])) {
             throw new PHPStreamServerException('PeriodicProcess is not fount in pool');
@@ -41,12 +41,12 @@ final class WorkerPool
         $this->pidMap[$worker] = $pid;
     }
 
-    public function deleteChild(PeriodicProcessInterface $worker): void
+    public function deleteChild(PeriodicProcess $worker): void
     {
         unset($this->pidMap[$worker]);
     }
 
-    public function getWorkerByPid(int $pid): PeriodicProcessInterface|null
+    public function getWorkerByPid(int $pid): PeriodicProcess|null
     {
         foreach ($this->pidMap as $worker => $workerPid) {
             if ($pid === $workerPid) {
@@ -57,13 +57,13 @@ final class WorkerPool
         return null;
     }
 
-    public function isWorkerRun(PeriodicProcessInterface $worker): bool
+    public function isWorkerRun(PeriodicProcess $worker): bool
     {
         return isset($this->pidMap[$worker]);
     }
 
     /**
-     * @return \Iterator<PeriodicProcessInterface>
+     * @return \Iterator<PeriodicProcess>
      */
     public function getWorkers(): \Iterator
     {

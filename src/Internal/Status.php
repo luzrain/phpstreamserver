@@ -9,7 +9,8 @@ namespace Luzrain\PHPStreamServer\Internal;
  */
 enum Status
 {
+    case SHUTDOWN;
     case STARTING;
     case RUNNING;
-    case SHUTDOWN;
+    case STOPPING;
 }
