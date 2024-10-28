@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
@@ -11,7 +12,6 @@ use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Server;
-use Revolt\EventLoop\DriverFactory;
 
 /**
  * @internal
@@ -28,17 +28,19 @@ final class StatusCommand extends Command
          */
 
         $isRunning = Functions::isRunning($args['pidFile']);
-        $eventLoop = (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
+        $eventLoop = Functions::getDriverName();
         $startFile = Functions::getStartFile();
 
         if ($isRunning) {
             $bus = new SocketFileMessageBus($args['socketFile']);
-            $status = $bus->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
-            \assert($status instanceof ServerStatus);
-            $startedAt = $status->startedAt;
-            $workersCount = $status->getWorkersCount();
-            $processesCount = $status->getProcessesCount();
-            $totalMemory = $status->getTotalMemory();
+            $serverStatus = $bus->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
+            \assert($serverStatus instanceof ServerStatus);
+            $supervosorStatus = $bus->dispatch(new ContainerGetCommand(SupervisorStatus::class))->await();
+            \assert($supervosorStatus instanceof SupervisorStatus);
+            $startedAt = $serverStatus->startedAt;
+            $workersCount = $supervosorStatus->getWorkersCount();
+            $processesCount = $supervosorStatus->getProcessesCount();
+            $totalMemory = $supervosorStatus->getTotalMemory();
         }
 
         echo ($isRunning ? '<color;fg=green>●</> ' : '● ') . Server::TITLE . "\n";

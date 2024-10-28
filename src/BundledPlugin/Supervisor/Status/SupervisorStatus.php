@@ -14,10 +14,6 @@ use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use function Amp\weakClosure;
 
-/**
- * @readonly
- * @psalm-allow-private-mutation
- */
 final class SupervisorStatus
 {
     /**

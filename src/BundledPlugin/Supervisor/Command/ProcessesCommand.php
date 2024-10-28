@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Command;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\ProcessInfo;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
@@ -35,6 +36,9 @@ final class ProcessesCommand extends Command
         $processesStatus = $bus->dispatch(new ContainerGetCommand(SupervisorStatus::class))->await();
         \assert($processesStatus instanceof SupervisorStatus);
 
+        $connectionsStatus = $bus->dispatch(new ContainerGetCommand(ConnectionsStatus::class))->await();
+        \assert($connectionsStatus instanceof ConnectionsStatus);
+
         if ($processesStatus->getProcessesCount() > 0) {
             $processes = $processesStatus->getProcesses();
             \usort($processes, static fn (ProcessInfo $a, ProcessInfo $b) => $a->workerId <=> $b->workerId);
@@ -50,20 +54,19 @@ final class ProcessesCommand extends Command
                     'Bytes (RX / TX)',
                     'Status',
                 ])
-                ->addRows(\array_map(array: $processes, callback: static function (ProcessInfo $w) {
+                ->addRows(\array_map(array: $processes, callback: static function (ProcessInfo $w) use ($connectionsStatus) {
+                    $c = $connectionsStatus->getProcessConnectionsInfo($w->pid);
+
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
                         $w->memory > 0 ? Functions::humanFileSize($w->memory) : '<color;fg=gray>??</>',
                         $w->name,
-                        //\count($w->connections) === 0 ? '<color;fg=gray>0</>' : \count($w->connections),
-                        '111111',
-                        //$w->requests === 0 ? '<color;fg=gray>0</>' : $w->requests,
-                        '0',
-                        '11',
-//                        $w->rx === 0 && $w->tx === 0
-//                            ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx))
-//                            : \sprintf('(%s / %s)', Functions::humanFileSize($w->rx), Functions::humanFileSize($w->tx)),
+                        \count($c->connections) === 0 ? '<color;fg=gray>0</>' : \count($c->connections),
+                        $c->requests === 0 ? '<color;fg=gray>0</>' : $c->requests,
+                        $c->rx === 0 && $c->tx === 0
+                            ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx))
+                            : \sprintf('(%s / %s)', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx)),
                         match(true) {
                             $w->detached => '[<color;fg=cyan>DETACHED</>]',
                             $w->blocked => '[<color;fg=yellow>BLOCKED</>]',

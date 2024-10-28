@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
-use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
-use Luzrain\PHPStreamServer\Internal\ConnectionStatus\Connection;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\Connection;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
@@ -31,13 +31,11 @@ final class ConnectionsCommand extends Command
         echo "❯ Connections\n";
 
         $bus = new SocketFileMessageBus($args['socketFile']);
-        $status = $bus->dispatch(new ContainerGetCommand(ServerStatus::class))->await();
-        \assert($status instanceof ServerStatus);
 
-        $connections = [];
-        foreach ($status->getProcesses() as $process) {
-            \array_push($connections, ...$process->connections);
-        }
+        $connectionsStatus = $bus->dispatch(new ContainerGetCommand(ConnectionsStatus::class))->await();
+        \assert($connectionsStatus instanceof ConnectionsStatus);
+
+        $connections = $connectionsStatus->getActiveConnections();
 
         if (\count($connections) > 0) {
             echo (new Table(indent: 1))

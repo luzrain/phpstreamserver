@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
-use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\WorkerInfo;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
+use Luzrain\PHPStreamServer\Internal\Console\Table;
+use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
@@ -48,40 +51,42 @@ final class StartCommand extends Command
             workers: $args['workers'],
         );
 
-        $status = $masterProcess->masterContainer->get(ServerStatus::class);
-        \assert($status instanceof ServerStatus);
+        $supervisorStatus = $masterProcess->masterContainer->get(SupervisorStatus::class);
+        \assert($supervisorStatus instanceof SupervisorStatus);
+
+        $eventLoop = Functions::getDriverName();
 
         echo "❯ " . Server::TITLE . "\n";
 
-//        echo (new Table(indent: 1))
-//            ->addRows([
-//                [Server::NAME . ' version:', Server::VERSION],
-//                ['PHP version:', PHP_VERSION],
-//                ['Event loop driver:', $status->eventLoop],
-//                ['Workers count:', $status->getWorkersCount()],
-//            ])
-//        ;
-//
-//        echo "❯ Workers\n";
-//
-//        if ($status->getWorkersCount() > 0) {
-//            echo (new Table(indent: 1))
-//                ->setHeaderRow([
-//                    'User',
-//                    'Worker',
-//                    'Count',
-//                ])
-//                ->addRows(\array_map(static function (WorkerInfo $w) {
-//                    return [
-//                        $w->user,
-//                        $w->name,
-//                        $w->count,
-//                    ];
-//                }, $status->getWorkers()))
-//            ;
-//        } else {
-//            echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";
-//        }
+        echo (new Table(indent: 1))
+            ->addRows([
+                [Server::NAME . ' version:', Server::VERSION],
+                ['PHP version:', PHP_VERSION],
+                ['Event loop driver:', $eventLoop],
+                ['Workers count:', $supervisorStatus->getWorkersCount()],
+            ])
+        ;
+
+        echo "❯ Workers\n";
+
+        if ($supervisorStatus->getWorkersCount() > 0) {
+            echo (new Table(indent: 1))
+                ->setHeaderRow([
+                    'User',
+                    'Worker',
+                    'Count',
+                ])
+                ->addRows(\array_map(static function (WorkerInfo $w) {
+                    return [
+                        $w->user,
+                        $w->name,
+                        $w->count,
+                    ];
+                }, $supervisorStatus->getWorkers()))
+            ;
+        } else {
+            echo "  <color;bg=yellow> ! </> <color;fg=yellow>There are no workers</>\n";
+        }
 
         if (!$daemonize) {
             echo "Press Ctrl+C to stop.\n";

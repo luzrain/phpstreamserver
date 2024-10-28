@@ -60,7 +60,6 @@ class WorkerProcess extends Process implements ReloadStrategyAwareInterface
             \gc_mem_caches();
         });
 
-        //$this->trafficStatus = new NetworkTrafficCounter($this->messageBus);
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 
 //        EventLoop::setErrorHandler(function (\Throwable $exception) {

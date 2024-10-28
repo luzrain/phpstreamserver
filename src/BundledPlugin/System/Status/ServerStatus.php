@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Status;
 
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Revolt\EventLoop\DriverFactory;
 
 final readonly class ServerStatus
 {
@@ -15,7 +14,7 @@ final readonly class ServerStatus
 
     public function __construct()
     {
-        $this->eventLoop = (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
+        $this->eventLoop = Functions::getDriverName();
         $this->startFile = Functions::getStartFile();
         $this->startedAt = new \DateTimeImmutable('now');
     }

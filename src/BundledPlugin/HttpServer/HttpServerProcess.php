@@ -9,6 +9,7 @@ use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\AmpHttpServer;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 
 final class HttpServerProcess extends WorkerProcess
 {
@@ -84,7 +85,9 @@ final class HttpServerProcess extends WorkerProcess
             bodySizeLimit: $this->container->get('httpServerPlugin.bodySizeLimit'),
         );
 
-        $httpServer->start($this->logger, $this);
+        $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
+
+        $httpServer->start($this->logger, $networkTrafficCounter, $this);
     }
 
     /**

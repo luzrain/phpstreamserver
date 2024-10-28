@@ -19,8 +19,8 @@ use Revolt\EventLoop\Suspension;
 
 final class SupervisorPlugin extends Plugin
 {
-    private SupervisorStatus $supervisorStatus;
     private Container $masterContainer;
+    private SupervisorStatus $supervisorStatus;
     private Supervisor $supervisor;
 
     public function __construct(

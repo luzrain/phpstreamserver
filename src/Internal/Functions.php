@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
+use Revolt\EventLoop\DriverFactory;
 
 /**
  * @internal
@@ -23,6 +24,11 @@ final class Functions
             $file = \end($backtrace)['file'];
         }
         return $file;
+    }
+
+    public static function getDriverName(): string
+    {
+        return (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
     }
 
     public static function getCurrentUser(): string
