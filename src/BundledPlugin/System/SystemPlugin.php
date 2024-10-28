@@ -18,7 +18,7 @@ use Luzrain\PHPStreamServer\Plugin\Plugin;
 /**
  * @internal
  */
-final class System extends Plugin
+final class SystemPlugin extends Plugin
 {
     private Container $masterContainer;
 

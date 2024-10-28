@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
-use Luzrain\PHPStreamServer\BundledPlugin\System\System;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
+use Luzrain\PHPStreamServer\BundledPlugin\System\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\Console\App;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
@@ -24,10 +25,13 @@ final class Server
     public function __construct(
         private string|null $pidFile = null,
         private string|null $socketFile = null,
+        int $stopTimeout = 10,
+        float $restartDelay = 0.25,
     ) {
         $this->pidFile ??= Functions::getDefaultPidFile();
         $this->socketFile ??= Functions::getDefaultSocketFile();
-        $this->addPlugin(new System());
+        $this->addPlugin(new SystemPlugin());
+        $this->addPlugin(new SupervisorPlugin($stopTimeout, $restartDelay));
     }
 
     public function addPlugin(Plugin ...$plugins): self

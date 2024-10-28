@@ -24,8 +24,8 @@ final class SupervisorPlugin extends Plugin
     private Supervisor $supervisor;
 
     public function __construct(
-        private readonly int $stopTimeout = 10,
-        private readonly float $restartDelay = 0.25,
+        private readonly int $stopTimeout,
+        private readonly float $restartDelay,
     ) {
     }
 
