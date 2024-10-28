@@ -49,6 +49,11 @@ final class HttpServerProcess extends WorkerProcess
         );
     }
 
+    static public function handleBy(): array
+    {
+        return [...parent::handleBy(), HttpServerPlugin::class];
+    }
+
     private function onStart(): void
     {
         if ($this->onStart !== null) {

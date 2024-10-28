@@ -27,11 +27,6 @@ final class SchedulerPlugin extends Plugin
     {
     }
 
-    public function workerSupports(): array
-    {
-        return [PeriodicProcess::class];
-    }
-
     public function init(MasterProcess $masterProcess): void
     {
         $this->masterContainer = $masterProcess->masterContainer;

@@ -45,6 +45,11 @@ final class MasterProcess
     private array $plugins = [];
 
     /**
+     * @var array<class-string<Process>, class-string<Plugin>>
+     */
+    private array $workerClassesCanNotBeHandled = [];
+
+    /**
      * @param array<Plugin> $plugins
      * @param array<Process> $workers
      */
@@ -108,18 +113,15 @@ final class MasterProcess
         }
 
         foreach ($workers as $worker) {
-            $workerCanBeHandled = false;
-            foreach ($this->plugins as $plugin) {
-                foreach ($plugin->workerSupports() as $workerClass) {
-                    if ($worker instanceof $workerClass) {
-                        $workerCanBeHandled = true;
-                        $plugin->addWorker($worker);
-                    }
+            foreach ($worker::handleBy() as $handledByPluginClass) {
+                if (!isset($this->plugins[$handledByPluginClass])) {
+                    $this->workerClassesCanNotBeHandled[$worker::class] = $handledByPluginClass;
+                    continue 2;
                 }
             }
 
-            if (!$workerCanBeHandled) {
-                throw new PHPStreamServerException(\sprintf('Worker "%s" can not be handled', $worker::class));
+            foreach ($worker::handleBy() as $handledByPluginClass) {
+                $this->plugins[$handledByPluginClass]->addWorker($worker);
             }
         }
     }
@@ -228,6 +230,12 @@ final class MasterProcess
 
         EventLoop::defer(function () {
             $this->logger->info(Server::NAME . ' has started');
+
+            foreach ($this->workerClassesCanNotBeHandled as $workerClass => $handledByClass) {
+                $this->logger->error(\sprintf('"%s" process can not be handled. Register "%s" plugin', $workerClass, $handledByClass));
+            }
+
+            unset($this->workerClassesCanNotBeHandled);
         });
 
         $this->status = Status::RUNNING;

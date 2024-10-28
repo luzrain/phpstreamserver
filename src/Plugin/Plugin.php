@@ -13,17 +13,7 @@ use function Amp\async;
 abstract class Plugin
 {
     /**
-     * List of worker classes that plugin can handle
-     *
-     * @return list<class-string<Process>>
-     */
-    public function workerSupports(): array
-    {
-        return [];
-    }
-
-    /**
-     * Hanlde workers which classes is described in workerSupports
+     * Hanlde worker
      */
     public function addWorker(Process $worker): void
     {

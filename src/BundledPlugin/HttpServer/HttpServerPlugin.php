@@ -22,11 +22,6 @@ final class HttpServerPlugin extends Plugin
     ) {
     }
 
-    public function workerSupports(): array
-    {
-        return [HttpServerProcess::class];
-    }
-
     public function init(MasterProcess $masterProcess): void
     {
         $this->workerContainer = $masterProcess->workerContainer;

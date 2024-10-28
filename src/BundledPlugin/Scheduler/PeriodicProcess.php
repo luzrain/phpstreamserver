@@ -33,6 +33,11 @@ class PeriodicProcess extends Process
         parent::__construct(name: $name, user: $user, group: $group, onStart: $onStart, onStop: $onStop);
     }
 
+    static public function handleBy(): array
+    {
+        return [SchedulerPlugin::class];
+    }
+
     protected function start(): void
     {
         $this->stop();

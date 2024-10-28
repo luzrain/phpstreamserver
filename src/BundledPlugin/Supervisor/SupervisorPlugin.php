@@ -29,11 +29,6 @@ final class SupervisorPlugin extends Plugin
     ) {
     }
 
-    public function workerSupports(): array
-    {
-        return [WorkerProcess::class];
-    }
-
     public function init(MasterProcess $masterProcess): void
     {
         $this->masterContainer = $masterProcess->masterContainer;

@@ -36,6 +36,11 @@ class WorkerProcess extends Process implements ReloadStrategyAwareInterface
         parent::__construct(name: $name, user: $user, group: $group, onStart: $onStart, onStop: $this->onStop(...));
     }
 
+    static public function handleBy(): array
+    {
+        return [SupervisorPlugin::class];
+    }
+
     private function onStop(self $process): void
     {
         if ($this->isReloading && $this->onReload) {

@@ -16,6 +16,7 @@ use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\Status;
+use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
@@ -117,6 +118,11 @@ abstract class Process implements MessageBus
     }
 
     abstract protected function start(): void;
+
+    /**
+     * @return list<class-string<Plugin>>
+     */
+    abstract static public function handleBy(): array;
 
     /**
      * Stop and destroy the process event loop and communication with the master process.
