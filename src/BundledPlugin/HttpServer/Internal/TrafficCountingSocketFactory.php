@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
-use;
 use Amp\Cancellation;
 use Amp\Socket\BindContext;
 use Amp\Socket\ServerSocket;
 use Amp\Socket\ServerSocketFactory;
 use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
-use Luzrain\PHPStreamServer\Internal\ConnectionStatus\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 
 final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
 {
     public function __construct(
         private ServerSocketFactory $socketServerFactory,
-        private NetworkTrafficCounter $trafficStatisticStore,
+        private NetworkTrafficCounter $networkTrafficCounter,
     ) {
     }
 
@@ -25,8 +24,8 @@ final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
     {
         $serverSocket = $this->socketServerFactory->listen($address, $bindContext);
 
-        return new class ($serverSocket, $this->trafficStatisticStore) implements ServerSocket {
-            public function __construct(private readonly ServerSocket $serverSocket, private readonly NetworkTrafficCounter $trafficStatisticStore)
+        return new class ($serverSocket, $this->networkTrafficCounter) implements ServerSocket {
+            public function __construct(private readonly ServerSocket $serverSocket, private readonly NetworkTrafficCounter $networkTrafficCounter)
             {
             }
 
@@ -51,7 +50,7 @@ final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
                     return null;
                 }
 
-                return new TrafficCountingSocket($socket, $this->trafficStatisticStore);
+                return new TrafficCountingSocket($socket, $this->networkTrafficCounter);
             }
 
             public function getAddress(): SocketAddress

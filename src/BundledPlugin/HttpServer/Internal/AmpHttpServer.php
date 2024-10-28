@@ -23,7 +23,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ReloadS
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Middleware\StaticMiddleware;
-use Luzrain\PHPStreamServer\Internal\ConnectionStatus\NetworkTrafficCounterAwareInterface;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -57,7 +57,7 @@ final readonly class AmpHttpServer
     ) {
     }
 
-    public function start(LoggerInterface $logger, HttpServerProcess $worker): void
+    public function start(LoggerInterface $logger, NetworkTrafficCounter $networkTrafficCounter, HttpServerProcess $worker): void
     {
         $middleware = [];
 
@@ -74,12 +74,8 @@ final readonly class AmpHttpServer
             $serverSocketFactory = new ConnectionLimitingServerSocketFactory(new LocalSemaphore($this->connectionLimit), $serverSocketFactory);
         }
 
-        if ($worker instanceof NetworkTrafficCounterAwareInterface) {
-            $networkTrafficCounter = $worker->getNetworkTrafficCounter();
-            $serverSocketFactory = new TrafficCountingSocketFactory($serverSocketFactory, $networkTrafficCounter);
-            $clientFactory = new TrafficCountingClientFactory($clientFactory, $networkTrafficCounter);
-            $middleware[] = new RequestsCounterMiddleware($networkTrafficCounter);
-        }
+        $serverSocketFactory = new TrafficCountingSocketFactory($serverSocketFactory, $networkTrafficCounter);
+        $middleware[] = new RequestsCounterMiddleware($networkTrafficCounter);
 
         if ($this->concurrencyLimit !== null) {
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);

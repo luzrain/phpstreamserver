@@ -2,19 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ConnectionStatus\Event;
+namespace Luzrain\PHPStreamServer\BundledPlugin\System\Event;
 
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\Connection;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
 /**
  * @implements Message<void>
  */
-final readonly class TxCounterIncreaseEvent implements Message
+final readonly class ConnectionCreatedEvent implements Message
 {
     public function __construct(
         public int $pid,
         public int $connectionId,
-        public int $tx,
+        public Connection $connection,
     ) {
     }
 }

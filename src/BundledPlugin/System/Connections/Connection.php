@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ConnectionStatus;
+namespace Luzrain\PHPStreamServer\BundledPlugin\System\Connections;
 
 final class Connection
 {

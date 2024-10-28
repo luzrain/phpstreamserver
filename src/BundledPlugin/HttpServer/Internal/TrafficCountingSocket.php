@@ -10,7 +10,7 @@ use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
 use Amp\Socket\TlsInfo;
 use Amp\Socket\TlsState;
-use Luzrain\PHPStreamServer\Internal\ConnectionStatus\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 
 /**
  * @implements \IteratorAggregate<int, string>
@@ -21,6 +21,11 @@ final readonly class TrafficCountingSocket implements Socket, \IteratorAggregate
 
     public function __construct(private Socket $socket, private NetworkTrafficCounter $trafficStatisticStore)
     {
+        $this->trafficStatisticStore->addConnection($this);
+
+        $socket->onClose(function () {
+            $this->trafficStatisticStore->removeConnection($this);
+        });
     }
 
     public function close(): void

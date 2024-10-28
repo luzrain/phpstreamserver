@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ConnectionStatus\Event;
+namespace Luzrain\PHPStreamServer\BundledPlugin\System\Event;
 
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 
