@@ -2,21 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy;
 
-use Amp\Http\Server\ClientException;
-use Amp\Http\Server\HttpErrorException;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyInterface;
 
 /**
- * Reload worker each time after exception occurs
+ * Reload worker each time when exception occurs
  */
 final class ExceptionReloadStrategy implements ReloadStrategyInterface
 {
     /** @var array<class-string<\Throwable>> */
     private array $allowedExceptions = [
-        ClientException::class,
-        HttpErrorException::class,
+        'Amp\Http\Server\HttpErrorException',
     ];
 
     /**

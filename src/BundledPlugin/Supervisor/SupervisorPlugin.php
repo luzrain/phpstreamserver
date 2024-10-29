@@ -6,13 +6,13 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Command\ProcessesCommand;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\Supervisor;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Internal\Supervisor\Supervisor;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop\Suspension;

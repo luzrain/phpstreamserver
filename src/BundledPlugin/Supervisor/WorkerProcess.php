@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 
@@ -15,13 +15,14 @@ class WorkerProcess extends Process
     final public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
 
-    private ReloadStrategyTrigger $reloadStrategyTrigger;
+    protected readonly ReloadStrategyTrigger $reloadStrategyTrigger;
     private bool $isReloading = false;
 
     /**
      * @param null|\Closure(self):void $onStart
      * @param null|\Closure(self):void $onStop
      * @param null|\Closure(self):void $onReload
+     * @param array<ReloadStrategyInterface> $reloadStrategies
      */
     public function __construct(
         string $name = 'none',
@@ -32,6 +33,7 @@ class WorkerProcess extends Process
         \Closure|null $onStart = null,
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
+        private readonly array $reloadStrategies = [],
     ) {
         parent::__construct(name: $name, user: $user, group: $group, onStart: $onStart, onStop: $this->onStop(...));
     }
@@ -60,25 +62,12 @@ class WorkerProcess extends Process
             \gc_mem_caches();
         });
 
-        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
+        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...), $this->reloadStrategies);
 
         EventLoop::setErrorHandler(function (\Throwable $exception) {
             ErrorHandler::handleException($exception);
             $this->reloadStrategyTrigger->emitEvent($exception);
         });
-    }
-
-    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
-    {
-        $this->reloadStrategyTrigger->addReloadStrategy(...$reloadStrategies);
-    }
-
-    /**
-     * @TODO get rid of this
-     */
-    public function emitReloadEvent(mixed $event): void
-    {
-        $this->reloadStrategyTrigger->emitEvent($event);
     }
 
     public function stop(int $code = 0): void

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Supervisor;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
@@ -22,7 +22,7 @@ final class WorkerPool
     private array $workerPool = [];
 
     /**
-     * @var array<int, array<int, ProcessStatus>>
+     * @var ProcessStatus
      */
     private array $processStatusMap = [];
 

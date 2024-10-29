@@ -6,13 +6,13 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command\SchedulerCommand;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\Scheduler;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\SchedulerStatus;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Internal\Scheduler\Scheduler;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop\Suspension;

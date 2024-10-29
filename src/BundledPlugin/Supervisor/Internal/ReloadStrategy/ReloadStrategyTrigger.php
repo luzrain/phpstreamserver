@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\ReloadStrategy;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy;
 
 use Revolt\EventLoop;
 
@@ -14,11 +14,10 @@ final class ReloadStrategyTrigger
     /** @var list<ReloadStrategyInterface> */
     private array $reloadStrategies = [];
 
-    public function __construct(private readonly \Closure $reloadCallback)
-    {
-    }
-
-    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
+    /**
+     * @param array<ReloadStrategyInterface> $reloadStrategies
+     */
+    public function __construct(private readonly \Closure $reloadCallback, array $reloadStrategies)
     {
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TimerReloadStrategyInterface) {

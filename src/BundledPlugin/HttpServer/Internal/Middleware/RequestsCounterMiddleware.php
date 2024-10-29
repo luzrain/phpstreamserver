@@ -18,8 +18,10 @@ final readonly class RequestsCounterMiddleware implements Middleware
 
     public function handleRequest(Request $request, RequestHandler $requestHandler): Response
     {
-        $this->trafficStatisticStore->incRequests();
-
-        return $requestHandler->handleRequest($request);
+        try {
+            return $requestHandler->handleRequest($request);
+        } finally {
+            $this->trafficStatisticStore->incRequests();
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Scheduler\Trigger;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger;
 
 /**
  * @internal

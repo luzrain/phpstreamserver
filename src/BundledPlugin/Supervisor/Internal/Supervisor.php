@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Supervisor;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal;
 
 use Amp\DeferredFuture;
 use Amp\Future;

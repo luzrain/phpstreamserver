@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Scheduler;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal;
 
 use Amp\DeferredFuture;
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\ProcessScheduledEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerFactory;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerFactory;
-use Luzrain\PHPStreamServer\Internal\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\Internal\Status;
 use Psr\Log\LoggerInterface;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Scheduler;
+namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
