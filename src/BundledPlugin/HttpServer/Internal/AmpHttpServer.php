@@ -16,15 +16,12 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\AddServerHeadersMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ClientExceptionHandleMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ReloadStrategyTriggerMiddleware;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ErrorHandlerMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
-use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -57,12 +54,11 @@ final readonly class AmpHttpServer
     ) {
     }
 
-    public function start(LoggerInterface $logger, NetworkTrafficCounter $networkTrafficCounter, HttpServerProcess $worker): void
+    public function start(LoggerInterface $logger, NetworkTrafficCounter $networkTrafficCounter): void
     {
         $middleware = [];
-
+        $errorHandler = new HttpErrorHandler($logger);
         $serverSocketFactory = new ResourceServerSocketFactory();
-
         $clientFactory = new HttpClientFactory(
             logger: $logger,
             connectionLimitPerIp: $this->connectionLimitPerIp,
@@ -75,17 +71,13 @@ final readonly class AmpHttpServer
         }
 
         $serverSocketFactory = new TrafficCountingSocketFactory($serverSocketFactory, $networkTrafficCounter);
-        $middleware[] = new RequestsCounterMiddleware($networkTrafficCounter);
 
         if ($this->concurrencyLimit !== null) {
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        if ($worker instanceof ReloadStrategyAwareInterface) {
-            $middleware[] = new ReloadStrategyTriggerMiddleware($worker);
-        }
-
-        $middleware[] = new ClientExceptionHandleMiddleware();
+        $middleware[] = new ErrorHandlerMiddleware($errorHandler);
+        $middleware[] = new RequestsCounterMiddleware($networkTrafficCounter);
         $middleware[] = new AddServerHeadersMiddleware();
 
         \array_push($middleware, ...$this->middleware);
@@ -114,7 +106,7 @@ final readonly class AmpHttpServer
             $socketHttpServer->expose(...$this->createInternetAddressAndContext($listen));
         }
 
-        $socketHttpServer->start($this->requestHandler, new HttpErrorHandler());
+        $socketHttpServer->start($this->requestHandler, $errorHandler);
     }
 
     /**

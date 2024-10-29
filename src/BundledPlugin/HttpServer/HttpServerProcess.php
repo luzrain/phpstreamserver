@@ -87,7 +87,7 @@ final class HttpServerProcess extends WorkerProcess
 
         $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
 
-        $httpServer->start($this->logger, $networkTrafficCounter, $this);
+        $httpServer->start($this->logger->withChannel('http'), $networkTrafficCounter);
     }
 
     /**

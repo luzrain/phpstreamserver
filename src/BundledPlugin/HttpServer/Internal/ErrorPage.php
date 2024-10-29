@@ -6,19 +6,19 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
 use Luzrain\PHPStreamServer\Server;
 
-final readonly class ErrorPage implements \Stringable
+final readonly class ErrorPage
 {
-    private string $version;
+    public string $server;
 
     public function __construct(
-        private int $code = 500,
-        private string $title = '',
-        private \Throwable|null $exception = null,
+        public int $status = 500,
+        public string $reason = '',
+        public \Throwable|null $exception = null,
     ) {
-        $this->version = Server::VERSION_STRING;
+        $this->server = Server::VERSION_STRING;
     }
 
-    public function __toString(): string
+    public function toHtml(): string
     {
         return $this->exception !== null ? $this->getTemplateWithException($this->exception) : $this->getTemplateWithoutException();
     }
@@ -29,7 +29,7 @@ final readonly class ErrorPage implements \Stringable
             <!DOCTYPE html>
             <html lang="en">
             <head>
-                <title>{$this->code} {$this->title}</title>
+                <title>{$this->status} {$this->reason}</title>
                 <style>
                     body {color: #333; font-family: Verdana, sans-serif; font-size: 0.9em; margin: 0; padding: 1rem;}
                     h1 {margin: 0;}
@@ -37,9 +37,9 @@ final readonly class ErrorPage implements \Stringable
                 </style>
             </head>
             <body>
-            <h1>{$this->code} {$this->title}</h1>
+            <h1>{$this->status} {$this->reason}</h1>
             <hr>
-            <div>{$this->version}</div>
+            <div>{$this->server}</div>
             </body>
             </html>
             HTML;
@@ -52,7 +52,7 @@ final readonly class ErrorPage implements \Stringable
             <!DOCTYPE html>
             <html lang="en">
             <head>
-                <title>{$this->code} {$this->title}</title>
+                <title>{$this->status} {$this->reason}</title>
                 <style>
                     body {color: #333; font-family: Verdana, sans-serif; font-size: 0.9em; margin: 0; padding: 1rem;}
                     h1 {margin: 0;}
@@ -61,14 +61,14 @@ final readonly class ErrorPage implements \Stringable
                 </style>
             </head>
             <body>
-            <h1>{$this->code} {$this->title}</h1>
+            <h1>{$this->status} {$this->reason}</h1>
             <div style="margin: 1rem 0;">
                 <div>{$exceptionClass}: {$exception->getMessage()}</div>
                 <div style="font-size:0.85em;">in <b>{$exception->getFile()}</b> on line <b>{$exception->getLine()}</b></div>
             </div>
             <pre>Stack trace:\n{$exception->getTraceAsString()}</pre>
             <hr>
-            <div>{$this->version}</div>
+            <div>{$this->server}</div>
             </body>
             </html>
             HTML;

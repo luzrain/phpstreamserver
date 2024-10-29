@@ -86,12 +86,21 @@ final class ErrorHandler
             throw new \LogicException(\sprintf('%s(): ErrorHandler is unregistered', __METHOD__), 0, $exception);
         }
 
-        $message = match (true) {
-            $exception instanceof \Error => 'Uncaught Error: ' . $exception->getMessage(),
-            $exception instanceof \ErrorException => 'Uncaught: ' . $exception->getMessage(),
-            default => 'Uncaught Exception: ' . $exception->getMessage(),
+        $title = match (true) {
+            $exception instanceof \Error => 'Error',
+            $exception instanceof \ErrorException => '',
+            default => 'Exception',
         };
 
-        self::$logger->log(LogLevel::CRITICAL, $message, ['exception' => $exception]);
+        $message = \sprintf(
+            'Uncaught %s %s: "%s" in %s:%d',
+            $title,
+            (new \ReflectionClass($exception::class))->getShortName(),
+            $exception->getMessage(),
+            \basename($exception->getFile()),
+            $exception->getLine(),
+        );
+
+        self::$logger->critical($message, ['exception' => $exception]);
     }
 }

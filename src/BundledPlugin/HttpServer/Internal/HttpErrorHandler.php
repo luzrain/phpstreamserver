@@ -5,51 +5,85 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
 use Amp\Http\HttpStatus;
-use Amp\Http\Server\Driver\Internal\AbstractHttpDriver;
 use Amp\Http\Server\ErrorHandler;
+use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\Internal\Functions;
-use Luzrain\PHPStreamServer\Server;
+use Psr\Log\LoggerInterface;
 
 final readonly class HttpErrorHandler implements ErrorHandler
 {
-    public function handleError(int $status, ?string $reason = null, ?Request $request = null): Response
+    public function __construct(private LoggerInterface $logger)
     {
-        $exception = $this->findCausationExceptionInStackTrace();
+    }
 
-        $errorPage = (new ErrorPage(
-            code: $status,
-            title: $reason ?? HttpStatus::getReason($status),
-            exception: Functions::reportErrors() ? $exception : null,
-        ));
+    public function handleError(int $status, string|null $reason = null, Request|null $request = null): Response
+    {
+        $errorPage = new ErrorPage(status: $status, reason: $reason ?? HttpStatus::getReason($status));
 
+        return $this->createResponse($errorPage);
+    }
+
+    public function handleException(\Exception $exception, Request $request): Response
+    {
+        if ($exception instanceof HttpErrorException) {
+            return $this->handleError($exception->getStatus(), $exception->getReason(), $request);
+        }
+
+        $this->logException($exception, $request);
+        $status = HttpStatus::INTERNAL_SERVER_ERROR;
+        $reason = HttpStatus::getReason($status);
+        $errorPage = (new ErrorPage(status: $status, reason: $reason, exception: Functions::reportErrors() ? $exception : null));
+
+        return $this->createResponse($errorPage);
+    }
+
+    private function createResponse(ErrorPage $errorPage): Response
+    {
         $response = new Response(
-            headers: ['content-type' => 'text/html; charset=utf-8'],
-            body: (string) $errorPage,
+            headers: ['content-type' => 'text/html; charset=utf-8', 'server' => $errorPage->server],
+            body: $errorPage->toHtml(),
         );
 
-        $response->setHeader('server', Server::VERSION_STRING);
-        $response->setStatus($status, $reason);
+        $response->setStatus($errorPage->status, $errorPage->reason);
 
         return $response;
     }
 
-    /**
-     * A bit hacky but this is only possible way to get causation throwable since amp ErrorHandler doesn't provide exception itself
-     */
-    private function findCausationExceptionInStackTrace(): \Throwable|null
+    private function logException(\Exception $exception, Request $request): void
     {
-        foreach (\debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 10) as $trace) {
-            if (($trace['object'] ?? null) instanceof AbstractHttpDriver && ($trace['function'] ?? null) === 'handleInternalServerError') {
-                foreach ($trace['args'] ?? [] as $arg) {
-                    if ($arg instanceof \Throwable) {
-                        return $arg;
-                    }
-                }
-                return null;
-            }
-        }
-        return null;
+        $client = $request->getClient();
+        $method = $request->getMethod();
+        $uri = (string) $request->getUri();
+        $protocolVersion = $request->getProtocolVersion();
+        $local = $client->getLocalAddress()->toString();
+        $remote = $client->getRemoteAddress()->toString();
+
+        $title = match (true) {
+            $exception instanceof \Error => 'Error',
+            $exception instanceof \ErrorException => '',
+            default => 'Exception',
+        };
+
+        $message = \sprintf(
+            'Uncaught %s %s: "%s" in %s:%d during request: %s %s HTTP/%s',
+            $title,
+            (new \ReflectionClass($exception::class))->getShortName(),
+            $exception->getMessage(),
+            \basename($exception->getFile()),
+            $exception->getLine(),
+            $method,
+            $uri,
+            $protocolVersion,
+        );
+
+        $this->logger->critical($message, [
+            'exception' => $exception,
+            'method' => $method,
+            'uri' => $uri,
+            'local' => $local,
+            'remote' => $remote,
+        ]);
     }
 }

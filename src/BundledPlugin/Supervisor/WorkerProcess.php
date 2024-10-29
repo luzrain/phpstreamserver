@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
-use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyAwareInterface;
+use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 
-class WorkerProcess extends Process implements ReloadStrategyAwareInterface
+class WorkerProcess extends Process
 {
     final public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
@@ -62,10 +62,10 @@ class WorkerProcess extends Process implements ReloadStrategyAwareInterface
 
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...));
 
-//        EventLoop::setErrorHandler(function (\Throwable $exception) {
-//            ErrorHandler::handleException($exception);
-//            $this->emitReloadEvent($exception);
-//        });
+        EventLoop::setErrorHandler(function (\Throwable $exception) {
+            ErrorHandler::handleException($exception);
+            $this->reloadStrategyTrigger->emitEvent($exception);
+        });
     }
 
     public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
