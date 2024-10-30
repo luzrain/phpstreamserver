@@ -43,24 +43,22 @@ use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerPlugin;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
-use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
+use Luzrain\PHPStreamServer\Server;
 
 $server = new Server();
 
 $server->addPlugin(
     new HttpServerPlugin(),
-    new SupervisorPlugin(),
     new SchedulerPlugin(),
 );
 
 $server->addWorker(
     new HttpServerProcess(
-        name: 'web server',
+        name: 'Web Server',
         count: 1,
         listen: '0.0.0.0:8088',
         onStart: function (HttpServerProcess $worker, mixed &$context): void {
@@ -75,16 +73,16 @@ $server->addWorker(
         }
     ),
     new WorkerProcess(
-        name: 'supervised program',
+        name: 'Supervised Program',
         count: 1,
-        command: function (WorkerProcess_OLD $worker): void {
+        onStart: function (WorkerProcess $worker): void {
             // custom long running process
         },
     ),
     new PeriodicProcess(
-        name: 'scheduled program',
+        name: 'Scheduled program',
         schedule: '*/1 * * * *',
-        command: function (PeriodicProcess_OLD $worker): void {
+        onStart: function (PeriodicProcess $worker): void {
             // runs every 1 minute
         },
     ),
