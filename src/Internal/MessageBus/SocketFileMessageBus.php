@@ -17,18 +17,28 @@ use function Amp\delay;
  */
 final class SocketFileMessageBus implements MessageBus
 {
+    private bool $stopped = false;
+    private \WeakMap $inProgress;
     private SocketConnector $connector;
 
     public function __construct(string $socketFile)
     {
+        $this->inProgress = new \WeakMap();
         $this->connector = new StaticSocketConnector("unix://{$socketFile}", new DnsSocketConnector());
     }
 
     public function dispatch(Message $message): Future
     {
-        $connector = &$this->connector;
+        if ($this->stopped) {
+            return async(static function () {
+                while(true) {
+                    delay(60);
+                }
+            });
+        }
 
-        return async(static function () use (&$connector, &$message): mixed {
+        $connector = &$this->connector;
+        $future = async(static function () use (&$connector, &$message): mixed {
             while (true) {
                 try {
                     $socket = $connector->connect('');
@@ -45,6 +55,25 @@ final class SocketFileMessageBus implements MessageBus
             $buffer = $socket->read(limit: PHP_INT_MAX);
 
             return \unserialize($buffer);
+        });
+
+        $inProgresss = &$this->inProgress;
+        $inProgresss->offsetSet($future, true);
+        $future->finally(static fn () => $inProgresss->offsetUnset($future));
+
+        return $future;
+    }
+
+    public function stop(): Future
+    {
+        $this->stopped = true;
+
+        return async(function () {
+            while ($this->inProgress->count() > 0) {
+                delay(0.01);
+            }
+
+            return null;
         });
     }
 }

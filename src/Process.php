@@ -15,6 +15,7 @@ use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\Status;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Revolt\EventLoop;
@@ -30,7 +31,7 @@ abstract class Process implements MessageBus
     public readonly int $pid;
     protected readonly Container $container;
     public readonly LoggerInterface $logger;
-    private readonly MessageBus $messageBus;
+    private readonly SocketFileMessageBus $messageBus;
     private readonly DeferredFuture $startingFuture;
 
     /**
@@ -184,6 +185,7 @@ abstract class Process implements MessageBus
 
         EventLoop::defer(function (): void {
             $this->startingFuture->getFuture()->await();
+            $this->messageBus->stop()->await();
             if ($this->onStop !== null) {
                 ($this->onStop)($this);
             }
