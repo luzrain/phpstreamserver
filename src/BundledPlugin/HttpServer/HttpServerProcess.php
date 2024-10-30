@@ -37,6 +37,7 @@ final class HttpServerProcess extends WorkerProcess
         private int|null $connectionLimit = null,
         private int|null $connectionLimitPerIp = null,
         private int|null $concurrencyLimit = null,
+        array $reloadStrategies = [],
     ) {
         parent::__construct(
             name: $name,
@@ -47,6 +48,7 @@ final class HttpServerProcess extends WorkerProcess
             onStart: $this->onStart(...),
             onStop: $onStop,
             onReload: $onReload,
+            reloadStrategies: $reloadStrategies,
         );
     }
 
@@ -87,7 +89,7 @@ final class HttpServerProcess extends WorkerProcess
 
         $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
 
-        $httpServer->start($this->logger->withChannel('http'), $networkTrafficCounter);
+        $httpServer->start($this->logger->withChannel('http'), $networkTrafficCounter, $this->reloadStrategyTrigger);
     }
 
     /**

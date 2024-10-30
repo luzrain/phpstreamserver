@@ -17,12 +17,19 @@ final class ReloadStrategyTrigger
     /**
      * @param array<ReloadStrategyInterface> $reloadStrategies
      */
-    public function __construct(private readonly \Closure $reloadCallback, array $reloadStrategies)
+    public function __construct(private readonly \Closure $reloadCallback, array $reloadStrategies = [])
+    {
+        $this->addReloadStrategy(...$reloadStrategies);
+    }
+
+    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
     {
         foreach ($reloadStrategies as $reloadStrategy) {
             if ($reloadStrategy instanceof TimerReloadStrategyInterface) {
                 EventLoop::repeat($reloadStrategy->getInterval(), function () use ($reloadStrategy): void {
-                    $reloadStrategy->shouldReload() && $this->reload();
+                    if($reloadStrategy->shouldReload()) {
+                        $this->reload();
+                    }
                 });
             } else {
                 $this->reloadStrategies[] = $reloadStrategy;

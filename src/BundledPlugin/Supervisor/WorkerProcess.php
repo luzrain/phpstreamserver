@@ -82,4 +82,9 @@ class WorkerProcess extends Process
             $this->stop(self::RELOAD_EXIT_CODE);
         }
     }
+
+    public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
+    {
+        $this->reloadStrategyTrigger->addReloadStrategy(...$reloadStrategies);
+    }
 }

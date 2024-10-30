@@ -16,11 +16,9 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\AddServerHeadersMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\ErrorHandlerMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\RequestsCounterMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Middleware\StaticMiddleware;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 use Psr\Log\LoggerInterface;
 
@@ -54,8 +52,11 @@ final readonly class AmpHttpServer
     ) {
     }
 
-    public function start(LoggerInterface $logger, NetworkTrafficCounter $networkTrafficCounter): void
-    {
+    public function start(
+        LoggerInterface $logger,
+        NetworkTrafficCounter $networkTrafficCounter,
+        ReloadStrategyTrigger $reloadStrategyTrigger,
+    ): void {
         $middleware = [];
         $errorHandler = new HttpErrorHandler($logger);
         $serverSocketFactory = new ResourceServerSocketFactory();
@@ -76,9 +77,7 @@ final readonly class AmpHttpServer
             $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        $middleware[] = new ErrorHandlerMiddleware($errorHandler);
-        $middleware[] = new RequestsCounterMiddleware($networkTrafficCounter);
-        $middleware[] = new AddServerHeadersMiddleware();
+        $middleware[] = new AmpHttpServerMiddleware($errorHandler, $networkTrafficCounter, $reloadStrategyTrigger);
 
         \array_push($middleware, ...$this->middleware);
 
