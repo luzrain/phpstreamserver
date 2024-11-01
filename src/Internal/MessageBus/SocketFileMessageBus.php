@@ -9,6 +9,7 @@ use Amp\Socket\ConnectException;
 use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\SocketConnector;
 use Amp\Socket\StaticSocketConnector;
+use Amp\Socket\UnixAddress;
 use function Amp\async;
 use function Amp\delay;
 
@@ -24,7 +25,7 @@ final class SocketFileMessageBus implements MessageBus
     public function __construct(string $socketFile)
     {
         $this->inProgress = new \WeakMap();
-        $this->connector = new StaticSocketConnector("unix://{$socketFile}", new DnsSocketConnector());
+        $this->connector = new StaticSocketConnector(new UnixAddress($socketFile), new DnsSocketConnector());
     }
 
     public function dispatch(Message $message): Future

@@ -8,6 +8,7 @@ use Amp\ByteStream\StreamException;
 use Amp\Future;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
+use Amp\Socket\UnixAddress;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\weakClosure;
@@ -28,9 +29,11 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
 
     public function __construct(string $socketFile)
     {
-        $this->socket = (new ResourceServerSocketFactory(chunkSize: PHP_INT_MAX))->listen("unix://$socketFile");
+        $this->socket = (new ResourceServerSocketFactory(chunkSize: PHP_INT_MAX))->listen(new UnixAddress($socketFile));
         $server = &$this->socket;
         $subscribers = &$this->subscribers;
+
+        \chmod($socketFile, 0666);
 
         $this->callbackId = EventLoop::defer(static function () use (&$server, &$subscribers) {
             while ($socket = $server->accept()) {
