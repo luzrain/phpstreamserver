@@ -22,7 +22,7 @@ final class WorkerPool
     private array $workerPool = [];
 
     /**
-     * @var ProcessStatus
+     * @var array<int, array<int, ProcessStatus>>
      */
     private array $processStatusMap = [];
 
@@ -76,6 +76,13 @@ final class WorkerPool
         if (null !== $worker = $this->getWorkerByPid($pid)) {
             $this->processStatusMap[$worker->id][$pid]->blocked = false;
             $this->processStatusMap[$worker->id][$pid]->time = $time;
+        }
+    }
+
+    public function setReloadable(int $pid, bool $reloadable): void
+    {
+        if (null !== $worker = $this->getWorkerByPid($pid)) {
+            $this->processStatusMap[$worker->id][$pid]->reloadable = $reloadable;
         }
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSetOptionsEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
@@ -67,6 +68,13 @@ class WorkerProcess extends Process
         EventLoop::setErrorHandler(function (\Throwable $exception) {
             ErrorHandler::handleException($exception);
             $this->reloadStrategyTrigger->emitEvent($exception);
+        });
+
+        EventLoop::queue(function (): void {
+            $this->dispatch(new ProcessSetOptionsEvent(
+                pid: $this->pid,
+                reloadable: $this->reloadable,
+            ));
         });
     }
 

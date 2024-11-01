@@ -10,9 +10,10 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal;
 final class ProcessStatus
 {
     public int $pid;
+    public int $time;
     public bool $detached = false;
     public bool $blocked = false;
-    public int $time;
+    public bool $reloadable = true;
 
     public function __construct(int $pid)
     {

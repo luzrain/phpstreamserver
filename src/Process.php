@@ -13,6 +13,7 @@ use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
+use Luzrain\PHPStreamServer\Internal\MessageBus\CompositeMessage;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
@@ -32,7 +33,7 @@ abstract class Process implements MessageBus
     protected readonly Container $container;
     public readonly LoggerInterface $logger;
     private readonly SocketFileMessageBus $messageBus;
-    private readonly DeferredFuture $startingFuture;
+    private DeferredFuture|null $startingFuture;
 
     /**
      * @param null|\Closure(self):void $onStart
@@ -79,38 +80,38 @@ abstract class Process implements MessageBus
         EventLoop::onSignal(SIGINT, static fn() => null);
         EventLoop::onSignal(SIGTERM, fn() => $this->stop());
 
-        $this->start();
-
-        $spawnedEvent = function (): void {
-            $this->messageBus->dispatch(new ProcessSpawnedEvent(
-                workerId: $this->id,
-                pid: $this->pid,
-                user: $this->getUser(),
-                name: $this->name,
-                startedAt: new \DateTimeImmutable('now'),
-            ));
-        };
-
-        $heartbeatEvent = function (): void {
-            $this->messageBus->dispatch(new ProcessHeartbeatEvent(
+        $heartbeatEvent = function (): ProcessHeartbeatEvent {
+            return new ProcessHeartbeatEvent(
                 pid: $this->pid,
                 memory: \memory_get_usage(),
                 time: \hrtime(true),
-            ));
+            );
         };
 
         $this->startingFuture = new DeferredFuture();
 
-        EventLoop::repeat(self::HEARTBEAT_PERIOD, $heartbeatEvent);
+        EventLoop::repeat(self::HEARTBEAT_PERIOD, function () use ($heartbeatEvent) {
+            $this->messageBus->dispatch($heartbeatEvent());
+        });
 
-        EventLoop::defer(function () use ($spawnedEvent, $heartbeatEvent): void {
-            $spawnedEvent();
-            $heartbeatEvent();
+        EventLoop::queue(function () use ($heartbeatEvent): void {
+            $this->messageBus->dispatch(new CompositeMessage([
+                new ProcessSpawnedEvent(
+                    workerId: $this->id,
+                    pid: $this->pid,
+                    user: $this->getUser(),
+                    name: $this->name,
+                    startedAt: new \DateTimeImmutable('now'),
+                ),
+                $heartbeatEvent(),
+            ]))->await();
+            $this->start();
             if ($this->onStart !== null) {
                 ($this->onStart)($this);
             }
             $this->status = Status::RUNNING;
             $this->startingFuture->complete();
+            $this->startingFuture = null;
         });
 
         EventLoop::run();
@@ -124,35 +125,6 @@ abstract class Process implements MessageBus
      * @return list<class-string<Plugin>>
      */
     abstract static public function handleBy(): array;
-
-    /**
-     * Stop and destroy the process event loop and communication with the master process.
-     * After the process is detached, only the basic supervisor will work for it.
-     * This can be useful to give control to an external program and have it monitored by the master process.
-     */
-    public function detach(): void
-    {
-        $identifiers = EventLoop::getDriver()->getIdentifiers();
-        \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
-        EventLoop::getDriver()->stop();
-        unset($this->logger);
-        unset($this->socketFile);
-    }
-
-    /**
-     * Give control to an external program
-     *
-     * @param string $path path to a binary executable or a script
-     * @param array $args array of argument strings passed to the program
-     * @see https://www.php.net/manual/en/function.pcntl-exec.php
-     */
-    public function exec(string $path, array $args = []): never
-    {
-        $this->detach();
-        $envVars = [...\getenv(), ...$_ENV];
-        \pcntl_exec($path, $args, $envVars);
-        exit(0);
-    }
 
     final public function getUser(): string
     {
@@ -184,7 +156,7 @@ abstract class Process implements MessageBus
         $this->exitCode = $code;
 
         EventLoop::defer(function (): void {
-            $this->startingFuture->getFuture()->await();
+            $this->startingFuture?->getFuture()->await();
             $this->messageBus->stop()->await();
             if ($this->onStop !== null) {
                 ($this->onStop)($this);

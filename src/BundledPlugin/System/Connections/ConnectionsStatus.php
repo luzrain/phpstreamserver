@@ -70,7 +70,7 @@ final class ConnectionsStatus
 
     public function getProcessConnectionsInfo(int $pid): ProcessConnectionsInfo
     {
-        return $this->processConnections[$pid];
+        return $this->processConnections[$pid] ?? new ProcessConnectionsInfo(pid: $pid);
     }
 
     /**
