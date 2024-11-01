@@ -131,4 +131,20 @@ final class Functions
     {
         return \sprintf('%s/phpss%s.socket', self::getRunDirectory(), \hash('xxh32', self::getStartFile()));
     }
+
+    public static function absoluteBinaryPath(string $binary): string
+    {
+        if (!\str_starts_with($binary, '/') && \is_string($absoluteBinaryPath = \shell_exec("command -v $binary"))) {
+            $binary = \trim($absoluteBinaryPath);
+        }
+
+        return $binary;
+    }
+
+    public static function memoryUsageByPid(int $pid): int
+    {
+        $out = \shell_exec("ps -o rss= -p $pid 2>/dev/null");
+
+        return ((int) \trim((string) $out)) * 1024;
+    }
 }

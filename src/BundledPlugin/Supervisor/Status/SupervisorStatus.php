@@ -12,6 +12,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\Process;
+use Revolt\EventLoop;
 use function Amp\weakClosure;
 
 final class SupervisorStatus
@@ -69,8 +71,16 @@ final class SupervisorStatus
             }
 
             $this->processes[$message->pid]->detached = true;
-            $this->processes[$message->pid]->memory = 0;
             $this->processes[$message->pid]->blocked = false;
+
+            $checkMemoryUsageClosure = function (string $id) use ($message) {
+                isset($this->processes[$message->pid])
+                    ? $this->processes[$message->pid]->memory = Functions::memoryUsageByPid($message->pid)
+                    : EventLoop::cancel($id);
+            };
+
+            EventLoop::repeat(Process::HEARTBEAT_PERIOD, $checkMemoryUsageClosure);
+            EventLoop::delay(0.2, $checkMemoryUsageClosure);
         }));
     }
 
