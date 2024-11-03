@@ -11,14 +11,19 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionCreatedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RequestCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\TxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
 use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Revolt\EventLoop;
 
-/**
- * @TODO: throttle dispatching
- */
-final readonly class NetworkTrafficCounter
+final class NetworkTrafficCounter
 {
-    public function __construct(private MessageBus $bus)
+    private const MAX_FLUSH_TIME = 0.5;
+
+    private array $queue = [];
+    private string $callbackId = '';
+
+    public function __construct(private readonly MessageBus $messageBus)
     {
     }
 
@@ -29,7 +34,7 @@ final readonly class NetworkTrafficCounter
         \assert($localAddress instanceof InternetAddress);
         \assert($remoteAddress instanceof InternetAddress);
 
-        $this->bus->dispatch(new ConnectionCreatedEvent(
+        $this->queue(new ConnectionCreatedEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             connection: new Connection(
@@ -45,7 +50,7 @@ final readonly class NetworkTrafficCounter
 
     public function removeConnection(Socket $socket): void
     {
-        $this->bus->dispatch(new ConnectionClosedEvent(
+        $this->queue(new ConnectionClosedEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
         ));
@@ -56,7 +61,7 @@ final readonly class NetworkTrafficCounter
      */
     public function incRx(Socket $socket, int $val): void
     {
-        $this->bus->dispatch(new RxCounterIncreaseEvent(
+        $this->queue(new RxCounterIncreaseEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             rx: $val,
@@ -68,7 +73,7 @@ final readonly class NetworkTrafficCounter
      */
     public function incTx(Socket $socket, int $val): void
     {
-        $this->bus->dispatch(new TxCounterIncreaseEvent(
+        $this->queue(new TxCounterIncreaseEvent(
             pid: \posix_getpid(),
             connectionId: \spl_object_id($socket),
             tx: $val,
@@ -80,9 +85,27 @@ final readonly class NetworkTrafficCounter
      */
     public function incRequests(int $val = 1): void
     {
-        $this->bus->dispatch(new RequestCounterIncreaseEvent(
+        $this->queue(new RequestCounterIncreaseEvent(
             pid: \posix_getpid(),
             requests: $val,
         ));
+    }
+
+    private function queue(Message $message): void
+    {
+        $this->queue[] = $message;
+
+        if ($this->callbackId === '') {
+            $this->callbackId = EventLoop::delay(self::MAX_FLUSH_TIME, fn () => $this->flush());
+        }
+    }
+
+    private function flush(): void
+    {
+        $queue = $this->queue;
+        EventLoop::cancel($this->callbackId);
+        $this->queue = [];
+        $this->callbackId = '';
+        $this->messageBus->dispatch(new CompositeMessage($queue));
     }
 }
