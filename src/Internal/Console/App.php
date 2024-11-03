@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Console;
 
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Server;
+use function Luzrain\PHPStreamServer\Internal\getStartFile;
 
 /**
  * @internal
@@ -127,7 +127,7 @@ final class App
     {
         echo \sprintf("%s (%s)\n", Server::TITLE, Server::VERSION);
         echo "<color;fg=yellow>Usage:</>\n";
-        echo \sprintf("  %s <command> [options]\n", \basename(Functions::getStartFile()));
+        echo \sprintf("  %s <command> [options]\n", \basename(getStartFile()));
         echo "<color;fg=yellow>Commands:</>\n";
         echo (new Table(indent: 1))->addRows(\array_map(
             array: $this->commands,
@@ -145,7 +145,7 @@ final class App
         echo "<color;fg=yellow>Description:</>\n";
         echo \sprintf("  %s\n", $command::getDescription());
         echo "<color;fg=yellow>Usage:</>\n";
-        echo \sprintf("  %s %s [options]\n", \basename(Functions::getStartFile()), $command::getCommand());
+        echo \sprintf("  %s %s [options]\n", \basename(getStartFile()), $command::getCommand());
         echo "<color;fg=yellow>Options:</>\n";
         echo (new Table(indent: 1))->addRows($this->createOptionsTableRows());
     }

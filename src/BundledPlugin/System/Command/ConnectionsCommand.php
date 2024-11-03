@@ -9,8 +9,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use function Luzrain\PHPStreamServer\Internal\humanFileSize;
 
 /**
  * @internal
@@ -50,7 +50,7 @@ final class ConnectionsCommand extends Command
                         $c->pid,
                         $c->localIp . ':' . $c->localPort,
                         $c->remoteIp . ':' . $c->remotePort,
-                        \sprintf('(%s / %s)', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx)),
+                        \sprintf('(%s / %s)', humanFileSize($c->rx), humanFileSize($c->tx)),
                     ];
                 }));
         } else {

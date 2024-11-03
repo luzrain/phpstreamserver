@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Console;
 
-use Luzrain\PHPStreamServer\Internal\Functions;
+use function Luzrain\PHPStreamServer\Internal\isRunning;
 
 /**
  * @internal
@@ -34,14 +34,14 @@ abstract class Command
 
     final public function assertServerIsRunning(string $pidFile): void
     {
-        if (!Functions::isRunning($pidFile)) {
+        if (!isRunning($pidFile)) {
             throw new ServerIsNotRunning();
         }
     }
 
     final public function assertServerIsNotRunning(string $pidFile): void
     {
-        if (Functions::isRunning($pidFile)) {
+        if (isRunning($pidFile)) {
             throw new ServerIsRunning();
         }
     }

@@ -38,7 +38,10 @@
     "autoload": {
         "psr-4": {
             "Luzrain\\PHPStreamServer\\": "src/"
-        }
+        },
+        "files": [
+            "src/Internal/functions.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

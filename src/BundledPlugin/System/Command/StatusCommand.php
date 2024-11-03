@@ -9,9 +9,12 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Server;
+use function Luzrain\PHPStreamServer\Internal\getDriverName;
+use function Luzrain\PHPStreamServer\Internal\getStartFile;
+use function Luzrain\PHPStreamServer\Internal\humanFileSize;
+use function Luzrain\PHPStreamServer\Internal\isRunning;
 
 /**
  * @internal
@@ -27,9 +30,9 @@ final class StatusCommand extends Command
          * @var array{pidFile: string, socketFile: string} $args
          */
 
-        $isRunning = Functions::isRunning($args['pidFile']);
-        $eventLoop = Functions::getDriverName();
-        $startFile = Functions::getStartFile();
+        $isRunning = isRunning($args['pidFile']);
+        $eventLoop = getDriverName();
+        $startFile = getStartFile();
 
         if ($isRunning) {
             $bus = new SocketFileMessageBus($args['socketFile']);
@@ -60,7 +63,7 @@ final class StatusCommand extends Command
             $rows = [...$rows, ...[
                 ['Workers count:', $workersCount],
                 ['Processes count:', $processesCount],
-                ['Memory usage:', Functions::humanFileSize($totalMemory)],
+                ['Memory usage:', humanFileSize($totalMemory)],
             ]];
         }
 

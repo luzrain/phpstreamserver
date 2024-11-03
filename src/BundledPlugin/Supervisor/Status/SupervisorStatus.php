@@ -10,11 +10,12 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessExitEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessHeartbeatEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
+use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
+use function Luzrain\PHPStreamServer\Internal\memoryUsageByPid;
 
 final class SupervisorStatus
 {
@@ -75,7 +76,7 @@ final class SupervisorStatus
 
             $checkMemoryUsageClosure = function (string $id) use ($message) {
                 isset($this->processes[$message->pid])
-                    ? $this->processes[$message->pid]->memory = Functions::memoryUsageByPid($message->pid)
+                    ? $this->processes[$message->pid]->memory = memoryUsageByPid($message->pid)
                     : EventLoop::cancel($id);
             };
 
@@ -87,7 +88,7 @@ final class SupervisorStatus
     public function addWorker(WorkerProcess $worker): void
     {
         $this->workers[$worker->id] = new WorkerInfo(
-            user: $worker->getUser() ?? Functions::getCurrentUser(),
+            user: $worker->getUser() ?? getCurrentUser(),
             name: $worker->name,
             count: $worker->count,
         );

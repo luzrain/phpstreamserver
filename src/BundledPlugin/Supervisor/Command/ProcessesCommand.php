@@ -10,8 +10,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
 use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use function Luzrain\PHPStreamServer\Internal\humanFileSize;
 
 /**
  * @internal
@@ -60,13 +60,13 @@ final class ProcessesCommand extends Command
                     return [
                         $w->pid,
                         $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
-                        $w->memory > 0 ? Functions::humanFileSize($w->memory) : '<color;fg=gray>??</>',
+                        $w->memory > 0 ? humanFileSize($w->memory) : '<color;fg=gray>??</>',
                         $w->name,
                         \count($c->connections) === 0 ? '<color;fg=gray>0</>' : \count($c->connections),
                         $c->requests === 0 ? '<color;fg=gray>0</>' : $c->requests,
                         $c->rx === 0 && $c->tx === 0
-                            ? \sprintf('<color;fg=gray>(%s / %s)</>', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx))
-                            : \sprintf('(%s / %s)', Functions::humanFileSize($c->rx), Functions::humanFileSize($c->tx)),
+                            ? \sprintf('<color;fg=gray>(%s / %s)</>', humanFileSize($c->rx), humanFileSize($c->tx))
+                            : \sprintf('(%s / %s)', humanFileSize($c->rx), humanFileSize($c->tx)),
                         match(true) {
                             $w->detached => '[<color;fg=cyan>DETACHED</>]',
                             $w->blocked => '[<color;fg=yellow>BLOCKED</>]',

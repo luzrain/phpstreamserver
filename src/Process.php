@@ -11,7 +11,6 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
 use Luzrain\PHPStreamServer\Internal\MessageBus\CompositeMessage;
 use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
@@ -21,6 +20,8 @@ use Luzrain\PHPStreamServer\Internal\Status;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
+use function Luzrain\PHPStreamServer\Internal\getCurrentGroup;
+use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
 
 abstract class Process implements MessageBus
 {
@@ -72,7 +73,7 @@ abstract class Process implements MessageBus
         EventLoop::setErrorHandler(ErrorHandler::handleException(...));
 
         try {
-            Functions::setUserAndGroup($this->user, $this->group);
+            $this->setUserAndGroup($this->user, $this->group);
         } catch (UserChangeException $e) {
             $this->logger->warning($e->getMessage(), [(new \ReflectionObject($this))->getShortName() => $this->name]);
         }
@@ -128,12 +129,12 @@ abstract class Process implements MessageBus
 
     final public function getUser(): string
     {
-        return $this->user ?? Functions::getCurrentUser();
+        return $this->user ?? getCurrentUser();
     }
 
     final public function getGroup(): string
     {
-        return $this->group ?? Functions::getCurrentGroup();
+        return $this->group ?? getCurrentGroup();
     }
 
     /**
@@ -163,5 +164,44 @@ abstract class Process implements MessageBus
             }
             EventLoop::getDriver()->stop();
         });
+    }
+
+    /**
+     * @throws UserChangeException
+     */
+    private function setUserAndGroup(string|null $user = null, string|null $group = null): void
+    {
+        if ($user === null && $group === null) {
+            return;
+        }
+
+        if (\posix_getuid() !== 0) {
+            throw new UserChangeException('You must have the root privileges to change the user and group');
+        }
+
+        $user ??= getCurrentUser();
+
+        // Get uid
+        if ($userInfo = \posix_getpwnam($user)) {
+            $uid = $userInfo['uid'];
+        } else {
+            throw new UserChangeException(\sprintf('User "%s" does not exist', $user));
+        }
+
+        // Get gid
+        if ($group === null) {
+            $gid = $userInfo['gid'];
+        } elseif ($groupInfo = \posix_getgrnam($group)) {
+            $gid = $groupInfo['gid'];
+        } else {
+            throw new UserChangeException(\sprintf('Group "%s" does not exist', $group));
+        }
+
+        // Set uid and gid
+        if ($uid !== \posix_getuid() || $gid !== \posix_getgid()) {
+            if (!\posix_setgid($gid) || !\posix_initgroups($userInfo['name'], $gid) || !\posix_setuid($uid)) {
+                throw new UserChangeException('Changing guid or uid fails');
+            }
+        }
     }
 }

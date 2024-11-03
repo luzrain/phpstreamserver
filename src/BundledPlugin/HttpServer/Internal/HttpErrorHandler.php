@@ -9,8 +9,8 @@ use Amp\Http\Server\ErrorHandler;
 use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Psr\Log\LoggerInterface;
+use function Luzrain\PHPStreamServer\Internal\reportErrors;
 
 final readonly class HttpErrorHandler implements ErrorHandler
 {
@@ -34,7 +34,7 @@ final readonly class HttpErrorHandler implements ErrorHandler
         $this->logException($exception, $request);
         $status = HttpStatus::INTERNAL_SERVER_ERROR;
         $reason = HttpStatus::getReason($status);
-        $errorPage = (new ErrorPage(status: $status, reason: $reason, exception: Functions::reportErrors() ? $exception : null));
+        $errorPage = (new ErrorPage(status: $status, reason: $reason, exception: reportErrors() ? $exception : null));
 
         return $this->createResponse($errorPage);
     }

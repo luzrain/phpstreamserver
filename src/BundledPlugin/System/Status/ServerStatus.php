@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Status;
 
-use Luzrain\PHPStreamServer\Internal\Functions;
+use function Luzrain\PHPStreamServer\Internal\getDriverName;
+use function Luzrain\PHPStreamServer\Internal\getStartFile;
 
 final readonly class ServerStatus
 {
@@ -14,8 +15,8 @@ final readonly class ServerStatus
 
     public function __construct()
     {
-        $this->eventLoop = Functions::getDriverName();
-        $this->startFile = Functions::getStartFile();
+        $this->eventLoop = getDriverName();
+        $this->startFile = getStartFile();
         $this->startedAt = new \DateTimeImmutable('now');
     }
 }

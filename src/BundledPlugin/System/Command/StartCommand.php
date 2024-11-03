@@ -8,11 +8,11 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\WorkerInfo;
 use Luzrain\PHPStreamServer\Internal\Console\Command;
 use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Luzrain\PHPStreamServer\Server;
+use function Luzrain\PHPStreamServer\Internal\getDriverName;
 
 /**
  * @internal
@@ -54,7 +54,7 @@ final class StartCommand extends Command
         $supervisorStatus = $masterProcess->masterContainer->get(SupervisorStatus::class);
         \assert($supervisorStatus instanceof SupervisorStatus);
 
-        $eventLoop = Functions::getDriverName();
+        $eventLoop = getDriverName();
 
         echo "❯ " . Server::TITLE . "\n";
 

@@ -166,7 +166,7 @@ final class MasterProcess
      */
     private function start(bool $noOutput = false): void
     {
-        $startFile = Functions::getStartFile();
+        $startFile = getStartFile();
 
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
@@ -320,7 +320,7 @@ final class MasterProcess
 
     public function isRunning(): bool
     {
-        return $this->status === Status::RUNNING || Functions::isRunning($this->pidFile);
+        return $this->status === Status::RUNNING || isRunning($this->pidFile);
     }
 
     private function free(): void

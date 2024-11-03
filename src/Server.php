@@ -7,8 +7,9 @@ namespace Luzrain\PHPStreamServer;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
 use Luzrain\PHPStreamServer\BundledPlugin\System\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\Console\App;
-use Luzrain\PHPStreamServer\Internal\Functions;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
+use function Luzrain\PHPStreamServer\Internal\getDefaultPidFile;
+use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
 
 final class Server
 {
@@ -28,8 +29,8 @@ final class Server
         int $stopTimeout = 10,
         float $restartDelay = 0.25,
     ) {
-        $this->pidFile ??= Functions::getDefaultPidFile();
-        $this->socketFile ??= Functions::getDefaultSocketFile();
+        $this->pidFile ??= getDefaultPidFile();
+        $this->socketFile ??= getDefaultSocketFile();
         $this->addPlugin(new SystemPlugin());
         $this->addPlugin(new SupervisorPlugin($stopTimeout, $restartDelay));
     }
