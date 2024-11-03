@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Event\StopServerCommand;
+use Luzrain\PHPStreamServer\Console\Command;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\MessageBus\Message\StopServerCommand;
 use Luzrain\PHPStreamServer\Server;
 
 /**
@@ -14,8 +14,8 @@ use Luzrain\PHPStreamServer\Server;
  */
 final class StopCommand extends Command
 {
-    protected const COMMAND = 'stop';
-    protected const DESCRIPTION = 'Stop server';
+    public const COMMAND = 'stop';
+    public const DESCRIPTION = 'Stop server';
 
     public function execute(array $args): int
     {

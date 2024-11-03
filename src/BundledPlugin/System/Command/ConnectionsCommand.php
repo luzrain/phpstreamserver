@@ -6,10 +6,10 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\Connection;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use function Luzrain\PHPStreamServer\Internal\humanFileSize;
 
 /**
@@ -17,8 +17,8 @@ use function Luzrain\PHPStreamServer\Internal\humanFileSize;
  */
 final class ConnectionsCommand extends Command
 {
-    protected const COMMAND = 'connections';
-    protected const DESCRIPTION = 'Show active connections';
+    public const COMMAND = 'connections';
+    public const DESCRIPTION = 'Show active connections';
 
     public function execute(array $args): int
     {

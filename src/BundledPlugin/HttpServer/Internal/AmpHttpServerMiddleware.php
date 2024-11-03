@@ -8,16 +8,18 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 use Luzrain\PHPStreamServer\Server;
 
+/**
+ * @internal
+ */
 final readonly class AmpHttpServerMiddleware implements Middleware
 {
     public function __construct(
         private HttpErrorHandler $errorHandler,
         private NetworkTrafficCounter $networkTrafficCounter,
-        private ReloadStrategyTrigger $reloadStrategyTrigger,
+        private \Closure $reloadStrategyTrigger,
     ) {
     }
 
@@ -27,11 +29,11 @@ final readonly class AmpHttpServerMiddleware implements Middleware
             $response = $requestHandler->handleRequest($request);
         } catch (\Throwable $exception) {
             $response = $this->errorHandler->handleException($exception, $request);
-            $this->reloadStrategyTrigger->emitEvent($exception);
+            ($this->reloadStrategyTrigger)($exception);
         }
 
         $this->networkTrafficCounter->incRequests();
-        $this->reloadStrategyTrigger->emitEvent($request);
+        ($this->reloadStrategyTrigger)($request);
 
         if (!$response->hasHeader('server')) {
             $response->setHeader('server', Server::VERSION_STRING);

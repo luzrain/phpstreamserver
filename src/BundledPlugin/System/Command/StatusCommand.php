@@ -6,10 +6,10 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use Luzrain\PHPStreamServer\Server;
 use function Luzrain\PHPStreamServer\Internal\getDriverName;
 use function Luzrain\PHPStreamServer\Internal\getStartFile;
@@ -21,8 +21,8 @@ use function Luzrain\PHPStreamServer\Internal\isRunning;
  */
 final class StatusCommand extends Command
 {
-    protected const COMMAND = 'status';
-    protected const DESCRIPTION = 'Show server status';
+    public const COMMAND = 'status';
+    public const DESCRIPTION = 'Show server status';
 
     public function execute(array $args): int
     {

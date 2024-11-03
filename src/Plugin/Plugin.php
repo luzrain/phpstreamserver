@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Plugin;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\MasterProcessIntarface;
 use Luzrain\PHPStreamServer\Process;
 use function Amp\async;
 
@@ -22,7 +22,7 @@ abstract class Plugin
     /**
      * Initialize. Ecexutes before start
      */
-    public function init(MasterProcess $masterProcess): void
+    public function init(MasterProcessIntarface $masterProcess): void
     {
     }
 

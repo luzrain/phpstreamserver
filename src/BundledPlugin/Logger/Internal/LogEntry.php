@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
-use Luzrain\PHPStreamServer\Internal\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\Message;
 
+/**
+ * @internal
+ */
 final readonly class LogEntry implements Message
 {
     public function __construct(

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessDetachedEvent;
 use function Luzrain\PHPStreamServer\Internal\absoluteBinaryPath;
 
 class ExternalProcess extends WorkerProcess

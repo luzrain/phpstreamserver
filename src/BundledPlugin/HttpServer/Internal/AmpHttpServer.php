@@ -18,7 +18,6 @@ use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Middleware\StaticMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyTrigger;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 use Psr\Log\LoggerInterface;
 
@@ -55,7 +54,7 @@ final readonly class AmpHttpServer
     public function start(
         LoggerInterface $logger,
         NetworkTrafficCounter $networkTrafficCounter,
-        ReloadStrategyTrigger $reloadStrategyTrigger,
+        \Closure $reloadStrategyTrigger,
     ): void {
         $middleware = [];
         $errorHandler = new HttpErrorHandler($logger);

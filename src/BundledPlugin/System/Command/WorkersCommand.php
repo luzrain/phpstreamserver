@@ -6,18 +6,18 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\WorkerInfo;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 
 /**
  * @internal
  */
 final class WorkersCommand extends Command
 {
-    protected const COMMAND = 'workers';
-    protected const DESCRIPTION = 'Show workers status';
+    public const COMMAND = 'workers';
+    public const DESCRIPTION = 'Show workers status';
 
     public function execute(array $args): int
     {

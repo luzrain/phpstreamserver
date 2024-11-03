@@ -12,6 +12,9 @@ use Amp\Http\Server\Response;
 use Psr\Log\LoggerInterface;
 use function Luzrain\PHPStreamServer\Internal\reportErrors;
 
+/**
+ * @internal
+ */
 final readonly class HttpErrorHandler implements ErrorHandler
 {
     public function __construct(private LoggerInterface $logger)

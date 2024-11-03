@@ -6,10 +6,6 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger;
 
 use Cron\CronExpression;
 
-/**
- * @psalm-suppress UndefinedClass
- * @internal
- */
 final class CronExpressionTrigger implements TriggerInterface
 {
     private CronExpression $expression;

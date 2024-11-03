@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\PeriodicWorkerInfo;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\SchedulerStatus;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\PeriodicWorkerInfo;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 
 /**
  * @internal
  */
 final class SchedulerCommand extends Command
 {
-    protected const COMMAND = 'scheduler';
-    protected const DESCRIPTION = 'Show scheduler map';
+    public const COMMAND = 'scheduler';
+    public const DESCRIPTION = 'Show scheduler map';
 
     public function execute(array $args): int
     {

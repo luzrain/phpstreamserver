@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\ReloadStrategy;
 
 use Amp\Http\Server\Request;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker on every $maxRequests requests.

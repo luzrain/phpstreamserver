@@ -11,6 +11,9 @@ use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Socket\Socket;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @internal
+ */
 final readonly class HttpClientFactory implements ClientFactory
 {
     private ClientFactory $clientFactory;

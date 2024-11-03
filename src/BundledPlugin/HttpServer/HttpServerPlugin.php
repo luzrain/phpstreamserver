@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
 
 use Amp\Http\Server\Driver\HttpDriver;
-use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
+use Luzrain\PHPStreamServer\MasterProcessIntarface;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
 
 final class HttpServerPlugin extends Plugin
 {
-    private Container $workerContainer;
-
     public function __construct(
         private readonly bool $http2Enabled = true,
         private readonly int $connectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
@@ -22,13 +19,13 @@ final class HttpServerPlugin extends Plugin
     ) {
     }
 
-    public function init(MasterProcess $masterProcess): void
+    public function init(MasterProcessIntarface $masterProcess): void
     {
-        $this->workerContainer = $masterProcess->workerContainer;
-        $this->workerContainer->set('httpServerPlugin.http2Enabled', $this->http2Enabled);
-        $this->workerContainer->set('httpServerPlugin.connectionTimeout', $this->connectionTimeout);
-        $this->workerContainer->set('httpServerPlugin.headerSizeLimit', $this->headerSizeLimit);
-        $this->workerContainer->set('httpServerPlugin.bodySizeLimit', $this->bodySizeLimit);
+        $workerContainer = $masterProcess->getWorkerContainer();
+        $workerContainer->set('httpServerPlugin.http2Enabled', $this->http2Enabled);
+        $workerContainer->set('httpServerPlugin.connectionTimeout', $this->connectionTimeout);
+        $workerContainer->set('httpServerPlugin.headerSizeLimit', $this->headerSizeLimit);
+        $workerContainer->set('httpServerPlugin.bodySizeLimit', $this->bodySizeLimit);
     }
 
     public function addWorker(Process $worker): void

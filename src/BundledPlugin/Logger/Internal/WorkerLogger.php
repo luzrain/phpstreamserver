@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
-use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
-use Luzrain\PHPStreamServer\Internal\MessageBus\CompositeMessage;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\LoggerInterface;
+use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
+use Luzrain\PHPStreamServer\MessageBus\MessageBus;
 use Psr\Log\LoggerTrait;
 use Revolt\EventLoop;
 

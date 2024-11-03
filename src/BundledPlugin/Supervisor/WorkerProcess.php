@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSetOptionsEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyTrigger;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSetOptionsEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategyStack;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
@@ -16,7 +16,8 @@ class WorkerProcess extends Process
     final public const RELOAD_EXIT_CODE = 100;
     private const GC_PERIOD = 180;
 
-    protected readonly ReloadStrategyTrigger $reloadStrategyTrigger;
+    protected readonly \Closure $reloadStrategyTrigger;
+    private readonly ReloadStrategyStack $reloadStrategyStack;
     private bool $isReloading = false;
 
     /**
@@ -63,12 +64,13 @@ class WorkerProcess extends Process
             \gc_mem_caches();
         });
 
-        $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...), $this->reloadStrategies);
+        $this->reloadStrategyStack = new ReloadStrategyStack($this->reload(...), $this->reloadStrategies);
+        $this->reloadStrategyTrigger = \Closure::fromCallable($this->reloadStrategyStack);
         unset($this->reloadStrategies);
 
         EventLoop::setErrorHandler(function (\Throwable $exception) {
             ErrorHandler::handleException($exception);
-            $this->reloadStrategyTrigger->emitEvent($exception);
+            $this->reloadStrategyStack->emitEvent($exception);
         });
 
         EventLoop::queue(function (): void {
@@ -94,6 +96,6 @@ class WorkerProcess extends Process
 
     public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void
     {
-        $this->reloadStrategyTrigger->addReloadStrategy(...$reloadStrategies);
+        $this->reloadStrategyStack->addReloadStrategy(...$reloadStrategies);
     }
 }

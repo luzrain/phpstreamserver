@@ -13,6 +13,7 @@ use Amp\Socket\TlsState;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 
 /**
+ * @internal
  * @implements \IteratorAggregate<int, string>
  */
 final readonly class TrafficCountingSocket implements Socket, \IteratorAggregate

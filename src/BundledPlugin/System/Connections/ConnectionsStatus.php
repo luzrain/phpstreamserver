@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Connections;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSpawnedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\ConnectionClosedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\ConnectionCreatedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\RequestCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\RxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\TxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSpawnedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionClosedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionCreatedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RequestCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\TxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
 use function Amp\weakClosure;
 
 final class ConnectionsStatus

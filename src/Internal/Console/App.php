@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Console;
 
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Options;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Server;
 use function Luzrain\PHPStreamServer\Internal\getStartFile;
 
@@ -86,7 +89,7 @@ final class App
         }
 
         foreach ($this->commands as $command) {
-            if ($command::getCommand() === $this->command) {
+            if ($command::COMMAND === $this->command) {
                 $command->options = $this->options;
                 $command->configure();
 
@@ -132,7 +135,7 @@ final class App
         echo (new Table(indent: 1))->addRows(\array_map(
             array: $this->commands,
             callback: static function (Command $command) {
-                return ["<color;fg=green>{$command::getCommand()}</>", $command::getDescription()];
+                return [\sprintf('<color;fg=green>%s</>', $command::COMMAND), $command::DESCRIPTION];
             },
         ));
         echo "<color;fg=yellow>Options:</>\n";
@@ -143,9 +146,9 @@ final class App
     {
         echo \sprintf("%s (%s)\n", Server::TITLE, Server::VERSION);
         echo "<color;fg=yellow>Description:</>\n";
-        echo \sprintf("  %s\n", $command::getDescription());
+        echo \sprintf("  %s\n", $command::DESCRIPTION);
         echo "<color;fg=yellow>Usage:</>\n";
-        echo \sprintf("  %s %s [options]\n", \basename(getStartFile()), $command::getCommand());
+        echo \sprintf("  %s %s [options]\n", \basename(getStartFile()), $command::COMMAND);
         echo "<color;fg=yellow>Options:</>\n";
         echo (new Table(indent: 1))->addRows($this->createOptionsTableRows());
     }

@@ -4,40 +4,42 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
+use Luzrain\PHPStreamServer\ContainerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerHasCommand;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerSetCommand;
-use Luzrain\PHPStreamServer\Internal\Event\ReloadServerCommand;
-use Luzrain\PHPStreamServer\Internal\Event\StopServerCommand;
 use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
-use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
+use Luzrain\PHPStreamServer\LoggerInterface;
+use Luzrain\PHPStreamServer\MasterProcessIntarface;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerHasCommand;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerSetCommand;
+use Luzrain\PHPStreamServer\MessageBus\Message\ReloadServerCommand;
+use Luzrain\PHPStreamServer\MessageBus\Message\StopServerCommand;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Luzrain\PHPStreamServer\Server;
+use Luzrain\PHPStreamServer\Status;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
 use function Amp\Future\await;
 
-final class MasterProcess
+/**
+ * @internal
+ */
+final class MasterProcess implements MasterProcessIntarface
 {
     private const GC_PERIOD = 300;
 
     private static bool $registered = false;
     private Suspension $suspension;
-    public Status $status = Status::SHUTDOWN;
+    private Status $status = Status::SHUTDOWN;
     private MessageHandler $messageHandler;
     private LoggerInterface $logger;
-    /**
-     * @readonly
-     * @psalm-allow-private-mutation
-     */
-    public Container $masterContainer;
-    public readonly Container $workerContainer;
+    private Container $masterContainer;
+    private Container $workerContainer;
 
     /**
      * @var array<class-string<Plugin>, Plugin>
@@ -342,5 +344,20 @@ final class MasterProcess
 
         \gc_collect_cycles();
         \gc_mem_caches();
+    }
+
+    public function getMasterContainer(): ContainerInterface
+    {
+        return $this->masterContainer;
+    }
+
+    public function getWorkerContainer(): ContainerInterface
+    {
+        return $this->workerContainer;
+    }
+
+    public function &getStatus(): Status
+    {
+        return $this->status;
     }
 }

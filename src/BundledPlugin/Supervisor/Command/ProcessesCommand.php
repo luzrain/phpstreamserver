@@ -7,10 +7,10 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Command;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\ProcessInfo;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Table;
-use Luzrain\PHPStreamServer\Internal\Event\ContainerGetCommand;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use function Luzrain\PHPStreamServer\Internal\humanFileSize;
 
 /**
@@ -18,8 +18,8 @@ use function Luzrain\PHPStreamServer\Internal\humanFileSize;
  */
 final class ProcessesCommand extends Command
 {
-    protected const COMMAND = 'processes';
-    protected const DESCRIPTION = 'Show processes status';
+    public const COMMAND = 'processes';
+    public const DESCRIPTION = 'Show processes status';
 
     public function execute(array $args): int
     {

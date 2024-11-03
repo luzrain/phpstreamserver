@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessBlockedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessExitEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessHeartbeatEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessSpawnedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessBlockedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessDetachedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessExitEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessHeartbeatEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 use function Amp\weakClosure;

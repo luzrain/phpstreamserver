@@ -12,6 +12,9 @@ use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 
+/**
+ * @internal
+ */
 final readonly class TrafficCountingSocketFactory implements ServerSocketFactory
 {
     public function __construct(

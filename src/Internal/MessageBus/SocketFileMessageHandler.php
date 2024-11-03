@@ -9,6 +9,10 @@ use Amp\Future;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\UnixAddress;
+use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
+use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\weakClosure;
@@ -84,8 +88,6 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
     {
         EventLoop::cancel($this->callbackId);
         $this->socket->close();
-        unset($this->socket);
-        unset($this->subscribers);
     }
 
     /**
@@ -108,6 +110,11 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
         unset($this->subscribers[$class][\spl_object_id($closure)]);
     }
 
+    /**
+     * @template T
+     * @param Message<T> $message
+     * @return Future<T>
+     */
     public function dispatch(Message $message): Future
     {
         $subscribers = &$this->subscribers;

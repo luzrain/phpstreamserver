@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\FileMonitor;
 
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 
 final class FileMonitor extends Plugin
@@ -17,10 +16,10 @@ final class FileMonitor extends Plugin
     ) {
     }
 
-    public function init(MasterProcess $masterProcess): void
-    {
-        $this->reload = $masterProcess->reload(...);
-    }
+//    public function init(Container $masterContainer, Container $workerContainer, Status &$status): void
+//    {
+//        //$this->reload = $masterProcess->reload(...);
+//    }
 
     public function start(): void
     {

@@ -6,6 +6,9 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
 use Luzrain\PHPStreamServer\Server;
 
+/**
+ * @internal
+ */
 final readonly class ErrorPage
 {
     public string $server;

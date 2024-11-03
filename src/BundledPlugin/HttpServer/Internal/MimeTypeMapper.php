@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
+/**
+ * @internal
+ */
 final class MimeTypeMapper
 {
     private const MIME_TYPES_MAP = [

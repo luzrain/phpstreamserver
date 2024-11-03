@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal\Logger;
 
+use Luzrain\PHPStreamServer\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
 /**

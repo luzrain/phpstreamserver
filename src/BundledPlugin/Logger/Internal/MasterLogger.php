@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
-use Luzrain\PHPStreamServer\Internal\Logger\LoggerInterface;
+use Luzrain\PHPStreamServer\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
 /**

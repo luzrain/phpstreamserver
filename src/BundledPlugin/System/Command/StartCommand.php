@@ -6,8 +6,8 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\System\Command;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\WorkerInfo;
-use Luzrain\PHPStreamServer\Internal\Console\Command;
-use Luzrain\PHPStreamServer\Internal\Console\Table;
+use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Console\Table;
 use Luzrain\PHPStreamServer\Internal\MasterProcess;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 use Luzrain\PHPStreamServer\Process;
@@ -19,8 +19,8 @@ use function Luzrain\PHPStreamServer\Internal\getDriverName;
  */
 final class StartCommand extends Command
 {
-    protected const COMMAND = 'start';
-    protected const DESCRIPTION = 'Start server';
+    public const COMMAND = 'start';
+    public const DESCRIPTION = 'Start server';
 
     public function configure(): void
     {
@@ -51,7 +51,7 @@ final class StartCommand extends Command
             workers: $args['workers'],
         );
 
-        $supervisorStatus = $masterProcess->masterContainer->get(SupervisorStatus::class);
+        $supervisorStatus = $masterProcess->getMasterContainer()->get(SupervisorStatus::class);
         \assert($supervisorStatus instanceof SupervisorStatus);
 
         $eventLoop = getDriverName();

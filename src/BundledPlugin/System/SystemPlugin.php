@@ -13,8 +13,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
 use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MasterProcessIntarface;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
 use Luzrain\PHPStreamServer\Plugin\Plugin;
 
 /**
@@ -29,9 +29,9 @@ final class SystemPlugin extends Plugin
     {
     }
 
-    public function init(MasterProcess $masterProcess): void
+    public function init(MasterProcessIntarface $masterProcess): void
     {
-        $this->masterContainer = $masterProcess->masterContainer;
+        $this->masterContainer = $masterProcess->getMasterContainer();
 
         $serverStatus = new ServerStatus();
         $this->masterContainer->set(ServerStatus::class, $serverStatus);

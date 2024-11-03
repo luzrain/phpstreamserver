@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\ReloadStrategy\ReloadStrategyInterface;
-
 /**
  * Reload worker each time when exception occurs
  */

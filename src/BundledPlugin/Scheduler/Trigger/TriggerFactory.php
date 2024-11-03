@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger;
 
-/**
- * @internal
- */
 final class TriggerFactory
 {
     /**

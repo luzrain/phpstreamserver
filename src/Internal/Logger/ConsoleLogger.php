@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\Internal\Logger;
 
 use Luzrain\PHPStreamServer\Internal\Console\Colorizer;
+use Luzrain\PHPStreamServer\LoggerInterface;
 use Psr\Log\LoggerTrait;
 use function Amp\ByteStream\getStderr;
 

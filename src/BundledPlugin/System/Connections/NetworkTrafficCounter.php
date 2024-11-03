@@ -6,12 +6,12 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\System\Connections;
 
 use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\ConnectionClosedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\ConnectionCreatedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\RequestCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\RxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Event\TxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\Internal\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionClosedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionCreatedEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RequestCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\System\Message\TxCounterIncreaseEvent;
+use Luzrain\PHPStreamServer\MessageBus\MessageBus;
 
 /**
  * @TODO: throttle dispatching
