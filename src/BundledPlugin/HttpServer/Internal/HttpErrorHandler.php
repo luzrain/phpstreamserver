@@ -28,7 +28,7 @@ final readonly class HttpErrorHandler implements ErrorHandler
         return $this->createResponse($errorPage);
     }
 
-    public function handleException(\Exception $exception, Request $request): Response
+    public function handleException(\Throwable $exception, Request $request): Response
     {
         if ($exception instanceof HttpErrorException) {
             return $this->handleError($exception->getStatus(), $exception->getReason(), $request);
@@ -54,7 +54,7 @@ final readonly class HttpErrorHandler implements ErrorHandler
         return $response;
     }
 
-    private function logException(\Exception $exception, Request $request): void
+    private function logException(\Throwable $exception, Request $request): void
     {
         $client = $request->getClient();
         $method = $request->getMethod();
