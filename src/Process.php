@@ -15,13 +15,13 @@ use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\MessageBus\Message;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
 use Luzrain\PHPStreamServer\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Psr\Container\ContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Luzrain\PHPStreamServer\Internal\getCurrentGroup;
 use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
 
-abstract class Process implements MessageBus
+abstract class Process implements MessageBus, ContainerInterface
 {
     final public const HEARTBEAT_PERIOD = 2;
 
@@ -201,5 +201,15 @@ abstract class Process implements MessageBus
                 throw new UserChangeException('Changing guid or uid fails');
             }
         }
+    }
+
+    final public function get(string $id): mixed
+    {
+        return $this->container->get($id);
+    }
+
+    final public function has(string $id): bool
+    {
+        return $this->container->has($id);
     }
 }

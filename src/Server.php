@@ -8,7 +8,6 @@ use Composer\InstalledVersions;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
 use Luzrain\PHPStreamServer\BundledPlugin\System\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\Console\App;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
 use function Luzrain\PHPStreamServer\Internal\getDefaultPidFile;
 use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
 

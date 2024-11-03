@@ -9,24 +9,18 @@ use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\MasterLogger;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\WorkerLogger;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\LoggerInterface;
-use Luzrain\PHPStreamServer\MasterProcessIntarface;
 use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin;
 use Revolt\EventLoop;
 
 final class LoggerPlugin extends Plugin
 {
-    private Container $masterContainer;
-
     public function __construct()
     {
     }
 
-    public function init(MasterProcessIntarface $masterProcess): void
+    public function init(): void
     {
-        $this->masterContainer = $masterProcess->getMasterContainer();
-        $workerContainer = $masterProcess->getWorkerContainer();
-
         $masterLoggerFactory = static function () {
             return new MasterLogger();
         };
@@ -36,7 +30,7 @@ final class LoggerPlugin extends Plugin
         };
 
         $this->masterContainer->register('logger', $masterLoggerFactory);
-        $workerContainer->register('logger', $workerLoggerFactory);
+        $this->workerContainer->register('logger', $workerLoggerFactory);
     }
 
     public function start(): void

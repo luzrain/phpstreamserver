@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
 
 use Amp\Http\Server\Driver\HttpDriver;
-use Luzrain\PHPStreamServer\MasterProcessIntarface;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
-use Luzrain\PHPStreamServer\Process;
+use Luzrain\PHPStreamServer\Plugin;
 
 final class HttpServerPlugin extends Plugin
 {
@@ -19,17 +17,11 @@ final class HttpServerPlugin extends Plugin
     ) {
     }
 
-    public function init(MasterProcessIntarface $masterProcess): void
+    public function init(): void
     {
-        $workerContainer = $masterProcess->getWorkerContainer();
-        $workerContainer->set('httpServerPlugin.http2Enabled', $this->http2Enabled);
-        $workerContainer->set('httpServerPlugin.connectionTimeout', $this->connectionTimeout);
-        $workerContainer->set('httpServerPlugin.headerSizeLimit', $this->headerSizeLimit);
-        $workerContainer->set('httpServerPlugin.bodySizeLimit', $this->bodySizeLimit);
-    }
-
-    public function addWorker(Process $worker): void
-    {
-        \assert($worker instanceof HttpServerProcess);
+        $this->workerContainer->set('httpServerPlugin.http2Enabled', $this->http2Enabled);
+        $this->workerContainer->set('httpServerPlugin.connectionTimeout', $this->connectionTimeout);
+        $this->workerContainer->set('httpServerPlugin.headerSizeLimit', $this->headerSizeLimit);
+        $this->workerContainer->set('httpServerPlugin.bodySizeLimit', $this->bodySizeLimit);
     }
 }

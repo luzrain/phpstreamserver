@@ -8,29 +8,25 @@ use Amp\Future;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command\SchedulerCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\Scheduler;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
-use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\LoggerInterface;
-use Luzrain\PHPStreamServer\MasterProcessIntarface;
 use Luzrain\PHPStreamServer\MessageBus\MessageBus;
 use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
-use Luzrain\PHPStreamServer\Plugin\Plugin;
+use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop\Suspension;
 
 final class SchedulerPlugin extends Plugin
 {
     private SchedulerStatus $schedulerStatus;
-    private Container $masterContainer;
     private Scheduler $scheduler;
 
     public function __construct()
     {
     }
 
-    public function init(MasterProcessIntarface $masterProcess): void
+    public function init(): void
     {
-        $this->masterContainer = $masterProcess->getMasterContainer();
-        $this->scheduler = new Scheduler($masterProcess->getStatus());
+        $this->scheduler = new Scheduler($this->status);
         $this->schedulerStatus = new SchedulerStatus();
         $this->masterContainer->set(SchedulerStatus::class, $this->schedulerStatus);
     }
