@@ -133,7 +133,15 @@ function absoluteBinaryPath(string $binary): string
  */
 function memoryUsageByPid(int $pid): int
 {
-    $out = \shell_exec("ps -o rss= -p $pid 2>/dev/null");
+    if (PHP_VERSION_ID >= 80300 && \is_file("/proc/$pid/statm")) {
+        $pagesize = \posix_sysconf(POSIX_SC_PAGESIZE);
+        $statm = \trim(\file_get_contents("/proc/$pid/statm"));
+        $statm = \explode(' ', $statm);
+        $vmrss = ($statm[1] ?? 0) * $pagesize;
+    } else {
+        $out = \shell_exec("ps -o rss= -p $pid 2>/dev/null");
+        $vmrss = ((int) \trim((string) $out)) * 1024;
+    }
 
-    return ((int) \trim((string) $out)) * 1024;
+    return $vmrss;
 }
