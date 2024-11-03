@@ -49,7 +49,7 @@ final class StatusCommand extends Command
         echo ($isRunning ? '<color;fg=green>●</> ' : '● ') . Server::TITLE . "\n";
 
         $rows = [
-            [Server::NAME . ' version:', Server::VERSION],
+            [Server::NAME . ' version:', Server::getVersion()],
             ['PHP version:', PHP_VERSION],
             ['Event loop driver:', $eventLoop],
             ['Start file:', $startFile],

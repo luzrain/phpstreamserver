@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer;
 
+use Composer\InstalledVersions;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
 use Luzrain\PHPStreamServer\BundledPlugin\System\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\Console\App;
@@ -13,8 +14,7 @@ use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
 
 final class Server
 {
-    public const VERSION = '0.2.2';
-    public const VERSION_STRING = 'phpstreamserver/' . self::VERSION;
+    private const PACKAGE = 'luzrain/phpstreamserver';
     public const NAME = 'PHPStreamServer';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
 
@@ -55,5 +55,16 @@ final class Server
         $app = new App(...$commands);
 
         return $app->run(\get_object_vars($this));
+    }
+
+    public static function getVersion(): string
+    {
+        static $version;
+        return $version ??= InstalledVersions::getVersion(self::PACKAGE);
+    }
+
+    public static function getVersionString(): string
+    {
+        return \sprintf('%s/%s', \strtolower(self::NAME), self::getVersion());
     }
 }

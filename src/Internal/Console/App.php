@@ -118,7 +118,7 @@ final class App
         }
 
         if ($this->options->hasOption('version')) {
-            echo \sprintf("%s\n", Server::VERSION);
+            echo \sprintf("%s\n", Server::getVersion());
             return 0;
         }
 
@@ -128,7 +128,7 @@ final class App
 
     private function showHelp(): void
     {
-        echo \sprintf("%s (%s)\n", Server::TITLE, Server::VERSION);
+        echo \sprintf("%s (%s)\n", Server::TITLE, Server::getVersion());
         echo "<color;fg=yellow>Usage:</>\n";
         echo \sprintf("  %s <command> [options]\n", \basename(getStartFile()));
         echo "<color;fg=yellow>Commands:</>\n";
@@ -144,7 +144,7 @@ final class App
 
     private function showHelpForCommand(Command $command): void
     {
-        echo \sprintf("%s (%s)\n", Server::TITLE, Server::VERSION);
+        echo \sprintf("%s (%s)\n", Server::TITLE, Server::getVersion());
         echo "<color;fg=yellow>Description:</>\n";
         echo \sprintf("  %s\n", $command::DESCRIPTION);
         echo "<color;fg=yellow>Usage:</>\n";

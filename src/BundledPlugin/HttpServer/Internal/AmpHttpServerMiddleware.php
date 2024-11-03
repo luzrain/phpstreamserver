@@ -38,7 +38,7 @@ final readonly class AmpHttpServerMiddleware implements Middleware
         ($this->reloadStrategyTrigger)($request);
 
         if (!$response->hasHeader('server')) {
-            $response->setHeader('server', Server::VERSION_STRING);
+            $response->setHeader('server', Server::getVersionString());
         }
 
         return $response;

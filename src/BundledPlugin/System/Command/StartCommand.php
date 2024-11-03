@@ -60,7 +60,7 @@ final class StartCommand extends Command
 
         echo (new Table(indent: 1))
             ->addRows([
-                [Server::NAME . ' version:', Server::VERSION],
+                [Server::NAME . ' version:', Server::getVersion()],
                 ['PHP version:', PHP_VERSION],
                 ['Event loop driver:', $eventLoop],
                 ['Workers count:', $supervisorStatus->getWorkersCount()],
