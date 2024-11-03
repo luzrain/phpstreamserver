@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * Process sends this message periodically
- * @implements Message<null>
+ * @implements MessageInterface<null>
  */
-final readonly class ProcessHeartbeatEvent implements Message
+final readonly class ProcessHeartbeatEvent implements MessageInterface
 {
     public function __construct(
         public int $pid,

@@ -10,7 +10,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessExitEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessHeartbeatEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
@@ -33,7 +33,7 @@ final class SupervisorStatus
     {
     }
 
-    public function subscribeToWorkerMessages(MessageHandler $handler): void
+    public function subscribeToWorkerMessages(MessageHandlerInterface $handler): void
     {
         $handler->subscribe(ProcessSpawnedEvent::class, weakClosure(function (ProcessSpawnedEvent $message): void {
             $this->processes[$message->pid] = new ProcessInfo(

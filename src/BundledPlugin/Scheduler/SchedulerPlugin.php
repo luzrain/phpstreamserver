@@ -9,8 +9,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command\SchedulerCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\Scheduler;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
 use Luzrain\PHPStreamServer\LoggerInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop\Suspension;
@@ -44,9 +44,9 @@ final class SchedulerPlugin extends Plugin
         $suspension = $this->masterContainer->get('suspension');
         /** @var LoggerInterface $logger */
         $logger = &$this->masterContainer->get('logger');
-        /** @var MessageBus $bus */
+        /** @var MessageBusInterface $bus */
         $bus = &$this->masterContainer->get('bus');
-        /** @var MessageHandler $handler */
+        /** @var MessageHandlerInterface $handler */
         $handler = &$this->masterContainer->get('handler');
 
         $this->schedulerStatus->subscribeToWorkerMessages($handler);

@@ -9,6 +9,6 @@ namespace Luzrain\PHPStreamServer\MessageBus;
  *
  * @template T
  */
-interface Message
+interface MessageInterface
 {
 }

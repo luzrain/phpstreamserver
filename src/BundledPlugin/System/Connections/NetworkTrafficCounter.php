@@ -11,9 +11,9 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionCreatedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RequestCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\TxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use Revolt\EventLoop;
 
 final class NetworkTrafficCounter
@@ -23,7 +23,7 @@ final class NetworkTrafficCounter
     private array $queue = [];
     private string $callbackId = '';
 
-    public function __construct(private readonly MessageBus $messageBus)
+    public function __construct(private readonly MessageBusInterface $messageBus)
     {
     }
 
@@ -91,7 +91,7 @@ final class NetworkTrafficCounter
         ));
     }
 
-    private function queue(Message $message): void
+    private function queue(MessageInterface $message): void
     {
         $this->queue[] = $message;
 

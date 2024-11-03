@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
+use Luzrain\PHPStreamServer\ContainerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
@@ -15,12 +16,12 @@ use Luzrain\PHPStreamServer\MessageBus\Message\ContainerHasCommand;
 use Luzrain\PHPStreamServer\MessageBus\Message\ContainerSetCommand;
 use Luzrain\PHPStreamServer\MessageBus\Message\ReloadServerCommand;
 use Luzrain\PHPStreamServer\MessageBus\Message\StopServerCommand;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Luzrain\PHPStreamServer\Server;
 use Luzrain\PHPStreamServer\Status;
-use Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;
 use Revolt\EventLoop\Suspension;
@@ -29,17 +30,17 @@ use function Amp\Future\await;
 /**
  * @internal
  */
-final class MasterProcess implements ContainerInterface
+final class MasterProcess implements PsrContainerInterface
 {
     private const GC_PERIOD = 300;
 
     private static bool $registered = false;
     private Suspension $suspension;
     private Status $status = Status::SHUTDOWN;
-    private MessageHandler $messageHandler;
+    private MessageHandlerInterface $messageHandler;
     private LoggerInterface $logger;
-    private Container $masterContainer;
-    private Container $workerContainer;
+    private ContainerInterface $masterContainer;
+    private ContainerInterface $workerContainer;
 
     /**
      * @var array<class-string<Plugin>, Plugin>

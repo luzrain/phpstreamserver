@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessScheduledEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use function Amp\weakClosure;
 
 final class SchedulerStatus
@@ -20,7 +20,7 @@ final class SchedulerStatus
     {
     }
 
-    public function subscribeToWorkerMessages(MessageHandler $handler): void
+    public function subscribeToWorkerMessages(MessageHandlerInterface $handler): void
     {
         $handler->subscribe(ProcessScheduledEvent::class, weakClosure(function (ProcessScheduledEvent $message): void {
             $this->periodicWorkers[$message->id]->nextRunDate = $message->nextRunDate;

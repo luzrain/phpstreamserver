@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\System\Message;
 
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\Connection;
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 
 /**
- * @implements Message<null>
+ * @implements MessageInterface<null>
  */
-final readonly class ConnectionCreatedEvent implements Message
+final readonly class ConnectionCreatedEvent implements MessageInterface
 {
     public function __construct(
         public int $pid,

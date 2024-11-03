@@ -12,7 +12,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use Luzrain\PHPStreamServer\Status;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
@@ -24,7 +24,7 @@ use function Amp\weakClosure;
  */
 final class Scheduler
 {
-    private MessageBus $messageBus;
+    private MessageBusInterface $messageBus;
     private WorkerPool $pool;
     private LoggerInterface $logger;
     private Suspension $suspension;
@@ -40,7 +40,7 @@ final class Scheduler
         $this->pool->addWorker($worker);
     }
 
-    public function start(Suspension $suspension, LoggerInterface $logger, MessageBus $messageBus): void
+    public function start(Suspension $suspension, LoggerInterface $logger, MessageBusInterface $messageBus): void
     {
         $this->suspension = $suspension;
         $this->logger = $logger;

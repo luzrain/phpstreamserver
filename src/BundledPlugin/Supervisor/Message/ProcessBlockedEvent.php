@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * Process blocked by IO operations
- * @implements Message<null>
+ * @implements MessageInterface<null>
  */
-final readonly class ProcessBlockedEvent implements Message
+final readonly class ProcessBlockedEvent implements MessageInterface
 {
     public function __construct(
         public int $pid,

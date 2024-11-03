@@ -9,8 +9,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Command\ProcessesCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\Supervisor;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\LoggerInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop\Suspension;
@@ -46,9 +46,9 @@ final class SupervisorPlugin extends Plugin
         $suspension = $this->masterContainer->get('suspension');
         /** @var LoggerInterface $logger */
         $logger = &$this->masterContainer->get('logger');
-        /** @var MessageBus $bus */
+        /** @var MessageBusInterface $bus */
         $bus = &$this->masterContainer->get('bus');
-        /** @var MessageHandler $handler */
+        /** @var MessageHandlerInterface $handler */
         $handler = &$this->masterContainer->get('handler');
 
         $this->supervisorStatus->subscribeToWorkerMessages($handler);

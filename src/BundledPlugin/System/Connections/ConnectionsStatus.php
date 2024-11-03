@@ -11,7 +11,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Message\ConnectionCreatedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RequestCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\RxCounterIncreaseEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Message\TxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use function Amp\weakClosure;
 
 final class ConnectionsStatus
@@ -25,7 +25,7 @@ final class ConnectionsStatus
     {
     }
 
-    public function subscribeToWorkerMessages(MessageHandler $handler): void
+    public function subscribeToWorkerMessages(MessageHandlerInterface $handler): void
     {
         $handler->subscribe(ProcessSpawnedEvent::class, weakClosure(function (ProcessSpawnedEvent $message): void {
             $this->processConnections[$message->pid] = new ProcessConnectionsInfo(

@@ -12,7 +12,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\System\Command\StopCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Command\WorkersCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\ConnectionsStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Status\ServerStatus;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 
 /**
@@ -37,7 +37,7 @@ final class SystemPlugin extends Plugin
 
     public function start(): void
     {
-        /** @var MessageHandler $handler */
+        /** @var MessageHandlerInterface $handler */
         $handler = &$this->masterContainer->get('handler');
 
         $this->connectionsStatus->subscribeToWorkerMessages($handler);

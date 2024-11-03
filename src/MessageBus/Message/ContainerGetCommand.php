@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\MessageBus\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 
 /**
- * @implements Message<mixed>
+ * @implements MessageInterface<mixed>
  */
-final readonly class ContainerGetCommand implements Message
+final readonly class ContainerGetCommand implements MessageInterface
 {
     public function __construct(public string $id)
     {

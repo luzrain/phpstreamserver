@@ -10,15 +10,15 @@ use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\SocketConnector;
 use Amp\Socket\StaticSocketConnector;
 use Amp\Socket\UnixAddress;
-use Luzrain\PHPStreamServer\MessageBus\Message;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use function Amp\async;
 use function Amp\delay;
 
 /**
  * @internal
  */
-final class SocketFileMessageBus implements MessageBus
+final class SocketFileMessageBus implements MessageBusInterface
 {
     private bool $stopped = false;
     private \WeakMap $inProgress;
@@ -30,7 +30,7 @@ final class SocketFileMessageBus implements MessageBus
         $this->connector = new StaticSocketConnector(new UnixAddress($socketFile), new DnsSocketConnector());
     }
 
-    public function dispatch(Message $message): Future
+    public function dispatch(MessageInterface $message): Future
     {
         if ($this->stopped) {
             return async(static function () {

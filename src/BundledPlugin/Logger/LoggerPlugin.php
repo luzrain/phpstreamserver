@@ -9,7 +9,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\MasterLogger;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\WorkerLogger;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\LoggerInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Revolt\EventLoop;
 
@@ -38,7 +38,7 @@ final class LoggerPlugin extends Plugin
         /** @var LoggerInterface $logger */
         $logger = $this->masterContainer->get('logger');
 
-        /** @var MessageHandler $handler */
+        /** @var MessageHandlerInterface $handler */
         $handler = $this->masterContainer->get('handler');
 
         $handler->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {

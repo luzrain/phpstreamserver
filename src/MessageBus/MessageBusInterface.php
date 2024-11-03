@@ -6,12 +6,12 @@ namespace Luzrain\PHPStreamServer\MessageBus;
 
 use Amp\Future;
 
-interface MessageBus
+interface MessageBusInterface
 {
     /**
      * @template T
-     * @param Message<T> $message
+     * @param MessageInterface<T> $message
      * @return Future<T>
      */
-    public function dispatch(Message $message): Future;
+    public function dispatch(MessageInterface $message): Future;
 }

@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
 use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use Psr\Log\LoggerTrait;
 use Revolt\EventLoop;
 
@@ -24,7 +24,7 @@ final class WorkerLogger implements LoggerInterface
     private string $channel = 'worker';
     private string $callbackId = '';
 
-    public function __construct(private MessageBus $messageBus)
+    public function __construct(private MessageBusInterface $messageBus)
     {
     }
 

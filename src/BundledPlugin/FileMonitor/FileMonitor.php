@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\FileMonitor;
 
+use Luzrain\PHPStreamServer\BundledPlugin\FileMonitor\Internal\InotifyMonitorWatcher;
 use Luzrain\PHPStreamServer\Plugin;
 
 final class FileMonitor extends Plugin
@@ -16,14 +17,9 @@ final class FileMonitor extends Plugin
     ) {
     }
 
-//    public function init(Container $masterContainer, Container $workerContainer, Status &$status): void
-//    {
-//        //$this->reload = $masterProcess->reload(...);
-//    }
-
     public function start(): void
     {
-        $fileMonitor = new \Luzrain\PHPStreamServer\BundledPlugin\FileMonitor\Internal\InotifyMonitorWatcher(
+        $fileMonitor = new InotifyMonitorWatcher(
             sourceDir: $this->sourceDir,
             filePattern: $this->filePattern,
             reloadCallback: function (): void {

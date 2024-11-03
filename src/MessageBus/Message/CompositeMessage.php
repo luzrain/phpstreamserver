@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\MessageBus\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * Used to send multiple messages in one request.
- * @implements Message<void>
+ * @implements MessageInterface<void>
  */
-final readonly class CompositeMessage implements Message
+final readonly class CompositeMessage implements MessageInterface
 {
     public function __construct(
         /**
-         * @var iterable<Message>
+         * @var iterable<MessageInterface>
          */
         public iterable $messages,
     ) {

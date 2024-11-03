@@ -12,16 +12,16 @@ use Luzrain\PHPStreamServer\Exception\UserChangeException;
 use Luzrain\PHPStreamServer\Internal\Container;
 use Luzrain\PHPStreamServer\Internal\ErrorHandler;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use Psr\Container\ContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 use function Luzrain\PHPStreamServer\Internal\getCurrentGroup;
 use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
 
-abstract class Process implements MessageBus, ContainerInterface
+abstract class Process implements MessageBusInterface, ContainerInterface
 {
     final public const HEARTBEAT_PERIOD = 2;
 
@@ -137,10 +137,10 @@ abstract class Process implements MessageBus, ContainerInterface
 
     /**
      * @template T
-     * @param Message<T> $message
+     * @param MessageInterface<T> $message
      * @return Future<T>
      */
-    public function dispatch(Message $message): Future
+    public function dispatch(MessageInterface $message): Future
     {
         return $this->messageBus->dispatch($message);
     }

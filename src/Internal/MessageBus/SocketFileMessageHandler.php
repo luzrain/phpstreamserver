@@ -10,9 +10,9 @@ use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\UnixAddress;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\Message;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\weakClosure;
@@ -20,7 +20,7 @@ use function Amp\weakClosure;
 /**
  * @internal
  */
-final class SocketFileMessageHandler implements MessageHandler, MessageBus
+final class SocketFileMessageHandler implements MessageHandlerInterface, MessageBusInterface
 {
     private ResourceServerSocket $socket;
 
@@ -56,7 +56,7 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
                 }
 
                 $message = \unserialize($data);
-                \assert($message instanceof Message);
+                \assert($message instanceof MessageInterface);
                 $return = null;
 
                 foreach ($subscribers[$message::class] ?? [] as $subscriber) {
@@ -91,7 +91,7 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
     }
 
     /**
-     * @template T of Message
+     * @template T of MessageInterface
      * @param class-string<T> $class
      * @param \Closure(T): mixed $closure
      */
@@ -101,7 +101,7 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
     }
 
     /**
-     * @template T of Message
+     * @template T of MessageInterface
      * @param class-string<T> $class
      * @param \Closure(T): mixed $closure
      */
@@ -112,10 +112,10 @@ final class SocketFileMessageHandler implements MessageHandler, MessageBus
 
     /**
      * @template T
-     * @param Message<T> $message
+     * @param MessageInterface<T> $message
      * @return Future<T>
      */
-    public function dispatch(Message $message): Future
+    public function dispatch(MessageInterface $message): Future
     {
         $subscribers = &$this->subscribers;
 

@@ -14,8 +14,8 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSetOptionsEv
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
-use Luzrain\PHPStreamServer\MessageBus\MessageBus;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandler;
+use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Status;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
@@ -27,8 +27,8 @@ use function Amp\weakClosure;
  */
 final class Supervisor
 {
-    public MessageHandler $messageHandler;
-    public MessageBus $messageBus;
+    public MessageHandlerInterface $messageHandler;
+    public MessageBusInterface $messageBus;
     private WorkerPool $workerPool;
     private LoggerInterface $logger;
     private Suspension $suspension;
@@ -47,7 +47,7 @@ final class Supervisor
         $this->workerPool->registerWorker($worker);
     }
 
-    public function start(Suspension $suspension, LoggerInterface $logger, MessageHandler $messageHandler, MessageBus $messageBus): void
+    public function start(Suspension $suspension, LoggerInterface $logger, MessageHandlerInterface $messageHandler, MessageBusInterface $messageBus): void
     {
         $this->suspension = $suspension;
         $this->logger = $logger;
