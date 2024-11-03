@@ -41,8 +41,13 @@ final class Colorizer
     public static function hasColorSupport($stream): bool
     {
         // Follow https://no-color.org/
-        if (\getenv('NO_COLOR') !== false) {
+        if (\getenv('NO_COLOR')) {
             return false;
+        }
+
+        // Follow https://force-color.org/
+        if (\getenv('FORCE_COLOR')) {
+            return true;
         }
 
         return self::$color && \posix_isatty($stream);
