@@ -25,6 +25,8 @@ final readonly class AmpHttpServerMiddleware implements Middleware
 
     public function handleRequest(Request $request, RequestHandler $requestHandler): Response
     {
+        \memory_reset_peak_usage();
+
         try {
             $response = $requestHandler->handleRequest($request);
         } catch (\Throwable $exception) {
