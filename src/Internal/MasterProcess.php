@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Luzrain\PHPStreamServer\ContainerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
+use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
@@ -138,17 +139,15 @@ final class MasterProcess implements MasterProcessIntarface
         }
 
         $daemonize = $options['daemonize'] ?? false;
-        $quiet = $options['quiet'] ?? false;
-        $isDaemonized = false;
         if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
             return 0;
         } elseif ($daemonize) {
             // Runs in daemonized master process
-            $isDaemonized = true;
+            StdoutHandler::disableStdout();
         }
 
-        $this->start(noOutput: $isDaemonized || $quiet);
+        $this->start();
         $ret = $this->suspension->suspend();
 
         // child process start
@@ -166,7 +165,7 @@ final class MasterProcess implements MasterProcessIntarface
     /**
      * Runs in master process
      */
-    private function start(bool $noOutput = false): void
+    private function start(): void
     {
         $startFile = getStartFile();
 
@@ -177,13 +176,6 @@ final class MasterProcess implements MasterProcessIntarface
 
         $this->status = Status::STARTING;
         $this->saveMasterPid();
-
-//        if ($noOutput) {
-//            StdoutHandler::disableStdout();
-//            $this->logger = new NullLogger();
-//        } else {
-//            $this->logger = new ConsoleLogger();
-//        }
 
         $this->logger = $this->masterContainer->get('logger');
         $this->messageHandler = $this->masterContainer->get('handler');

@@ -15,7 +15,7 @@ use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
 use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
-use function Luzrain\PHPStreamServer\Internal\memoryUsageByPid;
+use function Luzrain\PHPStreamServer\Internal\getMemoryUsageByPid;
 
 final class SupervisorStatus
 {
@@ -76,7 +76,7 @@ final class SupervisorStatus
 
             $checkMemoryUsageClosure = function (string $id) use ($message) {
                 isset($this->processes[$message->pid])
-                    ? $this->processes[$message->pid]->memory = memoryUsageByPid($message->pid)
+                    ? $this->processes[$message->pid]->memory = getMemoryUsageByPid($message->pid)
                     : EventLoop::cancel($id);
             };
 

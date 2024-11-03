@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessDetachedEvent;
-use function Luzrain\PHPStreamServer\Internal\absoluteBinaryPath;
+use function Luzrain\PHPStreamServer\Internal\getAbsoluteBinaryPath;
 
 class ExternalProcess extends WorkerProcess
 {
@@ -58,7 +58,7 @@ class ExternalProcess extends WorkerProcess
         $binary = \array_shift($parts);
         $args = $parts;
 
-        return [absoluteBinaryPath($binary), $args];
+        return [getAbsoluteBinaryPath($binary), $args];
     }
 
     /**

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
+use Amp\ByteStream\WritableResourceStream;
+use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
+use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
 /**
@@ -17,14 +20,6 @@ function getStartFile(): string
         $file = \end($backtrace)['file'];
     }
     return $file;
-}
-
-/**
- * @internal
- */
-function getDriverName(): string
-{
-    return (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
 }
 
 /**
@@ -119,7 +114,7 @@ function getDefaultSocketFile(): string
 /**
  * @internal
  */
-function absoluteBinaryPath(string $binary): string
+function getAbsoluteBinaryPath(string $binary): string
 {
     if (!\str_starts_with($binary, '/') && \is_string($absoluteBinaryPath = \shell_exec("command -v $binary"))) {
         $binary = \trim($absoluteBinaryPath);
@@ -131,7 +126,7 @@ function absoluteBinaryPath(string $binary): string
 /**
  * @internal
  */
-function memoryUsageByPid(int $pid): int
+function getMemoryUsageByPid(int $pid): int
 {
     if (PHP_VERSION_ID >= 80300 && \is_file("/proc/$pid/statm")) {
         $pagesize = \posix_sysconf(POSIX_SC_PAGESIZE);
@@ -144,4 +139,25 @@ function memoryUsageByPid(int $pid): int
     }
 
     return $vmrss;
+}
+
+function getDriverName(): string
+{
+    return (new \ReflectionObject((new DriverFactory())->create()))->getShortName();
+}
+
+function getStdout(): WritableResourceStream
+{
+    static $map;
+    $map ??= new \WeakMap();
+
+    return $map[EventLoop::getDriver()] ??= new WritableResourceStream(StdoutHandler::getStdOut());
+}
+
+function getStderr(): WritableResourceStream
+{
+    static $map;
+    $map ??= new \WeakMap();
+
+    return $map[EventLoop::getDriver()] ??= new WritableResourceStream(StdoutHandler::getStderr());
 }
