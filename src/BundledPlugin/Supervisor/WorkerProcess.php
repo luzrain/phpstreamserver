@@ -34,7 +34,7 @@ class WorkerProcess extends Process
         \Closure|null $onStart = null,
         private readonly \Closure|null $onStop = null,
         private readonly \Closure|null $onReload = null,
-        private readonly array $reloadStrategies = [],
+        private array $reloadStrategies = [],
     ) {
         parent::__construct(name: $name, user: $user, group: $group, onStart: $onStart, onStop: $this->onStop(...));
     }
@@ -64,6 +64,7 @@ class WorkerProcess extends Process
         });
 
         $this->reloadStrategyTrigger = new ReloadStrategyTrigger($this->reload(...), $this->reloadStrategies);
+        unset($this->reloadStrategies);
 
         EventLoop::setErrorHandler(function (\Throwable $exception) {
             ErrorHandler::handleException($exception);

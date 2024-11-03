@@ -7,7 +7,7 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Supervisor;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Event\ProcessDetachedEvent;
 use Luzrain\PHPStreamServer\Internal\Functions;
 
-final class ExternalProcess extends WorkerProcess
+class ExternalProcess extends WorkerProcess
 {
     public function __construct(
         string $name = 'none',
@@ -24,20 +24,10 @@ final class ExternalProcess extends WorkerProcess
     {
         $this->dispatch(new ProcessDetachedEvent($this->pid))->await();
 
-        if ($this->commandValidate($this->command)) {
-            \register_shutdown_function($this->exec(...), ...$this->convertCommandToPcntl($this->command));
-            $this->stop();
-        } else {
-            $this->stop(1);
-        }
-    }
-
-    private function commandValidate(string $command): bool
-    {
-        if ($command === '') {
+        if ($this->command === '') {
             $this->logger->critical('External process call error: command can not be empty', ['comand' => $this->command]);
-
-            return false;
+            $this->stop(1);
+            return;
         }
 
         // Check if command contains logic operators such as && and ||
@@ -47,10 +37,12 @@ final class ExternalProcess extends WorkerProcess
                 $this->command,
             ), ['comand' => $this->command]);
 
-            return false;
+            $this->stop(1);
+            return;
         }
 
-        return true;
+        \register_shutdown_function($this->exec(...), ...$this->convertCommandToPcntl($this->command));
+        $this->stop();
     }
 
     /**
