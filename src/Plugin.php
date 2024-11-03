@@ -12,6 +12,7 @@ abstract class Plugin
 {
     protected readonly ContainerInterface $masterContainer;
     protected readonly ContainerInterface $workerContainer;
+
     /**
      * @readonly
      */
