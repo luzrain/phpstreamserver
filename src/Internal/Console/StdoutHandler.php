@@ -35,7 +35,7 @@ final class StdoutHandler
         }
 
         if (\is_string($stderr)) {
-            self::$stderr = \fopen($stdout, 'ab');
+            self::$stderr = \fopen($stderr, 'ab');
         }
 
         self::$isRegistered = true;
