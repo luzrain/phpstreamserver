@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
 use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
 use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
@@ -24,7 +25,7 @@ final class WorkerLogger implements LoggerInterface
     private string $channel = 'worker';
     private string $callbackId = '';
 
-    public function __construct(private MessageBusInterface $messageBus)
+    public function __construct(private readonly MessageBusInterface $messageBus)
     {
     }
 
@@ -41,10 +42,10 @@ final class WorkerLogger implements LoggerInterface
         $event = new LogEntry(
             time: new \DateTimeImmutable('now'),
             pid: \posix_getpid(),
-            level: (string) $level,
+            level: LogLevel::fromName((string) $level),
             channel: $this->channel,
             message: (string) $message,
-            context: [],
+            context: ContextFlattenNormalizer::flatten($context),
         );
 
         $this->log[] = $event;

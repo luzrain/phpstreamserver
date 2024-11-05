@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
+use Luzrain\PHPStreamServer\BundledPlugin\Logger\HandlerInterface;
+use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
 use Luzrain\PHPStreamServer\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
@@ -14,10 +16,15 @@ final class MasterLogger implements LoggerInterface
 {
     use LoggerTrait;
 
+    /**
+     * @var array<HandlerInterface>
+     */
+    private array $handlers;
     private string $channel = 'server';
 
-    public function __construct()
+    public function __construct(HandlerInterface ...$handlers)
     {
+        $this->handlers = $handlers;
     }
 
     public function withChannel(string $channel): self
@@ -33,15 +40,19 @@ final class MasterLogger implements LoggerInterface
         $this->logEntry(new LogEntry(
             time: new \DateTimeImmutable('now'),
             pid: \posix_getpid(),
-            level: (string) $level,
+            level: LogLevel::fromName((string) $level),
             channel: $this->channel,
             message: (string) $message,
-            context: $context,
+            context: ContextFlattenNormalizer::flatten($context),
         ));
     }
 
     public function logEntry(LogEntry $logEntry): void
     {
-        dump($logEntry->message);
+        foreach ($this->handlers as $handler) {
+            if ($handler->isHandling($logEntry)) {
+                $handler->handle($logEntry);
+            }
+        }
     }
 }

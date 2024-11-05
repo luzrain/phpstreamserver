@@ -14,7 +14,7 @@ final readonly class LogEntry implements MessageInterface
     public function __construct(
         public \DateTimeImmutable $time,
         public int $pid,
-        public string $level,
+        public LogLevel $level,
         public string $channel,
         public string $message,
         public array $context = [],

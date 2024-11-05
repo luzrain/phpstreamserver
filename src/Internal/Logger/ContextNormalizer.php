@@ -32,7 +32,7 @@ final class ContextNormalizer
         }
 
         if ($data instanceof \JsonSerializable) {
-            return $data->jsonSerialize();
+            return $this->normalize($data->jsonSerialize());
         }
 
         if ($data instanceof \Stringable) {
@@ -80,12 +80,11 @@ final class ContextNormalizer
         );
     }
 
-    private function parseAnonymousClass(string $message): string
+    private function parseAnonymousClass(string $class): string
     {
-        return \preg_replace_callback(
-            '/[a-zA-Z_\x7f-\xff][\\\\a-zA-Z0-9_\x7f-\xff]*+@anonymous\x00.*?\.php(?:0x?|:[0-9]++\$)[0-9a-fA-F]++/',
-            static fn ($m) => class_exists($m[0], false) ? (get_parent_class($m[0]) ?: key(class_implements($m[0])) ?: 'class').'@anonymous' : $m[0],
-            $message,
-        );
+        return \str_contains($class, "@anonymous\0")
+            ? (\get_parent_class($class) ?: \key(class_implements($class)) ?: 'class').'@anonymous'
+            : $class
+        ;
     }
 }
