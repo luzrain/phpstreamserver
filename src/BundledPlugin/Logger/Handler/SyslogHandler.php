@@ -19,11 +19,11 @@ final class SyslogHandler extends Handler
      * @see https://www.php.net/manual/en/function.openlog.php
      */
     public function __construct(
+        private readonly string $prefix = Server::SHORTNAME,
+        private readonly int $flags = LOG_PID,
+        private readonly string|int $facility = LOG_USER,
         LogLevel $level = LogLevel::DEBUG,
         array $channels = [],
-        private string $prefix = Server::SHORTNAME,
-        private int $flags = LOG_PID,
-        private string|int $facility = LOG_USER,
     ) {
         parent::__construct($level, $channels);
     }

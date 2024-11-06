@@ -10,9 +10,12 @@ use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
 
 final class GelfHandler extends Handler
 {
-    public function __construct(LogLevel $level = LogLevel::DEBUG)
-    {
-        parent::__construct($level);
+    public function __construct(
+        private readonly string $address,
+        LogLevel $level = LogLevel::DEBUG,
+        array $channels = [],
+    ) {
+        parent::__construct($level, $channels);
     }
 
     public function start(): void

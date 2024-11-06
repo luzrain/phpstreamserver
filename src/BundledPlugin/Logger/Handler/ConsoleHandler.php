@@ -23,10 +23,10 @@ final class ConsoleHandler extends Handler
     private bool $colorSupport;
 
     public function __construct(
+        private readonly int $output = self::OUTPUT_STDERR,
         LogLevel $level = LogLevel::DEBUG,
         array $channels = [],
         private readonly FormatterInterface $formatter = new ConsoleFormatter(),
-        private int $output = self::OUTPUT_STDERR,
     ) {
         parent::__construct($level, $channels);
     }
