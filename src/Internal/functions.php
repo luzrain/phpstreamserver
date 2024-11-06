@@ -6,6 +6,7 @@ namespace Luzrain\PHPStreamServer\Internal;
 
 use Amp\ByteStream\WritableResourceStream;
 use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
+use Luzrain\PHPStreamServer\Server;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
@@ -100,7 +101,7 @@ function getRunDirectory(): string
  */
 function getDefaultPidFile(): string
 {
-    return \sprintf('%s/phpss%s.pid', getRunDirectory(), \hash('xxh32', getStartFile()));
+    return \sprintf('%s/%s%s.pid', getRunDirectory(), Server::SHORTNAME, \hash('xxh32', getStartFile()));
 }
 
 /**
@@ -108,7 +109,7 @@ function getDefaultPidFile(): string
  */
 function getDefaultSocketFile(): string
 {
-    return \sprintf('%s/phpss%s.socket', getRunDirectory(), \hash('xxh32', getStartFile()));
+    return \sprintf('%s/%s%s.socket', getRunDirectory(), Server::SHORTNAME, \hash('xxh32', getStartFile()));
 }
 
 /**

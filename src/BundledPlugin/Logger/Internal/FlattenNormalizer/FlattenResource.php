@@ -37,11 +37,11 @@ final readonly class FlattenResource
 
     public function toString(): string
     {
-        $attributesStr = '';
+        $attr = '';
         if ($this->uri !== null) {
-            $attributesStr .= ' uri:"' . $this->uri .'"';
+            $attr = ': ' . $this->uri;
         }
 
-        return \sprintf('[resource(%s)%s]', $this->type, $attributesStr !== '' ? ' ' . \trim($attributesStr) : '');
+        return \sprintf('[resource(%s)%s]', $this->type, $attr === '' ? '' : $attr);
     }
 }

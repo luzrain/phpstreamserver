@@ -13,12 +13,14 @@ use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
 
 final class Server
 {
-    private const PACKAGE = 'luzrain/phpstreamserver';
+    public const PACKAGE = 'luzrain/phpstreamserver';
     public const NAME = 'PHPStreamServer';
+    public const SHORTNAME = 'phpss';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
 
     /** @var array<Plugin> */
     private array $plugins = [];
+
     /** @var array<Process> */
     private array $workers = [];
 
