@@ -24,10 +24,11 @@ final class ConsoleHandler extends Handler
 
     public function __construct(
         LogLevel $level = LogLevel::DEBUG,
+        array $channels = [],
         private readonly FormatterInterface $formatter = new ConsoleFormatter(),
         private int $output = self::OUTPUT_STDERR,
     ) {
-        parent::__construct($level);
+        parent::__construct($level, $channels);
     }
 
     public function start(): void
