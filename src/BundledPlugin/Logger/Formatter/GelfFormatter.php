@@ -21,17 +21,15 @@ final readonly class GelfFormatter implements FormatterInterface
     private const VERSION = '1.1';
 
     public const DEFAULT_JSON_FLAGS = JSON_UNESCAPED_UNICODE
-    | JSON_PRESERVE_ZERO_FRACTION
-    | JSON_INVALID_UTF8_SUBSTITUTE
-    | JSON_PARTIAL_OUTPUT_ON_ERROR
+        | JSON_PRESERVE_ZERO_FRACTION
+        | JSON_INVALID_UTF8_SUBSTITUTE
+        | JSON_PARTIAL_OUTPUT_ON_ERROR
     ;
 
     private string $hostName;
 
-    public function __construct(
-        string $hostName = null,
-        private bool $includeStacktraces = false,
-    ) {
+    public function __construct(string $hostName = null, private bool $includeStacktraces = false)
+    {
         $this->hostName = $hostName ?? \gethostname();
     }
 

@@ -19,12 +19,16 @@ final class MasterLogger implements LoggerInterface
     /**
      * @var array<HandlerInterface>
      */
-    private array $handlers;
+    private array $handlers = [];
     private string $channel = 'server';
 
-    public function __construct(HandlerInterface ...$handlers)
+    public function __construct()
     {
-        $this->handlers = $handlers;
+    }
+
+    public function addHandler(HandlerInterface $handler): void
+    {
+        $this->handlers[] = $handler;
     }
 
     public function withChannel(string $channel): self

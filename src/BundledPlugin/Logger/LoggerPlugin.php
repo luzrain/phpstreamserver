@@ -26,8 +26,8 @@ final class LoggerPlugin extends Plugin
 
     public function init(): void
     {
-        $masterLoggerFactory = function () {
-            return new MasterLogger(...$this->handlers);
+        $masterLoggerFactory = static function () {
+            return new MasterLogger();
         };
 
         $workerLoggerFactory = static function (Container $container) {
@@ -43,14 +43,22 @@ final class LoggerPlugin extends Plugin
         /** @var MasterLogger $logger */
         $logger = $this->masterContainer->get('logger');
 
-        /** @var MessageHandlerInterface $handler */
-        $handler = $this->masterContainer->get('handler');
+        /** @var MessageHandlerInterface $messageBusHandler */
+        $messageBusHandler = $this->masterContainer->get('handler');
 
         foreach ($this->handlers as $loggerHandler) {
-            $loggerHandler->start();
+            $loggerHandler
+                ->start()
+                ->map(function () use ($logger, $loggerHandler) {
+                    $logger->addHandler($loggerHandler);
+                })
+                ->catch(function (\Throwable $e) use ($logger) {
+                    $logger->error($e->getMessage(), ['exception' => $e]);
+                })
+            ;
         }
 
-        $handler->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {
+        $messageBusHandler->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {
             EventLoop::queue(static function () use ($event, $logger) {
                 $logger->logEntry($event);
             });

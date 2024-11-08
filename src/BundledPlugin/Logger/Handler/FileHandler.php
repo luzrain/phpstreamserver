@@ -6,12 +6,14 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
 
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\WritableResourceStream;
+use Amp\Future;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Formatter\StringFormatter;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\FormatterInterface;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
 use Revolt\EventLoop;
+use function Amp\async;
 use function Amp\delay;
 
 final class FileHandler extends Handler
@@ -44,23 +46,25 @@ final class FileHandler extends Handler
         parent::__construct($level, $channels);
     }
 
-    public function start(): void
+    public function start(): Future
     {
-        $file = !\str_starts_with($this->filename, '/') ? \getcwd() . '/' . $this->filename : $this->filename;
-        $this->logFile = new \SplFileInfo($file);
+        return async(function () {
+            $file = !\str_starts_with($this->filename, '/') ? \getcwd() . '/' . $this->filename : $this->filename;
+            $this->logFile = new \SplFileInfo($file);
 
-        if(!\is_dir($this->logFile->getPath())) {
-            \mkdir(directory: $this->logFile->getPath(), recursive: true);
-        }
+            if(!\is_dir($this->logFile->getPath())) {
+                \mkdir(directory: $this->logFile->getPath(), recursive: true);
+            }
 
-        $this->stream = new WritableResourceStream(\fopen($this->logFile->getPathname(), 'a'));
-        \chmod($this->logFile->getPathname(), $this->permission);
+            $this->stream = new WritableResourceStream(\fopen($this->logFile->getPathname(), 'a'));
+            \chmod($this->logFile->getPathname(), $this->permission);
 
-        if ($this->rotate) {
-            $this->scheduleRotate();
-        }
+            if ($this->rotate) {
+                $this->scheduleRotate();
+            }
 
-        $this->pause = false;
+            $this->pause = false;
+        });
     }
 
     private function scheduleRotate(): void
@@ -157,6 +161,6 @@ final class FileHandler extends Handler
             delay(0.01);
         }
 
-        $this->stream->write($this->formatter->format($record) . PHP_EOL);
+        $this->stream->write($this->formatter->format($record) . "\n");
     }
 }

@@ -32,7 +32,7 @@ final class ConsoleLogger implements LoggerInterface
         'error' => 'fg=red',
         'critical' => 'fg=red',
         'alert' => 'fg=red',
-        'emergency' => 'bg=red',
+        'emergency' => 'fg=red',
     ];
 
     private ContextNormalizer $contextNormalizer;
@@ -73,6 +73,6 @@ final class ConsoleLogger implements LoggerInterface
 
         $message = $this->colorSupport ? Colorizer::colorize($message) : Colorizer::stripTags($message);
 
-        getStderr()->write($message . PHP_EOL);
+        getStderr()->write($message . "\n");
     }
 }
