@@ -199,7 +199,9 @@ final class MasterProcess implements PsrContainerInterface
         });
 
         foreach ($this->plugins as $plugin) {
-            $plugin->start();
+            EventLoop::queue(function () use ($plugin) {
+                $plugin->start();
+            });
         }
 
         $this->messageHandler->subscribe(ContainerGetCommand::class, function (ContainerGetCommand $message) {
@@ -319,20 +321,19 @@ final class MasterProcess implements PsrContainerInterface
 
     private function free(): void
     {
+        $identifiers = EventLoop::getDriver()->getIdentifiers();
+        \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
+        EventLoop::getDriver()->stop();
+
         ErrorHandler::unregister();
         SIGCHLDHandler::unregister();
+
+        EventLoop::getDriver()->run();
 
         unset($this->plugins);
         unset($this->messageHandler);
         unset($this->masterContainer);
         unset($this->logger);
-
-        EventLoop::queue(static function() {
-            $identifiers = EventLoop::getDriver()->getIdentifiers();
-            \array_walk($identifiers, EventLoop::getDriver()->cancel(...));
-            EventLoop::getDriver()->stop();
-        });
-        EventLoop::getDriver()->run();
 
         \gc_collect_cycles();
         \gc_mem_caches();

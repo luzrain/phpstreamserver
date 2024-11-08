@@ -79,7 +79,7 @@ final class Supervisor
 
     private function spawnWorkers(): void
     {
-        EventLoop::queue(function (): void {
+        EventLoop::defer(function (): void {
             foreach ($this->workerPool->getRegisteredWorkers() as $worker) {
                 while (\iterator_count($this->workerPool->getAliveWorkerPids($worker)) < $worker->count) {
                     if ($this->spawnWorker($worker)) {
