@@ -22,6 +22,8 @@ use function Amp\weakClosure;
  */
 final class SocketFileMessageHandler implements MessageHandlerInterface, MessageBusInterface
 {
+    public const CHUNK_SIZE = 65536;
+
     private ResourceServerSocket $socket;
 
     /**
@@ -33,7 +35,7 @@ final class SocketFileMessageHandler implements MessageHandlerInterface, Message
 
     public function __construct(string $socketFile)
     {
-        $this->socket = (new ResourceServerSocketFactory(chunkSize: PHP_INT_MAX))->listen(new UnixAddress($socketFile));
+        $this->socket = (new ResourceServerSocketFactory(chunkSize: self::CHUNK_SIZE))->listen(new UnixAddress($socketFile));
         $server = &$this->socket;
         $subscribers = &$this->subscribers;
 
@@ -41,18 +43,17 @@ final class SocketFileMessageHandler implements MessageHandlerInterface, Message
 
         $this->callbackId = EventLoop::defer(static function () use (&$server, &$subscribers) {
             while ($socket = $server->accept()) {
-                $data = $socket->read(limit: PHP_INT_MAX);
+                $data = $socket->read(limit: self::CHUNK_SIZE);
 
                 // if socket is not readable anymore
                 if ($data === null) {
                     continue;
                 }
 
-                $size = (int) \substr($data, 0, 10);
-                $data = \substr($data, 10);
+                ['size' => $size, 'data' => $data] = \unpack('Vsize/a*data', $data);
 
                 while (\strlen($data) < $size) {
-                    $data .= $socket->read(limit: PHP_INT_MAX);
+                    $data .= $socket->read(limit: self::CHUNK_SIZE);
                 }
 
                 $message = \unserialize($data);
@@ -67,7 +68,8 @@ final class SocketFileMessageHandler implements MessageHandlerInterface, Message
                 }
 
                 try {
-                    $socket->write(\serialize($return));
+                    $serializedWriteData = \serialize($return);
+                    $socket->write(\pack('Va*', \strlen($serializedWriteData), $serializedWriteData));
                 } catch (StreamException) {
                     // if socket is not writable anymore
                     continue;

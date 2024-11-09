@@ -51,13 +51,17 @@ final class SocketFileMessageBus implements MessageBusInterface
                 }
             }
 
-            $serializedData = \serialize($message);
-            $sizeMark = \str_pad((string) \strlen($serializedData), 10, '0', STR_PAD_LEFT);
+            $serializedWriteData = \serialize($message);
+            $socket->write(\pack('Va*', \strlen($serializedWriteData), $serializedWriteData));
 
-            $socket->write($sizeMark . $serializedData);
-            $buffer = $socket->read(limit: PHP_INT_MAX);
+            $data = $socket->read(limit: SocketFileMessageHandler::CHUNK_SIZE);
+            ['size' => $size, 'data' => $data] = \unpack('Vsize/a*data', $data);
 
-            return \unserialize($buffer);
+            while (\strlen($data) < $size) {
+                $data .= $socket->read(limit: SocketFileMessageHandler::CHUNK_SIZE);
+            }
+
+            return \unserialize($data);
         });
 
         $inProgresss = &$this->inProgress;
