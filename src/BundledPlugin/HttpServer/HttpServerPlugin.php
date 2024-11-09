@@ -5,23 +5,28 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
 
 use Amp\Http\Server\Driver\HttpDriver;
+use Amp\Http\Server\Middleware\CompressionMiddleware;
 use Luzrain\PHPStreamServer\Plugin;
 
 final class HttpServerPlugin extends Plugin
 {
     public function __construct(
-        private readonly bool $http2Enabled = true,
-        private readonly int $connectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
-        private readonly int $headerSizeLimit = HttpDriver::DEFAULT_HEADER_SIZE_LIMIT,
-        private readonly int $bodySizeLimit = HttpDriver::DEFAULT_BODY_SIZE_LIMIT,
+        private readonly bool $http2Enable = true,
+        private readonly int $httpConnectionTimeout = HttpDriver::DEFAULT_CONNECTION_TIMEOUT,
+        private readonly int $httpHeaderSizeLimit = HttpDriver::DEFAULT_HEADER_SIZE_LIMIT,
+        private readonly int $httpBodySizeLimit = HttpDriver::DEFAULT_BODY_SIZE_LIMIT,
+        private readonly int $gzipMinLength = CompressionMiddleware::DEFAULT_MINIMUM_LENGTH,
+        private readonly string $gzipTypesRegex = CompressionMiddleware::DEFAULT_CONTENT_TYPE_REGEX,
     ) {
     }
 
     public function init(): void
     {
-        $this->workerContainer->set('httpServerPlugin.http2Enabled', $this->http2Enabled);
-        $this->workerContainer->set('httpServerPlugin.connectionTimeout', $this->connectionTimeout);
-        $this->workerContainer->set('httpServerPlugin.headerSizeLimit', $this->headerSizeLimit);
-        $this->workerContainer->set('httpServerPlugin.bodySizeLimit', $this->bodySizeLimit);
+        $this->workerContainer->set('httpServerPlugin.http2Enable', $this->http2Enable);
+        $this->workerContainer->set('httpServerPlugin.httpConnectionTimeout', $this->httpConnectionTimeout);
+        $this->workerContainer->set('httpServerPlugin.httpHeaderSizeLimit', $this->httpHeaderSizeLimit);
+        $this->workerContainer->set('httpServerPlugin.httpBodySizeLimit', $this->httpBodySizeLimit);
+        $this->workerContainer->set('httpServerPlugin.gzipMinLength', $this->gzipMinLength);
+        $this->workerContainer->set('httpServerPlugin.gzipTypesRegex', $this->gzipTypesRegex);
     }
 }

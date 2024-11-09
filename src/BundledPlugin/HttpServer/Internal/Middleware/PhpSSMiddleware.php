@@ -2,19 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
+namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware;
 
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 use Luzrain\PHPStreamServer\Server;
 
 /**
  * @internal
  */
-final readonly class AmpHttpServerMiddleware implements Middleware
+final readonly class PhpSSMiddleware implements Middleware
 {
     public function __construct(
         private HttpErrorHandler $errorHandler,

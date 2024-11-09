@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
 
+use Amp\Http\Server\HttpErrorException;
+use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\AmpHttpServer;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
+use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
 
@@ -18,26 +21,31 @@ final class HttpServerProcess extends WorkerProcess
     /**
      * @param Listen|string|array<Listen> $listen
      * @param null|\Closure(self, mixed):void $onStart
+     * @param null|\Closure(Request, mixed): Response $onRequest
      * @param null|\Closure(self):void $onStop
      * @param null|\Closure(self):void $onReload
-     * @param \Closure(Request, mixed): Response $onRequest
+     * @param array<Middleware> $middleware
+     * @param array<ReloadStrategyInterface> $reloadStrategies
      */
     public function __construct(
         private Listen|string|array $listen,
-        private \Closure $onRequest,
         string $name = 'HTTP Server',
         int $count = 1,
         bool $reloadable = true,
         string|null $user = null,
         string|null $group = null,
         private \Closure|null $onStart = null,
+        private \Closure|null $onRequest = null,
         \Closure|null $onStop = null,
         \Closure|null $onReload = null,
         private array $middleware = [],
+        array $reloadStrategies = [],
+        private string|null $serverDir = null,
+        private bool $accessLog = true,
+        private bool $gzip = false,
         private int|null $connectionLimit = null,
         private int|null $connectionLimitPerIp = null,
         private int|null $concurrencyLimit = null,
-        array $reloadStrategies = [],
     ) {
         parent::__construct(
             name: $name,
@@ -63,6 +71,8 @@ final class HttpServerProcess extends WorkerProcess
             ($this->onStart)($this, $this->context);
         }
 
+        $this->onRequest ??= static fn() => throw new HttpErrorException(404);
+
         $requestHandler = new class($this->onRequest, $this->context) implements RequestHandler {
             public function __construct(private readonly \Closure $handler, private mixed &$context)
             {
@@ -74,22 +84,30 @@ final class HttpServerProcess extends WorkerProcess
             }
         };
 
-        $httpServer = new AmpHttpServer(
+        $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
+
+        $httpServer = new HttpServer(
             listen: self::normalizeListenList($this->listen),
             requestHandler: $requestHandler,
             middleware: $this->middleware,
             connectionLimit: $this->connectionLimit,
             connectionLimitPerIp: $this->connectionLimitPerIp,
             concurrencyLimit: $this->concurrencyLimit,
-            http2Enabled: $this->container->get('httpServerPlugin.http2Enabled'),
-            connectionTimeout: $this->container->get('httpServerPlugin.connectionTimeout'),
-            headerSizeLimit: $this->container->get('httpServerPlugin.headerSizeLimit'),
-            bodySizeLimit: $this->container->get('httpServerPlugin.bodySizeLimit'),
+            http2Enabled: $this->container->get('httpServerPlugin.http2Enable'),
+            connectionTimeout: $this->container->get('httpServerPlugin.httpConnectionTimeout'),
+            headerSizeLimit: $this->container->get('httpServerPlugin.httpHeaderSizeLimit'),
+            bodySizeLimit: $this->container->get('httpServerPlugin.httpBodySizeLimit'),
+            logger: $this->logger,
+            networkTrafficCounter: $networkTrafficCounter,
+            reloadStrategyTrigger: $this->reloadStrategyTrigger,
+            accessLog: $this->accessLog,
+            serveDir: $this->serverDir,
+            gzip: $this->gzip,
+            gzipMinLength: $this->container->get('httpServerPlugin.gzipMinLength'),
+            gzipTypesRegex: $this->container->get('httpServerPlugin.gzipTypesRegex'),
         );
 
-        $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
-
-        $httpServer->start($this->logger->withChannel('http'), $networkTrafficCounter, $this->reloadStrategyTrigger);
+        $httpServer->start();
     }
 
     /**

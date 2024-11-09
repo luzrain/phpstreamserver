@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
 
+use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
+use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\Middleware;
-use Amp\Http\Server\Middleware\ConcurrencyLimitingMiddleware;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\BindContext;
@@ -16,24 +17,23 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\AccessLoggerMiddleware;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\PhpSSMiddleware;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
-use Psr\Log\LoggerInterface;
+use Luzrain\PHPStreamServer\LoggerInterface;
 
 /**
  * @internal
  */
-final readonly class AmpHttpServer
+final readonly class HttpServer
 {
     private const DEFAULT_TCP_BACKLOG = 65536;
 
     /**
      * @param array<Listen> $listen
      * @param array<Middleware> $middleware
-     * @param positive-int|null $connectionLimit
-     * @param positive-int|null $connectionLimitPerIp
-     * @param positive-int|null $concurrencyLimit
      */
     public function __construct(
         private array $listen,
@@ -46,51 +46,63 @@ final readonly class AmpHttpServer
         private int $connectionTimeout,
         private int $headerSizeLimit,
         private int $bodySizeLimit,
-        private \Closure|null $onConnect = null,
-        private \Closure|null $onClose = null,
+        private LoggerInterface $logger,
+        private NetworkTrafficCounter $networkTrafficCounter,
+        private \Closure $reloadStrategyTrigger,
+        private bool $accessLog,
+        private string|null $serveDir,
+        private bool $gzip,
+        private int $gzipMinLength,
+        private string $gzipTypesRegex,
     ) {
     }
 
-    public function start(
-        LoggerInterface $logger,
-        NetworkTrafficCounter $networkTrafficCounter,
-        \Closure $reloadStrategyTrigger,
-    ): void {
+    public function start(): void
+    {
         $middleware = [];
-        $errorHandler = new HttpErrorHandler($logger);
+        $errorHandler = new HttpErrorHandler($this->logger);
         $serverSocketFactory = new ResourceServerSocketFactory();
-        $clientFactory = new HttpClientFactory(
-            logger: $logger,
-            connectionLimitPerIp: $this->connectionLimitPerIp,
-            onConnectCallback: $this->onConnect,
-            onCloseCallback: $this->onClose,
-        );
+        $clientFactory = new SocketClientFactory($this->logger);
+
+        if ($this->connectionLimitPerIp !== null) {
+            $clientFactory = new ConnectionLimitingClientFactory($clientFactory, $this->logger, $this->connectionLimitPerIp);
+        }
 
         if ($this->connectionLimit !== null) {
             $serverSocketFactory = new ConnectionLimitingServerSocketFactory(new LocalSemaphore($this->connectionLimit), $serverSocketFactory);
         }
 
-        $serverSocketFactory = new TrafficCountingSocketFactory($serverSocketFactory, $networkTrafficCounter);
+        $serverSocketFactory = new TrafficCountingSocketFactory($serverSocketFactory, $this->networkTrafficCounter);
 
         if ($this->concurrencyLimit !== null) {
-            $middleware[] = new ConcurrencyLimitingMiddleware($this->concurrencyLimit);
+            $middleware[] = new Middleware\ConcurrencyLimitingMiddleware($this->concurrencyLimit);
         }
 
-        $middleware[] = new AmpHttpServerMiddleware($errorHandler, $networkTrafficCounter, $reloadStrategyTrigger);
+        if ($this->accessLog) {
+            $middleware[] = new AccessLoggerMiddleware($this->logger->withChannel('http'));
+        }
+
+        if ($this->gzip) {
+            $middleware[] = new Middleware\CompressionMiddleware($this->gzipMinLength, $this->gzipTypesRegex);
+        }
+
+        $middleware[] = new PhpSSMiddleware($errorHandler, $this->networkTrafficCounter, $this->reloadStrategyTrigger);
 
         \array_push($middleware, ...$this->middleware);
 
-        // Force move StaticMiddleware to the end of the chain
-        \usort($middleware, static fn (mixed $a): int => $a instanceof StaticMiddleware ? 1 : -1);
+        // StaticMiddleware must be at the end of the chain.
+        if ($this->serveDir !== null) {
+            $middleware[] = new StaticMiddleware($this->serveDir);
+        }
 
         $socketHttpServer = new SocketHttpServer(
-            logger: $logger,
+            logger: $this->logger,
             serverSocketFactory: $serverSocketFactory,
             clientFactory: $clientFactory,
             middleware: $middleware,
             allowedMethods: null,
             httpDriverFactory: new DefaultHttpDriverFactory(
-                logger: $logger,
+                logger: $this->logger,
                 streamTimeout: $this->connectionTimeout,
                 connectionTimeout: $this->connectionTimeout,
                 headerSizeLimit: $this->headerSizeLimit,

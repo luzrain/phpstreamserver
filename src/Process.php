@@ -64,7 +64,7 @@ abstract class Process implements MessageBusInterface, ContainerInterface
         $this->status = Status::STARTING;
         $this->pid = \posix_getpid();
         $this->container = $workerContainer;
-        $this->logger = $workerContainer->get('logger');
+        $this->logger = $workerContainer->get('logger')->withChannel('worker');
         $this->messageBus = $workerContainer->get('bus');
 
         ErrorHandler::register($this->logger);
