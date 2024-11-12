@@ -106,7 +106,9 @@ abstract class Process implements MessageBusInterface, ContainerInterface
             ]))->await();
             $this->start();
             if ($this->onStart !== null) {
-                ($this->onStart)($this);
+                EventLoop::queue(function () {
+                    ($this->onStart)($this);
+                });
             }
             $this->status = Status::RUNNING;
             $this->startingFuture->complete();

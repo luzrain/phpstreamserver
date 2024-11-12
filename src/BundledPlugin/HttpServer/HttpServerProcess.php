@@ -113,7 +113,7 @@ final class HttpServerProcess extends WorkerProcess
     /**
      * @return list<Listen>
      */
-    private static function normalizeListenList(self|string|array $listen): array
+    private static function normalizeListenList(Listen|string|array $listen): array
     {
         $listen = \is_array($listen) ? $listen : [$listen];
         $ret = [];

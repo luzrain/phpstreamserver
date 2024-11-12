@@ -113,7 +113,7 @@ final readonly class HttpServer
         );
 
         foreach ($this->listen as $listen) {
-            $socketHttpServer->expose(...$this->createInternetAddressAndContext($listen));
+            $socketHttpServer->expose(...self::createInternetAddressAndContext($listen, true, self::DEFAULT_TCP_BACKLOG));
         }
 
         $socketHttpServer->start($this->requestHandler, $errorHandler);
@@ -122,20 +122,24 @@ final readonly class HttpServer
     /**
      * @return array{0: InternetAddress, 1: BindContext}
      */
-    private function createInternetAddressAndContext(Listen $listen): array
+    public static function createInternetAddressAndContext(Listen $listen, bool $reusePort = false, int $backlog = 0): array
     {
         $internetAddress = new InternetAddress($listen->host, $listen->port);
+        $context = new BindContext();
 
-        $context = (new BindContext())
-            ->withReusePort()
-            ->withBacklog(self::DEFAULT_TCP_BACKLOG)
-        ;
+        if ($reusePort) {
+            $context = $context->withReusePort();
+        }
+
+        if ($backlog > 0) {
+            $context = $context->withBacklog($backlog);
+        }
 
         if ($listen->tls) {
             \assert($listen->tlsCertificate !== null);
-            $context = $context->withTlsContext(
-                (new ServerTlsContext())->withDefaultCertificate(new Certificate($listen->tlsCertificate, $listen->tlsCertificateKey)),
-            );
+            $cert = new Certificate($listen->tlsCertificate, $listen->tlsCertificateKey);
+            $tlsContext = (new ServerTlsContext())->withDefaultCertificate($cert);
+            $context = $context->withTlsContext($tlsContext);
         }
 
         return [$internetAddress, $context];

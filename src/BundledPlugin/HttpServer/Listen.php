@@ -31,4 +31,10 @@ final readonly class Listen
             throw new \InvalidArgumentException('Certificate file must be provided');
         }
     }
+
+    public function getAddress(): string
+    {
+        return ($this->tls ? 'https://' : 'http://') . $this->host .
+            (($this->tls && $this->port === 443) || (!$this->tls && $this->port === 80) ? '' : ':' . $this->port);
+    }
 }

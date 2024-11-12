@@ -199,7 +199,7 @@ final class MasterProcess implements PsrContainerInterface
         });
 
         foreach ($this->plugins as $plugin) {
-            EventLoop::queue(function () use ($plugin) {
+            EventLoop::defer(function () use ($plugin) {
                 $plugin->start();
             });
         }
