@@ -26,22 +26,14 @@ final class LoggerPlugin extends Plugin
 
     public function init(): void
     {
-        $masterLoggerFactory = static function () {
-            return new MasterLogger();
-        };
+        $logger = new MasterLogger();
 
         $workerLoggerFactory = static function (Container $container) {
             return new WorkerLogger($container->get('bus'));
         };
 
-        $this->masterContainer->register('logger', $masterLoggerFactory);
+        $this->masterContainer->set('logger', $logger);
         $this->workerContainer->register('logger', $workerLoggerFactory);
-    }
-
-    public function start(): void
-    {
-        /** @var MasterLogger $logger */
-        $logger = $this->masterContainer->get('logger');
 
         /** @var MessageHandlerInterface $messageBusHandler */
         $messageBusHandler = $this->masterContainer->get('handler');

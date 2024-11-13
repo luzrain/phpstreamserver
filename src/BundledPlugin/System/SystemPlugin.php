@@ -20,8 +20,6 @@ use Luzrain\PHPStreamServer\Plugin;
  */
 final class SystemPlugin extends Plugin
 {
-    private ConnectionsStatus $connectionsStatus;
-
     public function __construct()
     {
     }
@@ -31,16 +29,13 @@ final class SystemPlugin extends Plugin
         $serverStatus = new ServerStatus();
         $this->masterContainer->set(ServerStatus::class, $serverStatus);
 
-        $this->connectionsStatus = new ConnectionsStatus();
-        $this->masterContainer->set(ConnectionsStatus::class, $this->connectionsStatus);
-    }
+        $connectionsStatus = new ConnectionsStatus();
+        $this->masterContainer->set(ConnectionsStatus::class, $connectionsStatus);
 
-    public function start(): void
-    {
         /** @var MessageHandlerInterface $handler */
         $handler = &$this->masterContainer->get('handler');
 
-        $this->connectionsStatus->subscribeToWorkerMessages($handler);
+        $connectionsStatus->subscribeToWorkerMessages($handler);
     }
 
     public function commands(): array

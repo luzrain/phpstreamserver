@@ -105,7 +105,7 @@ final class MasterProcess implements PsrContainerInterface
                 throw new PHPStreamServerException(\sprintf('Plugin "%s" already registered', $plugin::class));
             }
             $this->plugins[$plugin::class] = $plugin;
-            $plugin->register($this->masterContainer, $this->workerContainer, $this->status);
+            $plugin->registerPlugin($this->masterContainer, $this->workerContainer, $this->status);
         }
     }
 
@@ -196,7 +196,7 @@ final class MasterProcess implements PsrContainerInterface
 
         foreach ($this->plugins as $plugin) {
             EventLoop::defer(function () use ($plugin) {
-                $plugin->start();
+                $plugin->init();
             });
         }
 
@@ -229,6 +229,12 @@ final class MasterProcess implements PsrContainerInterface
 
             unset($this->workerClassesCanNotBeHandled);
         });
+
+        foreach ($this->plugins as $plugin) {
+            EventLoop::defer(function () use ($plugin) {
+                $plugin->start();
+            });
+        }
 
         $this->status = Status::RUNNING;
     }

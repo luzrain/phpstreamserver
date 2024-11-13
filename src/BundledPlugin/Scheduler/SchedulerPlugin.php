@@ -22,13 +22,7 @@ final class SchedulerPlugin extends Plugin
 
     public function __construct()
     {
-    }
-
-    public function init(): void
-    {
-        $this->scheduler = new Scheduler($this->status);
         $this->schedulerStatus = new SchedulerStatus();
-        $this->masterContainer->set(SchedulerStatus::class, $this->schedulerStatus);
     }
 
     public function addWorker(Process $worker): void
@@ -38,8 +32,11 @@ final class SchedulerPlugin extends Plugin
         $this->schedulerStatus->addWorker($worker);
     }
 
-    public function start(): void
+    public function init(): void
     {
+        $this->scheduler = new Scheduler($this->status);
+        $this->masterContainer->set(SchedulerStatus::class, $this->schedulerStatus);
+
         /** @var Suspension $suspension */
         $suspension = $this->masterContainer->get('suspension');
         /** @var LoggerInterface $logger */

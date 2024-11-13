@@ -33,18 +33,13 @@ final class MetricsPlugin extends Plugin
 
     public function init(): void
     {
-        $this->masterContainer->register(RegistryInterface::class, static function (Container $container): RegistryInterface {
-            return new MessageBusRegistry($container->get('bus'));
-        });
+        $listen = \is_string($this->listen) ? new Listen($this->listen) : $this->listen;
+
+        $this->masterContainer->set(RegistryInterface::class, new MessageBusRegistry($this->masterContainer->get('bus')));
 
         $this->workerContainer->register(RegistryInterface::class, static function (Container $container): RegistryInterface {
             return new MessageBusRegistry($container->get('bus'));
         });
-    }
-
-    public function start(): void
-    {
-        $listen = \is_string($this->listen) ? new Listen($this->listen) : $this->listen;
 
         /** @var LoggerInterface $logger */
         $logger = &$this->masterContainer->get('logger');
