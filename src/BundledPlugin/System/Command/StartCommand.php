@@ -42,7 +42,6 @@ final class StartCommand extends Command
         $this->assertServerIsNotRunning($args['pidFile']);
 
         $daemonize = (bool) $this->options->getOption('daemon');
-        $quiet = (bool) $this->options->getOption('quiet');
 
         $masterProcess = new MasterProcess(
             pidFile: $args['pidFile'],
@@ -50,6 +49,8 @@ final class StartCommand extends Command
             plugins: $args['plugins'],
             workers: $args['workers'],
         );
+
+        unset($args);
 
         $supervisorStatus = $masterProcess->get(SupervisorStatus::class);
         \assert($supervisorStatus instanceof SupervisorStatus);
@@ -92,9 +93,6 @@ final class StartCommand extends Command
             echo "Press Ctrl+C to stop.\n";
         }
 
-        return $masterProcess->run([
-            'daemonize' => $daemonize,
-            'quiet' => $quiet,
-        ]);
+        return $masterProcess->run($daemonize);
     }
 }

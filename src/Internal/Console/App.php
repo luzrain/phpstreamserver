@@ -70,7 +70,7 @@ final class App
         return $options;
     }
 
-    public function run(array $args): int
+    public function run(\WeakMap $args): int
     {
         $argv = $this->getArgvs();
         $this->parsedOptions = $this->parseArgvs($argv);
@@ -99,7 +99,7 @@ final class App
                 }
 
                 try {
-                    return $command->execute($args);
+                    return $command->execute($args->getIterator()->current());
                 } catch (ServerIsNotRunning) {
                     echo \sprintf("<color;bg=red>%s is not running</>\n", Server::NAME);
                     return 1;

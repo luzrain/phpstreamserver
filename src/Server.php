@@ -8,6 +8,7 @@ use Composer\InstalledVersions;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
 use Luzrain\PHPStreamServer\BundledPlugin\System\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\Console\App;
+use Revolt\EventLoop;
 use function Luzrain\PHPStreamServer\Internal\getDefaultPidFile;
 use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
 
@@ -52,10 +53,11 @@ final class Server
 
     public function run(): int
     {
-        $commands = \array_merge(...\array_map(static fn (Plugin $p) => $p->commands(), $this->plugins));
-        $app = new App(...$commands);
-
-        return $app->run(\get_object_vars($this));
+        $app = new App(...\array_merge(...\array_map(static fn (Plugin $p) => $p->commands(), $this->plugins)));
+        $map = new \WeakMap();
+        $map[EventLoop::getDriver()] = \get_object_vars($this);
+        unset($this->workers, $this->plugins);
+        return $app->run($map);
     }
 
     public static function getVersion(): string

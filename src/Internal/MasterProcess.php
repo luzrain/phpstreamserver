@@ -129,16 +129,12 @@ final class MasterProcess implements PsrContainerInterface
         }
     }
 
-    /**
-     * @param array{daemonize?: bool, quiet?: bool} $options
-     */
-    public function run(array $options = []): int
+    public function run(bool $daemonize): int
     {
         if ($this->isRunning()) {
             throw new PHPStreamServerException(\sprintf('%s already running', Server::NAME));
         }
 
-        $daemonize = $options['daemonize'] ?? false;
         if ($daemonize && $this->doDaemonize()) {
             // Runs in caller process
             return 0;
