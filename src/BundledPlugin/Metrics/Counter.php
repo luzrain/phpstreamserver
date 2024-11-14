@@ -11,6 +11,8 @@ use Revolt\EventLoop;
 
 final class Counter extends Metric
 {
+    protected const TYPE = 'counter';
+
     private array $buffer = [];
 
     /**

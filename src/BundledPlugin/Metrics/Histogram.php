@@ -11,6 +11,8 @@ use Revolt\EventLoop;
 
 final class Histogram extends Metric
 {
+    protected const TYPE = 'histogram';
+
     private array $buffer = [];
 
     /**

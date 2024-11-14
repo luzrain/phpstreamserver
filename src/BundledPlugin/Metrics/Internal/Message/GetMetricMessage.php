@@ -11,11 +11,6 @@ use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
  */
 final readonly class GetMetricMessage implements MessageInterface
 {
-    public const TYPE_COUNTER = 'counter';
-    public const TYPE_GAUGE = 'gauge';
-    public const TYPE_HISTOGRAM = 'histogram';
-    public const TYPE_SUMMARY = 'summary';
-
     private function __construct(
         public string $type,
         public string $namespace,
@@ -25,21 +20,21 @@ final readonly class GetMetricMessage implements MessageInterface
 
     public static function counter(string $namespace, string $name): self
     {
-        return new self(self::TYPE_COUNTER, $namespace, $name);
+        return new self('counter', $namespace, $name);
     }
 
     public static function gauge(string $namespace, string $name): self
     {
-        return new self(self::TYPE_GAUGE, $namespace, $name);
+        return new self('gauge', $namespace, $name);
     }
 
     public static function histogram(string $namespace, string $name): self
     {
-        return new self(self::TYPE_HISTOGRAM, $namespace, $name);
+        return new self('histogram', $namespace, $name);
     }
 
     public static function summary(string $namespace, string $name): self
     {
-        return new self(self::TYPE_SUMMARY, $namespace, $name);
+        return new self('summary', $namespace, $name);
     }
 }

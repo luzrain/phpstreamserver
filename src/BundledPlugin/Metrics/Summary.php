@@ -11,6 +11,8 @@ use Revolt\EventLoop;
 
 final class Summary extends Metric
 {
+    protected const TYPE = 'summary';
+
     private array $buffer = [];
 
     /**

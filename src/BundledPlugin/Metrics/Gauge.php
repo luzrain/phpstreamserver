@@ -11,6 +11,8 @@ use Revolt\EventLoop;
 
 final class Gauge extends Metric
 {
+    protected const TYPE = 'gauge';
+
     private array $buffer = [];
 
     /**

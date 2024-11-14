@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception\LabelsNotMatchException;
+use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\RemoveMetricMessage;
 use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 
 abstract class Metric
 {
+    protected const TYPE = '';
     protected const FLUSH_TIMEOUT = 0.2;
 
     private int $labelsCount;
@@ -21,6 +23,12 @@ abstract class Metric
         protected readonly array $labels = [],
     ) {
         $this->labelsCount = \count($this->labels);
+    }
+
+    public function remove(array $labels = []): void
+    {
+        $this->checkLabels($labels);
+        $this->messageBus->dispatch(new RemoveMetricMessage(static::TYPE, $this->namespace, $this->name, $labels));
     }
 
     /**
