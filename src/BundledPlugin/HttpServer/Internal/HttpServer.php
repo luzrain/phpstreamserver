@@ -51,9 +51,6 @@ final readonly class HttpServer
         private \Closure $reloadStrategyTrigger,
         private bool $accessLog,
         private string|null $serveDir,
-        private bool $gzip,
-        private int $gzipMinLength,
-        private string $gzipTypesRegex,
     ) {
     }
 
@@ -82,13 +79,9 @@ final readonly class HttpServer
             $middleware[] = new AccessLoggerMiddleware($this->logger->withChannel('http'));
         }
 
-        if ($this->gzip) {
-            $middleware[] = new Middleware\CompressionMiddleware($this->gzipMinLength, $this->gzipTypesRegex);
-        }
+        $middleware = [...$middleware, ...$this->middleware];
 
         $middleware[] = new PhpSSMiddleware($errorHandler, $this->networkTrafficCounter, $this->reloadStrategyTrigger);
-
-        \array_push($middleware, ...$this->middleware);
 
         // StaticMiddleware must be at the end of the chain.
         if ($this->serveDir !== null) {

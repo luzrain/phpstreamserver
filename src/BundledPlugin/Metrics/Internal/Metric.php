@@ -25,6 +25,9 @@ abstract class Metric
         $this->labelsCount = \count($this->labels);
     }
 
+    /**
+     * @param array<string, string> $labels
+     */
     public function remove(array $labels = []): void
     {
         $this->checkLabels($labels);

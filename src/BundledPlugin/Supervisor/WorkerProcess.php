@@ -47,9 +47,9 @@ class WorkerProcess extends Process
 
     private function onStop(self $process): void
     {
-        if ($this->isReloading && $this->onReload) {
+        if ($this->isReloading && $this->onReload !== null) {
             ($this->onReload)($process);
-        } elseif (!$this->isReloading && $this->onStop) {
+        } elseif (!$this->isReloading && $this->onStop !== null) {
             ($this->onStop)($process);
         }
     }

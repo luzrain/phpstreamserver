@@ -58,6 +58,16 @@ final class SupervisorPlugin extends Plugin
         $this->supervisor->start($suspension, $logger, $this->handler, $this->bus);
     }
 
+    public function start(): void
+    {
+        if (\interface_exists(RegistryInterface::class)) {
+            try {
+                $registry = $this->masterContainer->get(RegistryInterface::class);
+                $this->masterContainer->set('supervisor_metrics_handler', new MetricsHandler($registry, $this->supervisorStatus, $this->handler));
+            } catch (NotFoundExceptionInterface) {}
+        }
+    }
+
     public function stop(): Future
     {
         return $this->supervisor->stop();

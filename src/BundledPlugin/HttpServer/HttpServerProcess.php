@@ -10,9 +10,12 @@ use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
+use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\MetricsMiddleware;
+use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
+use Psr\Container\NotFoundExceptionInterface;
 
 final class HttpServerProcess extends WorkerProcess
 {
@@ -86,10 +89,25 @@ final class HttpServerProcess extends WorkerProcess
 
         $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
 
+        $middleware = [];
+
+        if ($this->gzip) {
+            $gzipMinLength = $this->container->get('httpServerPlugin.gzipMinLength');
+            $gzipTypesRegex = $this->container->get('httpServerPlugin.gzipTypesRegex');
+            $middleware[] = new Middleware\CompressionMiddleware($gzipMinLength, $gzipTypesRegex);
+        }
+
+        if (\interface_exists(RegistryInterface::class)) {
+            try {
+                $registry = $this->container->get(RegistryInterface::class);
+                $middleware[] = new MetricsMiddleware($registry);
+            } catch (NotFoundExceptionInterface) {}
+        }
+
         $httpServer = new HttpServer(
             listen: self::normalizeListenList($this->listen),
             requestHandler: $requestHandler,
-            middleware: $this->middleware,
+            middleware: [...$middleware, ...$this->middleware],
             connectionLimit: $this->connectionLimit,
             connectionLimitPerIp: $this->connectionLimitPerIp,
             concurrencyLimit: $this->concurrencyLimit,
@@ -102,9 +120,6 @@ final class HttpServerProcess extends WorkerProcess
             reloadStrategyTrigger: $this->reloadStrategyTrigger,
             accessLog: $this->accessLog,
             serveDir: $this->serverDir,
-            gzip: $this->gzip,
-            gzipMinLength: $this->container->get('httpServerPlugin.gzipMinLength'),
-            gzipTypesRegex: $this->container->get('httpServerPlugin.gzipTypesRegex'),
         );
 
         $httpServer->start();

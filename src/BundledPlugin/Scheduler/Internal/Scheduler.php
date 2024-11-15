@@ -7,6 +7,7 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal;
 use Amp\DeferredFuture;
 use Amp\Future;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessScheduledEvent;
+use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessStartedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerFactory;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerInterface;
@@ -101,6 +102,7 @@ final class Scheduler
 
         $this->logger->info(\sprintf('Periodic process "%s" [pid:%s] started', $worker->name, $pid));
         $this->scheduleWorker($worker, $trigger);
+        $this->messageBus->dispatch(new ProcessStartedEvent($worker->id));
     }
 
     private function spawnWorker(PeriodicProcess $worker): int
