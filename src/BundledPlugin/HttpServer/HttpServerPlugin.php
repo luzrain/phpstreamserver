@@ -20,7 +20,7 @@ final class HttpServerPlugin extends Plugin
     ) {
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         $this->workerContainer->set('httpServerPlugin.http2Enable', $this->http2Enable);
         $this->workerContainer->set('httpServerPlugin.httpConnectionTimeout', $this->httpConnectionTimeout);

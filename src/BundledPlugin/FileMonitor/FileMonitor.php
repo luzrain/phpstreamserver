@@ -19,7 +19,7 @@ final class FileMonitor extends Plugin
         $this->watchDirs = $watch;
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         /** @var MessageBusInterface */
         $this->messageBus = &$this->masterContainer->get('bus');

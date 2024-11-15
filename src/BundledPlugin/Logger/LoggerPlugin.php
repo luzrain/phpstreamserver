@@ -24,7 +24,7 @@ final class LoggerPlugin extends Plugin
         $this->handlers = $handlers;
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         $logger = new MasterLogger();
 

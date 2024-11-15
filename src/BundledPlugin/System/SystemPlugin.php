@@ -24,7 +24,7 @@ final class SystemPlugin extends Plugin
     {
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         $serverStatus = new ServerStatus();
         $this->masterContainer->set(ServerStatus::class, $serverStatus);
@@ -38,7 +38,7 @@ final class SystemPlugin extends Plugin
         $connectionsStatus->subscribeToWorkerMessages($handler);
     }
 
-    public function commands(): array
+    public function registerCommands(): array
     {
         return [
             new StartCommand(),

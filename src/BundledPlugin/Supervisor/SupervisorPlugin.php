@@ -31,7 +31,7 @@ final class SupervisorPlugin extends Plugin
     ) {
     }
 
-    protected function register(): void
+    protected function beforeStart(): void
     {
         $this->supervisor = new Supervisor($this->status, $this->stopTimeout, $this->restartDelay);
         $this->supervisorStatus = new SupervisorStatus();
@@ -45,7 +45,7 @@ final class SupervisorPlugin extends Plugin
         $this->supervisorStatus->addWorker($worker);
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         /** @var Suspension $suspension */
         $suspension = &$this->masterContainer->get('suspension');
@@ -58,7 +58,7 @@ final class SupervisorPlugin extends Plugin
         $this->supervisor->start($suspension, $logger, $this->handler, $this->bus);
     }
 
-    public function start(): void
+    public function afterStart(): void
     {
         if (\interface_exists(RegistryInterface::class)) {
             try {
@@ -68,17 +68,17 @@ final class SupervisorPlugin extends Plugin
         }
     }
 
-    public function stop(): Future
+    public function onStop(): Future
     {
         return $this->supervisor->stop();
     }
 
-    public function reload(): void
+    public function onReload(): void
     {
         $this->supervisor->reload();
     }
 
-    public function commands(): iterable
+    public function registerCommands(): iterable
     {
         return [
             new ProcessesCommand(),

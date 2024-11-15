@@ -105,7 +105,7 @@ final class MasterProcess implements PsrContainerInterface
                 throw new PHPStreamServerException(\sprintf('Plugin "%s" already registered', $plugin::class));
             }
             $this->plugins[$plugin::class] = $plugin;
-            $plugin->registerPlugin($this->masterContainer, $this->workerContainer, $this->status);
+            $plugin->register($this->masterContainer, $this->workerContainer, $this->status);
         }
     }
 
@@ -196,7 +196,7 @@ final class MasterProcess implements PsrContainerInterface
 
         foreach ($this->plugins as $plugin) {
             EventLoop::defer(function () use ($plugin) {
-                $plugin->init();
+                $plugin->onStart();
             });
         }
 
@@ -232,7 +232,7 @@ final class MasterProcess implements PsrContainerInterface
 
         foreach ($this->plugins as $plugin) {
             EventLoop::defer(function () use ($plugin) {
-                $plugin->start();
+                $plugin->afterStart();
             });
         }
 
@@ -297,7 +297,7 @@ final class MasterProcess implements PsrContainerInterface
 
         $this->status = Status::STOPPING;
         $this->logger->debug(Server::NAME . ' stopping ...');
-        await(\array_map(fn (Plugin $p) => $p->stop(), $this->plugins));
+        await(\array_map(fn (Plugin $p) => $p->onStop(), $this->plugins));
         $this->status = Status::SHUTDOWN;
         $this->logger->info(Server::NAME . ' stopped');
         $this->suspension->resume($code);
@@ -312,7 +312,7 @@ final class MasterProcess implements PsrContainerInterface
         $this->logger->info(Server::NAME . ' reloading ...');
 
         foreach ($this->plugins as $plugin) {
-            $plugin->reload();
+            $plugin->onReload();
         }
     }
 

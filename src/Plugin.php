@@ -21,12 +21,12 @@ abstract class Plugin
     /**
      * @internal
      */
-    final public function registerPlugin(ContainerInterface $masterContainer, ContainerInterface $workerContainer, Status &$status): void
+    final public function register(ContainerInterface $masterContainer, ContainerInterface $workerContainer, Status &$status): void
     {
         $this->masterContainer = $masterContainer;
         $this->workerContainer = $workerContainer;
         $this->status = &$status;
-        $this->register();
+        $this->beforeStart();
     }
 
     /**
@@ -37,30 +37,30 @@ abstract class Plugin
     }
 
     /**
-     * Executes before start
+     * Executes before startup
      */
-    protected function register(): void
+    protected function beforeStart(): void
     {
     }
 
     /**
      * Executes during startup
      */
-    public function init(): void
+    public function onStart(): void
     {
     }
 
     /**
      * Executes after startup
      */
-    public function start(): void
+    public function afterStart(): void
     {
     }
 
     /**
      * Executes after the master process receives a stop command
      */
-    public function stop(): Future
+    public function onStop(): Future
     {
         return async(static fn() => null);
     }
@@ -68,7 +68,7 @@ abstract class Plugin
     /**
      * Executes after the master process receives a reload command
      */
-    public function reload(): void
+    public function onReload(): void
     {
     }
 
@@ -77,7 +77,7 @@ abstract class Plugin
      *
      * @return iterable<Command>
      */
-    public function commands(): iterable
+    public function registerCommands(): iterable
     {
         return [];
     }

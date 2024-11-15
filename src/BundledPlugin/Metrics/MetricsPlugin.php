@@ -31,7 +31,7 @@ final class MetricsPlugin extends Plugin
     ) {
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         $listen = \is_string($this->listen) ? new Listen($this->listen) : $this->listen;
 

@@ -28,7 +28,7 @@ final class SchedulerPlugin extends Plugin
     {
     }
 
-    protected function register(): void
+    protected function beforeStart(): void
     {
         $this->scheduler = new Scheduler($this->status);
         $this->schedulerStatus = new SchedulerStatus();
@@ -41,7 +41,7 @@ final class SchedulerPlugin extends Plugin
         $this->schedulerStatus->addWorker($worker);
     }
 
-    public function init(): void
+    public function onStart(): void
     {
         $this->masterContainer->set(SchedulerStatus::class, $this->schedulerStatus);
 
@@ -57,7 +57,7 @@ final class SchedulerPlugin extends Plugin
         $this->scheduler->start($suspension, $logger, $bus);
     }
 
-    public function start(): void
+    public function afterStart(): void
     {
         if (\interface_exists(RegistryInterface::class)) {
             try {
@@ -67,12 +67,12 @@ final class SchedulerPlugin extends Plugin
         }
     }
 
-    public function stop(): Future
+    public function onStop(): Future
     {
         return $this->scheduler->stop();
     }
 
-    public function commands(): iterable
+    public function registerCommands(): iterable
     {
         return [
             new SchedulerCommand(),
