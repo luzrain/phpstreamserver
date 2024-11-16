@@ -10,7 +10,6 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessBlockedEvent
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessDetachedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessExitEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessHeartbeatEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSetOptionsEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
@@ -68,10 +67,6 @@ final class Supervisor
 
         $this->messageHandler->subscribe(ProcessHeartbeatEvent::class, weakClosure(function (ProcessHeartbeatEvent $message): void {
             $this->workerPool->markAsHealthy($message->pid, $message->time);
-        }));
-
-        $this->messageHandler->subscribe(ProcessSetOptionsEvent::class, weakClosure(function (ProcessSetOptionsEvent $message): void {
-            $this->workerPool->setReloadable($message->pid, $message->reloadable);
         }));
 
         $this->spawnWorkers();

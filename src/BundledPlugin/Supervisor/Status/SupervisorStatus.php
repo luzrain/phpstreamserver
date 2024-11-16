@@ -11,7 +11,6 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessHeartbeatEve
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessSpawnedEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Process;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
 use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
@@ -80,7 +79,7 @@ final class SupervisorStatus
                     : EventLoop::cancel($id);
             };
 
-            EventLoop::repeat(Process::HEARTBEAT_PERIOD, $checkMemoryUsageClosure);
+            EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, $checkMemoryUsageClosure);
             EventLoop::delay(0.2, $checkMemoryUsageClosure);
         }));
     }

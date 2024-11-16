@@ -15,9 +15,10 @@ final class ProcessStatus
     public bool $blocked = false;
     public bool $reloadable = true;
 
-    public function __construct(int $pid)
+    public function __construct(int $pid, bool $reloadable)
     {
         $this->pid = $pid;
+        $this->reloadable = $reloadable;
         $this->time = \hrtime(true);
     }
 }

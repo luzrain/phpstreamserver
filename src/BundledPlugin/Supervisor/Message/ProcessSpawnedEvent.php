@@ -17,6 +17,7 @@ final readonly class ProcessSpawnedEvent implements MessageInterface
         public int $pid,
         public string $user,
         public string $name,
+        public bool $reloadable,
         public \DateTimeImmutable $startedAt,
     ) {
     }

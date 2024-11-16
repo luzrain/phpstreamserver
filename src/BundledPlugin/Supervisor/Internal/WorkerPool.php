@@ -42,7 +42,7 @@ final class WorkerPool
             throw new PHPStreamServerException('Worker is not found in pool');
         }
 
-        $this->processStatusMap[$worker->id][$pid] = new ProcessStatus($pid);
+        $this->processStatusMap[$worker->id][$pid] = new ProcessStatus($pid, $worker->reloadable);
     }
 
     public function markAsDeleted(int $pid): void
@@ -76,13 +76,6 @@ final class WorkerPool
         if (null !== $worker = $this->getWorkerByPid($pid)) {
             $this->processStatusMap[$worker->id][$pid]->blocked = false;
             $this->processStatusMap[$worker->id][$pid]->time = $time;
-        }
-    }
-
-    public function setReloadable(int $pid, bool $reloadable): void
-    {
-        if (null !== $worker = $this->getWorkerByPid($pid)) {
-            $this->processStatusMap[$worker->id][$pid]->reloadable = $reloadable;
         }
     }
 

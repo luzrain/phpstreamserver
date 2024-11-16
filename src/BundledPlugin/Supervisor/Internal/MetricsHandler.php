@@ -11,7 +11,6 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Message\ProcessExitEvent;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
 use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Process;
 use Luzrain\PHPStreamServer\Server;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
@@ -72,7 +71,7 @@ final readonly class MetricsHandler
         $this->workersTotal->set($supervisorStatus->getWorkersCount());
 
         EventLoop::delay(0.3, $this->heartBeat(...));
-        EventLoop::repeat(Process::HEARTBEAT_PERIOD, $this->heartBeat(...));
+        EventLoop::repeat(WorkerProcess::HEARTBEAT_PERIOD, $this->heartBeat(...));
     }
 
     private function heartBeat(): void

@@ -14,7 +14,6 @@ use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
 use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\Status;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -31,7 +30,7 @@ final class Scheduler
     private Suspension $suspension;
     private DeferredFuture|null $stopFuture = null;
 
-    public function __construct(private Status &$status)
+    public function __construct()
     {
         $this->pool = new WorkerPool();
     }
@@ -64,7 +63,7 @@ final class Scheduler
 
     private function scheduleWorker(PeriodicProcess $worker, TriggerInterface $trigger): bool
     {
-        if ($this->status === Status::SHUTDOWN) {
+        if ($this->stopFuture !== null) {
             return false;
         }
 
