@@ -12,9 +12,9 @@ use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\MetricsMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 use Psr\Container\NotFoundExceptionInterface;
 
 final class HttpServerProcess extends WorkerProcess

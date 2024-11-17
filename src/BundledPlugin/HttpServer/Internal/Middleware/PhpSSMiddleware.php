@@ -9,7 +9,7 @@ use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 use Luzrain\PHPStreamServer\Server;
 
 /**

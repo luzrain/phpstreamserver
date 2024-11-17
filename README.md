@@ -39,15 +39,7 @@ Here is example of simple http server.
 ```php
 // server.php
 
-use Amp\Http\Server\HttpErrorException;
-use Amp\Http\Server\Request;
-use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerPlugin;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\Server;
+use Amp\Http\Server\HttpErrorException;use Amp\Http\Server\Request;use Amp\Http\Server\Response;use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerPlugin;use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;use Luzrain\PHPStreamServer\Server;
 
 $server = new Server();
 

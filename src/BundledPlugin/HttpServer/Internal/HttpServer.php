@@ -21,7 +21,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\AccessL
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\PhpSSMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 
 /**

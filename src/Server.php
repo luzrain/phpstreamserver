@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer;
 
 use Composer\InstalledVersions;
-use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\SupervisorPlugin;
-use Luzrain\PHPStreamServer\BundledPlugin\System\SystemPlugin;
 use Luzrain\PHPStreamServer\Internal\Console\App;
+use Luzrain\PHPStreamServer\Plugin\Supervisor\SupervisorPlugin;
+use Luzrain\PHPStreamServer\Plugin\System\SystemPlugin;
 use Revolt\EventLoop;
 use function Luzrain\PHPStreamServer\Internal\getDefaultPidFile;
 use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;

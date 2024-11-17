@@ -10,7 +10,7 @@ use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
 use Amp\Socket\TlsInfo;
 use Amp\Socket\TlsState;
-use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
+use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 
 /**
  * @internal
