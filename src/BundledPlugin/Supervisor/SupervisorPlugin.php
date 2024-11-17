@@ -10,11 +10,11 @@ use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Command\ProcessesCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\MetricsHandler;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Internal\Supervisor;
 use Luzrain\PHPStreamServer\BundledPlugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Revolt\EventLoop\Suspension;
 

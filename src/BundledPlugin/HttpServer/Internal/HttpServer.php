@@ -22,7 +22,7 @@ use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\PhpSSMi
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\StaticMiddleware;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
 use Luzrain\PHPStreamServer\BundledPlugin\System\Connections\NetworkTrafficCounter;
-use Luzrain\PHPStreamServer\LoggerInterface;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 
 /**
  * @internal

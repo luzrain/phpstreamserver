@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PHPStreamServer\ContainerInterface;
+use Luzrain\PHPStreamServer\Worker\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 final class Container implements ContainerInterface

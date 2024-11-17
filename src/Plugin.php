@@ -6,6 +6,8 @@ namespace Luzrain\PHPStreamServer;
 
 use Amp\Future;
 use Luzrain\PHPStreamServer\Console\Command;
+use Luzrain\PHPStreamServer\Worker\ContainerInterface;
+use Luzrain\PHPStreamServer\Worker\Status;
 use function Amp\async;
 
 abstract class Plugin

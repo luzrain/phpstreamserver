@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Luzrain\PHPStreamServer\Internal;
 
-use Luzrain\PHPStreamServer\ContainerInterface;
 use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
 use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
 use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
-use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use Luzrain\PHPStreamServer\MessageBus\Message\ContainerHasCommand;
 use Luzrain\PHPStreamServer\MessageBus\Message\ContainerSetCommand;
@@ -20,7 +18,9 @@ use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
 use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\Status;
+use Luzrain\PHPStreamServer\Worker\ContainerInterface;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use Luzrain\PHPStreamServer\Worker\Status;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;

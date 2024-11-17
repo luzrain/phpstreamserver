@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace Luzrain\PHPStreamServer\Worker;
 
 enum Status
 {

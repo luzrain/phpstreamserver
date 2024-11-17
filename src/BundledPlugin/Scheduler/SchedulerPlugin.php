@@ -10,11 +10,11 @@ use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command\SchedulerCommand;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\MetricsHandler;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\Scheduler;
 use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
-use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
 use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Luzrain\PHPStreamServer\Plugin;
 use Luzrain\PHPStreamServer\Process;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Revolt\EventLoop\Suspension;
 

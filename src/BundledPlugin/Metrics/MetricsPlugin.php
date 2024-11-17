@@ -15,12 +15,12 @@ use Amp\Socket\ResourceServerSocketFactory;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
 use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\MessageBusRegistryHandler;
 use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\MessageBusRegistry;
+use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\MessageBusRegistryHandler;
 use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\NotFoundPage;
 use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\Plugin;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
 

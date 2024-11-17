@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
-use Luzrain\PHPStreamServer\LoggerInterface;
 use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
 use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\LoggerTrait;
 use Revolt\EventLoop;
 

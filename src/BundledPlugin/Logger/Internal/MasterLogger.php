@@ -6,7 +6,7 @@ namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
 
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\HandlerInterface;
 use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
-use Luzrain\PHPStreamServer\LoggerInterface;
+use Luzrain\PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
 /**
