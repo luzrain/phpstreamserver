@@ -25,6 +25,7 @@ use Luzrain\PHPStreamServer\Worker\ProcessUserChange;
 use Luzrain\PHPStreamServer\Worker\Status;
 use Psr\Container\ContainerInterface;
 use Revolt\EventLoop;
+use Revolt\EventLoop\CallbackType;
 use Revolt\EventLoop\DriverFactory;
 use function Luzrain\PHPStreamServer\Internal\getCurrentGroup;
 use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
@@ -205,11 +206,10 @@ class WorkerProcess implements Process, MessageBusInterface, ContainerInterface
 
         EventLoop::defer(function (): void {
             $this->startingFuture?->getFuture()->await();
-            $this->messageBus->stop()->await();
             if ($this->onStop !== null) {
                 ($this->onStop)($this);
             }
-            EventLoop::getDriver()->stop();
+            $this->gracefulStop();
         });
     }
 
@@ -228,12 +228,24 @@ class WorkerProcess implements Process, MessageBusInterface, ContainerInterface
 
         EventLoop::defer(function (): void {
             $this->startingFuture?->getFuture()->await();
-            $this->messageBus->stop()->await();
             if ($this->onReload !== null) {
                 ($this->onReload)($this);
             }
-            EventLoop::getDriver()->stop();
+            $this->gracefulStop();
         });
+    }
+
+    private function gracefulStop(): void
+    {
+        foreach (EventLoop::getIdentifiers() as $identifier) {
+            $type = EventLoop::getType($identifier);
+            if (\in_array($type, [CallbackType::Repeat, CallbackType::Signal])) {
+                EventLoop::disable($identifier);
+            }
+            if (\in_array($type, [CallbackType::Readable, CallbackType::Writable])) {
+                EventLoop::unreference($identifier);
+            }
+        }
     }
 
     public function addReloadStrategy(ReloadStrategyInterface ...$reloadStrategies): void

@@ -17,7 +17,7 @@ use Revolt\EventLoop;
 final class WorkerLogger implements LoggerInterface
 {
     private const MAX_FLUSH_SIZE = 1200;
-    private const MAX_FLUSH_TIME = 0.01;
+    private const MAX_FLUSH_TIME = 0.005;
 
     use LoggerTrait;
 
