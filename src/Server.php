@@ -14,7 +14,7 @@ use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
 
 final class Server
 {
-    public const PACKAGE = 'luzrain/phpstreamserver';
+    public const PACKAGE = 'phpstreamserver/phpstreamserver';
     public const NAME = 'PHPStreamServer';
     public const SHORTNAME = 'phpss';
     public const TITLE = '🌸 PHPStreamServer - PHP application server';
@@ -63,7 +63,11 @@ final class Server
     public static function getVersion(): string
     {
         static $version;
-        return $version ??= InstalledVersions::getVersion(self::PACKAGE);
+        try {
+            return $version ??= InstalledVersions::getVersion(self::PACKAGE) ?? '???';
+        } catch (\OutOfBoundsException) {
+            return $version ??= '???';
+        }
     }
 
     public static function getVersionString(): string
