@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 include __DIR__ . '/../../vendor/autoload.php';
 
-use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\WorkerProcess_OLD;
+use PHPStreamServer\Server;
+use PHPStreamServer\WorkerProcess_OLD;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 

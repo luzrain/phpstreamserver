@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware;
+namespace PHPStreamServer\HttpServerPlugin\Internal\Middleware;
 
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Counter;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Histogram;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\BundledPlugin\Metrics\Counter;
+use PHPStreamServer\BundledPlugin\Metrics\Histogram;
+use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\Server;
 
 /**
  * @internal

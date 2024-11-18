@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal;
+namespace PHPStreamServer\SchedulerPlugin\Internal;
 
 use Amp\DeferredFuture;
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessScheduledEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessStartedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerFactory;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger\TriggerInterface;
-use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\SchedulerPlugin\Message\ProcessScheduledEvent;
+use PHPStreamServer\SchedulerPlugin\Message\ProcessStartedEvent;
+use PHPStreamServer\SchedulerPlugin\PeriodicProcess;
+use PHPStreamServer\SchedulerPlugin\Trigger\TriggerFactory;
+use PHPStreamServer\SchedulerPlugin\Trigger\TriggerInterface;
+use PHPStreamServer\Exception\PHPStreamServerException;
+use PHPStreamServer\Internal\SIGCHLDHandler;
+use PHPStreamServer\MessageBus\MessageBusInterface;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;

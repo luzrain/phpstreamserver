@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\FileMonitor;
+namespace PHPStreamServer\FileMonitorPlugin;
 
-use Luzrain\PHPStreamServer\BundledPlugin\FileMonitor\Internal\InotifyMonitorWatcher;
-use Luzrain\PHPStreamServer\MessageBus\Message\ReloadServerCommand;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\Plugin;
+use PHPStreamServer\FileMonitorPlugin\Internal\InotifyMonitorWatcher;
+use PHPStreamServer\MessageBus\Message\ReloadServerCommand;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\Plugin;
 
 final class FileMonitor extends Plugin
 {

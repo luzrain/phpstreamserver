@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Message;
+namespace PHPStreamServer\Plugin\System\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\Connection;
+use PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\Plugin\System\Connections\Connection;
 
 /**
  * @implements MessageInterface<null>

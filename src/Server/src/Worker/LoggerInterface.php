@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Worker;
+namespace PHPStreamServer\Worker;
 
 use Psr\Log\LoggerInterface as PsrLoggerInterface;
 

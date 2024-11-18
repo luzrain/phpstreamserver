@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal;
+namespace PHPStreamServer\MetricsPlugin\Internal;
 
 use Prometheus\Storage\InMemory as PrometheusInMemory;
 

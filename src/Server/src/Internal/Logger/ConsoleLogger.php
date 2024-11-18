@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Logger;
+namespace PHPStreamServer\Internal\Logger;
 
-use Luzrain\PHPStreamServer\Internal\Console\Colorizer;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\Internal\Console\Colorizer;
+use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\LoggerTrait;
-use function Luzrain\PHPStreamServer\Internal\getStderr;
+use function PHPStreamServer\Internal\getStderr;
 
 /**
  * @internal

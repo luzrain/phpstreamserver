@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Command;
+namespace PHPStreamServer\Plugin\System\Command;
 
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message\StopServerCommand;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\Message\StopServerCommand;
+use PHPStreamServer\Server;
 
 /**
  * @internal

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
+namespace PHPStreamServer\LoggerPlugin\Handler;
 
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Formatter\StringFormatter;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\FormatterInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
+use PHPStreamServer\LoggerPlugin\Formatter\StringFormatter;
+use PHPStreamServer\LoggerPlugin\FormatterInterface;
+use PHPStreamServer\LoggerPlugin\Handler;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\LogLevel;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\delay;

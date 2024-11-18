@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Command;
+namespace PHPStreamServer\Plugin\System\Command;
 
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\Plugin\System\Status\ServerStatus;
-use Luzrain\PHPStreamServer\Server;
-use function Luzrain\PHPStreamServer\Internal\getDriverName;
-use function Luzrain\PHPStreamServer\Internal\getStartFile;
-use function Luzrain\PHPStreamServer\Internal\humanFileSize;
-use function Luzrain\PHPStreamServer\Internal\isRunning;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Console\Table;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\Plugin\System\Status\ServerStatus;
+use PHPStreamServer\Server;
+use function PHPStreamServer\Internal\getDriverName;
+use function PHPStreamServer\Internal\getStartFile;
+use function PHPStreamServer\Internal\humanFileSize;
+use function PHPStreamServer\Internal\isRunning;
 
 /**
  * @internal

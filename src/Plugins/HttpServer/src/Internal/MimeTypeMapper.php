@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
+namespace PHPStreamServer\HttpServerPlugin\Internal;
 
 /**
  * @internal

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Command;
+namespace PHPStreamServer\Plugin\Supervisor\Command;
 
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\ProcessInfo;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\ConnectionsStatus;
-use function Luzrain\PHPStreamServer\Internal\humanFileSize;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Console\Table;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use PHPStreamServer\Plugin\Supervisor\Status\ProcessInfo;
+use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\Plugin\System\Connections\ConnectionsStatus;
+use function PHPStreamServer\Internal\humanFileSize;
 
 /**
  * @internal

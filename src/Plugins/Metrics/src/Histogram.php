@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics;
+namespace PHPStreamServer\MetricsPlugin;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception\LabelsNotMatchException;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\ObserveHistorgamMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Metric;
+use PHPStreamServer\MetricsPlugin\Exception\LabelsNotMatchException;
+use PHPStreamServer\MetricsPlugin\Internal\Message\ObserveHistorgamMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Metric;
 use Revolt\EventLoop;
 
 final class Histogram extends Metric

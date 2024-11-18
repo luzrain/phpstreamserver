@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\ReloadStrategy;
+namespace PHPStreamServer\HttpServerPlugin\ReloadStrategy;
 
 use Amp\Http\Server\Request;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker on every $maxRequests requests.

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger;
+namespace PHPStreamServer\LoggerPlugin;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\LogLevel;
 
 abstract class Handler implements HandlerInterface
 {

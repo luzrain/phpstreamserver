@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Status;
+namespace PHPStreamServer\Plugin\Supervisor\Status;
 
 final readonly class WorkerInfo
 {

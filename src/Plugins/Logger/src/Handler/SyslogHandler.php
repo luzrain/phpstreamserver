@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
+namespace PHPStreamServer\LoggerPlugin\Handler;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Formatter\StringFormatter;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\FormatterInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\LoggerPlugin\Formatter\StringFormatter;
+use PHPStreamServer\LoggerPlugin\FormatterInterface;
+use PHPStreamServer\LoggerPlugin\Handler;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\LogLevel;
+use PHPStreamServer\Server;
 use function Amp\async;
 
 final class SyslogHandler extends Handler

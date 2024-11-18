@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler;
+namespace PHPStreamServer\SchedulerPlugin;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\Exception\UserChangeException;
-use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\Internal\ErrorHandler;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
-use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
-use Luzrain\PHPStreamServer\Worker\ProcessUserChange;
-use Luzrain\PHPStreamServer\Worker\Status;
+use PHPStreamServer\Exception\UserChangeException;
+use PHPStreamServer\Internal\Container;
+use PHPStreamServer\Internal\ErrorHandler;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\Process;
+use PHPStreamServer\Server;
+use PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\Worker\ProcessUserChange;
+use PHPStreamServer\Worker\Status;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
-use function Luzrain\PHPStreamServer\Internal\getCurrentGroup;
-use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
+use function PHPStreamServer\Internal\getCurrentGroup;
+use function PHPStreamServer\Internal\getCurrentUser;
 
 class PeriodicProcess implements Process, MessageBusInterface
 {

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
+namespace PHPStreamServer\LoggerPlugin\Internal;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\HandlerInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\LoggerPlugin\HandlerInterface;
+use PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer\ContextFlattenNormalizer;
+use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
 /**

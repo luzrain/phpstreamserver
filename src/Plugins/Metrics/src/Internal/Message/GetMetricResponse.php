@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message;
+namespace PHPStreamServer\MetricsPlugin\Internal\Message;
 
 final readonly class GetMetricResponse
 {

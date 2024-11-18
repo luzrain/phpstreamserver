@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Worker;
+namespace PHPStreamServer\Worker;
 
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
+namespace PHPStreamServer\HttpServerPlugin\Internal;
 
 use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
@@ -17,12 +17,12 @@ use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\AccessLoggerMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\PhpSSMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\StaticMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\HttpServerPlugin\Internal\Middleware\AccessLoggerMiddleware;
+use PHPStreamServer\HttpServerPlugin\Internal\Middleware\PhpSSMiddleware;
+use PHPStreamServer\HttpServerPlugin\Internal\Middleware\StaticMiddleware;
+use PHPStreamServer\HttpServerPlugin\Listen;
+use PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
+use PHPStreamServer\Worker\LoggerInterface;
 
 /**
  * @internal

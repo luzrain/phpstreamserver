@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
+namespace PHPStreamServer\HttpServerPlugin;
 
 final readonly class Listen
 {

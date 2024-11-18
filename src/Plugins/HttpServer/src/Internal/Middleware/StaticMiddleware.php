@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware;
+namespace PHPStreamServer\HttpServerPlugin\Internal\Middleware;
 
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\MimeTypeMapper;
+use PHPStreamServer\HttpServerPlugin\Internal\MimeTypeMapper;
 
 final readonly class StaticMiddleware implements Middleware
 {

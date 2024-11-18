@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Console;
+namespace PHPStreamServer\Console;
 
-use Luzrain\PHPStreamServer\Internal\Console\OptionDefinition;
+use PHPStreamServer\Internal\Console\OptionDefinition;
 
 final class Options
 {

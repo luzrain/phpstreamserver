@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\FileMonitor;
+namespace PHPStreamServer\FileMonitorPlugin;
 
 final readonly class WatchDir
 {

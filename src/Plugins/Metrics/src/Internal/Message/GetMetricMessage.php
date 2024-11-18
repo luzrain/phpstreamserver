@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message;
+namespace PHPStreamServer\MetricsPlugin\Internal\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * @implements MessageInterface<GetMetricResponse|false>

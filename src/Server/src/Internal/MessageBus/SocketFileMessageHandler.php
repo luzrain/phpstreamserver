@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\MessageBus;
+namespace PHPStreamServer\Internal\MessageBus;
 
 use Amp\ByteStream\StreamException;
 use Amp\Future;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\UnixAddress;
-use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\MessageBus\Message\CompositeMessage;
+use PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\weakClosure;

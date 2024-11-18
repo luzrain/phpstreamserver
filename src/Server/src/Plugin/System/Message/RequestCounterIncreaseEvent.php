@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Message;
+namespace PHPStreamServer\Plugin\System\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * @implements MessageInterface<null>

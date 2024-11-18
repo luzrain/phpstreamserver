@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Trigger;
+namespace PHPStreamServer\SchedulerPlugin\Trigger;
 
 final class JitterTrigger implements TriggerInterface
 {

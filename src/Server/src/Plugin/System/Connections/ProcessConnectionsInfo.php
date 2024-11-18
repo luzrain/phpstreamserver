@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Connections;
+namespace PHPStreamServer\Plugin\System\Connections;
 
 final class ProcessConnectionsInfo
 {

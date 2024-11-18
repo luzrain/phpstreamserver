@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\MessageBus;
+namespace PHPStreamServer\MessageBus;
 
 interface MessageHandlerInterface
 {

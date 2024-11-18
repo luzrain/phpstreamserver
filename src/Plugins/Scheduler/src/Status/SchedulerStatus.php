@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status;
+namespace PHPStreamServer\SchedulerPlugin\Status;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessScheduledEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\SchedulerPlugin\Message\ProcessScheduledEvent;
+use PHPStreamServer\SchedulerPlugin\PeriodicProcess;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
 use function Amp\weakClosure;
 
 final class SchedulerStatus

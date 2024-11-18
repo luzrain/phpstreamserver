@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace PHPStreamServer\Internal;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger;
+namespace PHPStreamServer\LoggerPlugin;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
 
 interface HandlerInterface
 {

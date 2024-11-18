@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Command;
+namespace PHPStreamServer\Plugin\System\Command;
 
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Console\Table;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
 
 /**
  * @internal

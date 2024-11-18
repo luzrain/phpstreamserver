@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace PHPStreamServer;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Worker\ContainerInterface;
-use Luzrain\PHPStreamServer\Worker\Status;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Worker\ContainerInterface;
+use PHPStreamServer\Worker\Status;
 use function Amp\async;
 
 abstract class Plugin

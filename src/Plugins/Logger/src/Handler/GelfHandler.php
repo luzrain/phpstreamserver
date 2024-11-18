@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
+namespace PHPStreamServer\LoggerPlugin\Handler;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Formatter\GelfFormatter;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\FormatterInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\GelfTransport\GelfHttpTransport;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\GelfTransport\GelfTcpTransport;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\GelfTransport\GelfTransport;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\GelfTransport\GelfUdpTransport;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
+use PHPStreamServer\LoggerPlugin\Formatter\GelfFormatter;
+use PHPStreamServer\LoggerPlugin\FormatterInterface;
+use PHPStreamServer\LoggerPlugin\Handler;
+use PHPStreamServer\LoggerPlugin\Internal\GelfTransport\GelfHttpTransport;
+use PHPStreamServer\LoggerPlugin\Internal\GelfTransport\GelfTcpTransport;
+use PHPStreamServer\LoggerPlugin\Internal\GelfTransport\GelfTransport;
+use PHPStreamServer\LoggerPlugin\Internal\GelfTransport\GelfUdpTransport;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\LogLevel;
 use Revolt\EventLoop;
 use function Amp\async;
 

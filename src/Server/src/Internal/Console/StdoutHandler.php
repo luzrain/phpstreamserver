@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Console;
+namespace PHPStreamServer\Internal\Console;
 
 /**
  * Handler for redirect standard output to custom stream with colorize filters

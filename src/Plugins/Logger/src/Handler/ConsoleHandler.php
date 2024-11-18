@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
+namespace PHPStreamServer\LoggerPlugin\Handler;
 
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Formatter\ConsoleFormatter;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\FormatterInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Handler;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogLevel;
-use Luzrain\PHPStreamServer\Internal\Console\Colorizer;
+use PHPStreamServer\LoggerPlugin\Formatter\ConsoleFormatter;
+use PHPStreamServer\LoggerPlugin\FormatterInterface;
+use PHPStreamServer\LoggerPlugin\Handler;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\LogLevel;
+use PHPStreamServer\Internal\Console\Colorizer;
 use function Amp\async;
-use function Luzrain\PHPStreamServer\Internal\getStderr;
-use function Luzrain\PHPStreamServer\Internal\getStdout;
+use function PHPStreamServer\Internal\getStderr;
+use function PHPStreamServer\Internal\getStdout;
 
 final class ConsoleHandler extends Handler
 {

@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
+namespace PHPStreamServer\Plugin\Supervisor;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Command\ProcessesCommand;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Internal\MetricsHandler;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Internal\Supervisor;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Supervisor\Command\ProcessesCommand;
+use PHPStreamServer\Plugin\Supervisor\Internal\MetricsHandler;
+use PHPStreamServer\Plugin\Supervisor\Internal\Supervisor;
+use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\Process;
+use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Revolt\EventLoop\Suspension;
 

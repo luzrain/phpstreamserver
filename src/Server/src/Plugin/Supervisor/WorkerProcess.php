@@ -2,33 +2,33 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
+namespace PHPStreamServer\Plugin\Supervisor;
 
 use Amp\DeferredFuture;
 use Amp\Future;
-use Luzrain\PHPStreamServer\Exception\UserChangeException;
-use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\Internal\ErrorHandler;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Internal\ReloadStrategyStack;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
-use Luzrain\PHPStreamServer\Worker\ProcessUserChange;
-use Luzrain\PHPStreamServer\Worker\Status;
+use PHPStreamServer\Exception\UserChangeException;
+use PHPStreamServer\Internal\Container;
+use PHPStreamServer\Internal\ErrorHandler;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\Message\CompositeMessage;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Supervisor\Internal\ReloadStrategyStack;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
+use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Process;
+use PHPStreamServer\Server;
+use PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\Worker\ProcessUserChange;
+use PHPStreamServer\Worker\Status;
 use Psr\Container\ContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\CallbackType;
 use Revolt\EventLoop\DriverFactory;
-use function Luzrain\PHPStreamServer\Internal\getCurrentGroup;
-use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
+use function PHPStreamServer\Internal\getCurrentGroup;
+use function PHPStreamServer\Internal\getCurrentUser;
 
 class WorkerProcess implements Process, MessageBusInterface, ContainerInterface
 {

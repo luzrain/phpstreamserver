@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Message;
+namespace PHPStreamServer\Plugin\Supervisor\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * Process blocked by IO operations

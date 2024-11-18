@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
+namespace PHPStreamServer\LoggerPlugin\Internal;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * @internal

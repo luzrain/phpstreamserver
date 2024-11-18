@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics;
+namespace PHPStreamServer\MetricsPlugin;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception\MetricNotFoundException;
+use PHPStreamServer\MetricsPlugin\Exception\MetricNotFoundException;
 
 interface RegistryInterface
 {

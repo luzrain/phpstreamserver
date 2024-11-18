@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware;
+namespace PHPStreamServer\HttpServerPlugin\Internal\Middleware;
 
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\HttpServerPlugin\Internal\HttpErrorHandler;
+use PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
+use PHPStreamServer\Server;
 
 /**
  * @internal

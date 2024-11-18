@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger;
+namespace PHPStreamServer\LoggerPlugin;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\MasterLogger;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\WorkerLogger;
-use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\Internal\MasterLogger;
+use PHPStreamServer\LoggerPlugin\Internal\WorkerLogger;
+use PHPStreamServer\Internal\Container;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin;
 use Revolt\EventLoop;
 
 final class LoggerPlugin extends Plugin

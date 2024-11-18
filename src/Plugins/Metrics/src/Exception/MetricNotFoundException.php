@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception;
+namespace PHPStreamServer\MetricsPlugin\Exception;
 
 final class MetricNotFoundException extends \InvalidArgumentException
 {

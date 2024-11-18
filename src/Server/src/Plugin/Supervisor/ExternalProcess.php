@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor;
+namespace PHPStreamServer\Plugin\Supervisor;
 
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use function Luzrain\PHPStreamServer\Internal\getAbsoluteBinaryPath;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
+use function PHPStreamServer\Internal\getAbsoluteBinaryPath;
 
 class ExternalProcess extends WorkerProcess
 {

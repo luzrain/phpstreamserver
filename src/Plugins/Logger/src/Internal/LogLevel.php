@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal;
+namespace PHPStreamServer\LoggerPlugin\Internal;
 
 use Psr\Log\LogLevel as PsrLogLevel;
 

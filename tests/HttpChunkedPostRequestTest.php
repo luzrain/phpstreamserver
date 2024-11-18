@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Test;
+namespace PHPStreamServer\Test;
 
 final class HttpChunkedPostRequestTest extends ServerTestCase
 {

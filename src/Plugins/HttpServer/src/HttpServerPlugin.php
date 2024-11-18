@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
+namespace PHPStreamServer\HttpServerPlugin;
 
 use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\Middleware\CompressionMiddleware;
-use Luzrain\PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin;
 
 final class HttpServerPlugin extends Plugin
 {

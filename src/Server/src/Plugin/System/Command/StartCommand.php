@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Command;
+namespace PHPStreamServer\Plugin\System\Command;
 
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MasterProcess;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
-use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\Server;
-use function Luzrain\PHPStreamServer\Internal\getDriverName;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Console\Table;
+use PHPStreamServer\Internal\MasterProcess;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
+use PHPStreamServer\Process;
+use PHPStreamServer\Server;
+use function PHPStreamServer\Internal\getDriverName;
 
 /**
  * @internal

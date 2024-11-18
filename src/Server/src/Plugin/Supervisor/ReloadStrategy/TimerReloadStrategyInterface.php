@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy;
+namespace PHPStreamServer\Plugin\Supervisor\ReloadStrategy;
 
 interface TimerReloadStrategyInterface extends ReloadStrategyInterface
 {

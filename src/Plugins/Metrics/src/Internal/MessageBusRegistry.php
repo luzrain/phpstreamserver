@@ -1,17 +1,17 @@
 <?php
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal;
+namespace PHPStreamServer\MetricsPlugin\Internal;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Counter;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception\MetricNotFoundException;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Gauge;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Histogram;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\GetMetricMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\GetMetricResponse;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\RegisterMetricMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Summary;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MetricsPlugin\Counter;
+use PHPStreamServer\MetricsPlugin\Exception\MetricNotFoundException;
+use PHPStreamServer\MetricsPlugin\Gauge;
+use PHPStreamServer\MetricsPlugin\Histogram;
+use PHPStreamServer\MetricsPlugin\Internal\Message\GetMetricMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\GetMetricResponse;
+use PHPStreamServer\MetricsPlugin\Internal\Message\RegisterMetricMessage;
+use PHPStreamServer\MetricsPlugin\RegistryInterface;
+use PHPStreamServer\MetricsPlugin\Summary;
+use PHPStreamServer\MessageBus\MessageBusInterface;
 
 final class MessageBusRegistry implements RegistryInterface
 {

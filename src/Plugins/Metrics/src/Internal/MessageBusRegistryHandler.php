@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal;
+namespace PHPStreamServer\MetricsPlugin\Internal;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\GetMetricMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\GetMetricResponse;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\IncreaseCounterMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\ObserveHistorgamMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\ObserveSummaryMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\RegisterMetricMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\RemoveMetricMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\SetGaugeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\MetricsPlugin\Internal\Message\GetMetricMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\GetMetricResponse;
+use PHPStreamServer\MetricsPlugin\Internal\Message\IncreaseCounterMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\ObserveHistorgamMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\ObserveSummaryMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\RegisterMetricMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\RemoveMetricMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Message\SetGaugeMessage;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
 use Prometheus\CollectorRegistry;
 use Prometheus\Exception\MetricNotFoundException as PrometheusMetricNotFoundException;
 use Prometheus\Exception\MetricsRegistrationException as PrometheusMetricRegistrationException;

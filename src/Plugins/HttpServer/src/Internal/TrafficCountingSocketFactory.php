@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
+namespace PHPStreamServer\HttpServerPlugin\Internal;
 
 use Amp\Cancellation;
 use Amp\Socket\BindContext;
@@ -10,7 +10,7 @@ use Amp\Socket\ServerSocket;
 use Amp\Socket\ServerSocketFactory;
 use Amp\Socket\Socket;
 use Amp\Socket\SocketAddress;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
+use PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 
 /**
  * @internal

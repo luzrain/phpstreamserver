@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal;
+namespace PHPStreamServer\SchedulerPlugin\Internal;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Counter;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Gauge;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message\ProcessStartedEvent;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\BundledPlugin\Metrics\Counter;
+use PHPStreamServer\BundledPlugin\Metrics\Gauge;
+use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\SchedulerPlugin\Message\ProcessStartedEvent;
+use PHPStreamServer\SchedulerPlugin\Status\SchedulerStatus;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Server;
 use function Amp\weakClosure;
 
 final readonly class MetricsHandler

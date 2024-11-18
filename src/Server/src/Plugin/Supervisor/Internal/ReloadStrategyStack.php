@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\Plugin\Supervisor\Internal;
 
-use Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy\TimerReloadStrategyInterface;
+use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\TimerReloadStrategyInterface;
 use Revolt\EventLoop;
 
 /**

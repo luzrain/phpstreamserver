@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status;
+namespace PHPStreamServer\SchedulerPlugin\Status;
 
 final class PeriodicWorkerInfo
 {

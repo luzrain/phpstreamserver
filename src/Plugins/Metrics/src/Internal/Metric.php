@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal;
+namespace PHPStreamServer\MetricsPlugin\Internal;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception\LabelsNotMatchException;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\RemoveMetricMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MetricsPlugin\Exception\LabelsNotMatchException;
+use PHPStreamServer\MetricsPlugin\Internal\Message\RemoveMetricMessage;
+use PHPStreamServer\MessageBus\MessageBusInterface;
 
 abstract class Metric
 {

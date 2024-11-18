@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\GelfTransport;
+namespace PHPStreamServer\LoggerPlugin\Internal\GelfTransport;
 
 use Amp\Http\Client\HttpClient;
 use Amp\Http\Client\HttpClientBuilder;

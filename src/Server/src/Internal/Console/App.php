@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Console;
+namespace PHPStreamServer\Internal\Console;
 
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Console\Options;
-use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Server;
-use function Luzrain\PHPStreamServer\Internal\getStartFile;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Console\Options;
+use PHPStreamServer\Console\Table;
+use PHPStreamServer\Server;
+use function PHPStreamServer\Internal\getStartFile;
 
 /**
  * @internal

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace PHPStreamServer\Internal;
 
 use Amp\ByteStream\WritableResourceStream;
-use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\Internal\Console\StdoutHandler;
+use PHPStreamServer\Server;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 

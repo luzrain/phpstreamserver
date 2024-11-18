@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Status;
+namespace PHPStreamServer\Plugin\System\Status;
 
-use function Luzrain\PHPStreamServer\Internal\getDriverName;
-use function Luzrain\PHPStreamServer\Internal\getStartFile;
+use function PHPStreamServer\Internal\getDriverName;
+use function PHPStreamServer\Internal\getStartFile;
 
 final readonly class ServerStatus
 {

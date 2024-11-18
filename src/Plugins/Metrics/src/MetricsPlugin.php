@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics;
+namespace PHPStreamServer\MetricsPlugin;
 
 use Amp\Http\HttpStatus;
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
@@ -12,15 +12,15 @@ use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\ResourceServerSocketFactory;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Listen;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\MessageBusRegistry;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\MessageBusRegistryHandler;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\NotFoundPage;
-use Luzrain\PHPStreamServer\Internal\Container;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpErrorHandler;
+use PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
+use PHPStreamServer\BundledPlugin\HttpServer\Listen;
+use PHPStreamServer\MetricsPlugin\Internal\MessageBusRegistry;
+use PHPStreamServer\MetricsPlugin\Internal\MessageBusRegistryHandler;
+use PHPStreamServer\MetricsPlugin\Internal\NotFoundPage;
+use PHPStreamServer\Internal\Container;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
 

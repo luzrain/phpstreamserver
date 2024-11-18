@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Console;
+namespace PHPStreamServer\Console;
 
-use Luzrain\PHPStreamServer\Internal\Console\ServerIsNotRunning;
-use Luzrain\PHPStreamServer\Internal\Console\ServerIsRunning;
-use function Luzrain\PHPStreamServer\Internal\isRunning;
+use PHPStreamServer\Internal\Console\ServerIsNotRunning;
+use PHPStreamServer\Internal\Console\ServerIsRunning;
+use function PHPStreamServer\Internal\isRunning;
 
 abstract class Command
 {

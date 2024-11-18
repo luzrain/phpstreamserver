@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Connections;
+namespace PHPStreamServer\Plugin\System\Connections;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\ConnectionClosedEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\ConnectionCreatedEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\RequestCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\RxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\TxCounterIncreaseEvent;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
+use PHPStreamServer\Plugin\System\Message\ConnectionClosedEvent;
+use PHPStreamServer\Plugin\System\Message\ConnectionCreatedEvent;
+use PHPStreamServer\Plugin\System\Message\RequestCounterIncreaseEvent;
+use PHPStreamServer\Plugin\System\Message\RxCounterIncreaseEvent;
+use PHPStreamServer\Plugin\System\Message\TxCounterIncreaseEvent;
 use function Amp\weakClosure;
 
 final class ConnectionsStatus

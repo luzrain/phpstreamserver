@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Exception;
+namespace PHPStreamServer\Exception;
 
 final class PHPStreamServerException extends \RuntimeException
 {

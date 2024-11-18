@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer;
+namespace PHPStreamServer\HttpServerPlugin;
 
 use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\HttpServer;
-use Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal\Middleware\MetricsMiddleware;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
+use PHPStreamServer\HttpServerPlugin\Internal\HttpServer;
+use PHPStreamServer\HttpServerPlugin\Internal\Middleware\MetricsMiddleware;
+use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 use Psr\Container\NotFoundExceptionInterface;
 
 final class HttpServerProcess extends WorkerProcess

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal;
+namespace PHPStreamServer\MetricsPlugin\Internal;
 
 use Amp\Http\HttpStatus;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\Server;
 
 /**
  * @internal

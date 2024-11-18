@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\GelfTransport;
+namespace PHPStreamServer\LoggerPlugin\Internal\GelfTransport;
 
 use Amp\ByteStream\StreamException;
 use Amp\ByteStream\WritableStream;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\ConnectException;
 use Amp\Socket\DnsSocketConnector;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\NullWritableStream;
+use PHPStreamServer\LoggerPlugin\Internal\NullWritableStream;
 use Revolt\EventLoop;
 
 final class GelfTcpTransport implements GelfTransport

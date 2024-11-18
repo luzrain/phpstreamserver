@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System\Connections;
+namespace PHPStreamServer\Plugin\System\Connections;
 
 use Amp\Socket\InternetAddress;
 use Amp\Socket\Socket;
-use Luzrain\PHPStreamServer\MessageBus\Message\CompositeMessage;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
-use Luzrain\PHPStreamServer\Plugin\System\Message\ConnectionClosedEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\ConnectionCreatedEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\RequestCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\RxCounterIncreaseEvent;
-use Luzrain\PHPStreamServer\Plugin\System\Message\TxCounterIncreaseEvent;
+use PHPStreamServer\MessageBus\Message\CompositeMessage;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\Plugin\System\Message\ConnectionClosedEvent;
+use PHPStreamServer\Plugin\System\Message\ConnectionCreatedEvent;
+use PHPStreamServer\Plugin\System\Message\RequestCounterIncreaseEvent;
+use PHPStreamServer\Plugin\System\Message\RxCounterIncreaseEvent;
+use PHPStreamServer\Plugin\System\Message\TxCounterIncreaseEvent;
 use Revolt\EventLoop;
 
 final class NetworkTrafficCounter

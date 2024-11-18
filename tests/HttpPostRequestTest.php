@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Test;
+namespace PHPStreamServer\Test;
 
 use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Stream;

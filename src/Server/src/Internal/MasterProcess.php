@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal;
+namespace PHPStreamServer\Internal;
 
-use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\Console\StdoutHandler;
-use Luzrain\PHPStreamServer\Internal\Logger\ConsoleLogger;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerHasCommand;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerSetCommand;
-use Luzrain\PHPStreamServer\MessageBus\Message\ReloadServerCommand;
-use Luzrain\PHPStreamServer\MessageBus\Message\StopServerCommand;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\Server;
-use Luzrain\PHPStreamServer\Worker\ContainerInterface;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
-use Luzrain\PHPStreamServer\Worker\Status;
+use PHPStreamServer\Exception\PHPStreamServerException;
+use PHPStreamServer\Internal\Console\StdoutHandler;
+use PHPStreamServer\Internal\Logger\ConsoleLogger;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
+use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use PHPStreamServer\MessageBus\Message\ContainerHasCommand;
+use PHPStreamServer\MessageBus\Message\ContainerSetCommand;
+use PHPStreamServer\MessageBus\Message\ReloadServerCommand;
+use PHPStreamServer\MessageBus\Message\StopServerCommand;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Process;
+use PHPStreamServer\Server;
+use PHPStreamServer\Worker\ContainerInterface;
+use PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\Worker\Status;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Driver\StreamSelectDriver;

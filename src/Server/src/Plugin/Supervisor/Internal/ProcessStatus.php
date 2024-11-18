@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\Plugin\Supervisor\Internal;
 
 /**
  * @internal

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\Plugin\Supervisor\Internal;
 
-use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\Exception\PHPStreamServerException;
+use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
 use Revolt\EventLoop;
 
 /**

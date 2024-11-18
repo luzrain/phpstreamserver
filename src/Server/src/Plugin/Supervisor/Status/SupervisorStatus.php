@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Status;
+namespace PHPStreamServer\Plugin\Supervisor\Status;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessBlockedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessBlockedEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
+use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
-use function Luzrain\PHPStreamServer\Internal\getCurrentUser;
-use function Luzrain\PHPStreamServer\Internal\getMemoryUsageByPid;
+use function PHPStreamServer\Internal\getCurrentUser;
+use function PHPStreamServer\Internal\getMemoryUsageByPid;
 
 final class SupervisorStatus
 {

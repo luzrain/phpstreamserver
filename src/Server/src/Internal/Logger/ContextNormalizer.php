@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Internal\Logger;
+namespace PHPStreamServer\Internal\Logger;
 
 /**
  * @internal

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace PHPStreamServer;
 
-use Luzrain\PHPStreamServer\Internal\Container;
+use PHPStreamServer\Internal\Container;
 
 interface Process
 {

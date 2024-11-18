@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\Plugin\Supervisor\Internal;
 
 use Amp\DeferredFuture;
 use Amp\Future;
-use Luzrain\PHPStreamServer\Exception\PHPStreamServerException;
-use Luzrain\PHPStreamServer\Internal\SIGCHLDHandler;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessBlockedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\Worker\Status;
+use PHPStreamServer\Exception\PHPStreamServerException;
+use PHPStreamServer\Internal\SIGCHLDHandler;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessBlockedEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
+use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\Worker\Status;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;

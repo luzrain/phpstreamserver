@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\HttpServer\Internal;
+namespace PHPStreamServer\HttpServerPlugin\Internal;
 
 use Amp\Http\HttpStatus;
 use Amp\Http\Server\ErrorHandler;
@@ -10,7 +10,7 @@ use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Psr\Log\LoggerInterface;
-use function Luzrain\PHPStreamServer\Internal\reportErrors;
+use function PHPStreamServer\Internal\reportErrors;
 
 /**
  * @internal

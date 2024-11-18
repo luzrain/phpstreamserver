@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer;
+namespace PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer;
 
 final readonly class FlattenResource
 {

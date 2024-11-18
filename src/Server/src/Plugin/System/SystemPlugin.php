@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\System;
+namespace PHPStreamServer\Plugin\System;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Plugin\System\Command\ConnectionsCommand;
-use Luzrain\PHPStreamServer\Plugin\System\Command\ReloadCommand;
-use Luzrain\PHPStreamServer\Plugin\System\Command\StartCommand;
-use Luzrain\PHPStreamServer\Plugin\System\Command\StatusCommand;
-use Luzrain\PHPStreamServer\Plugin\System\Command\StopCommand;
-use Luzrain\PHPStreamServer\Plugin\System\Command\WorkersCommand;
-use Luzrain\PHPStreamServer\Plugin\System\Connections\ConnectionsStatus;
-use Luzrain\PHPStreamServer\Plugin\System\Status\ServerStatus;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\System\Command\ConnectionsCommand;
+use PHPStreamServer\Plugin\System\Command\ReloadCommand;
+use PHPStreamServer\Plugin\System\Command\StartCommand;
+use PHPStreamServer\Plugin\System\Command\StatusCommand;
+use PHPStreamServer\Plugin\System\Command\StopCommand;
+use PHPStreamServer\Plugin\System\Command\WorkersCommand;
+use PHPStreamServer\Plugin\System\Connections\ConnectionsStatus;
+use PHPStreamServer\Plugin\System\Status\ServerStatus;
 
 /**
  * @internal

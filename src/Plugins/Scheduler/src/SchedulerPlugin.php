@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler;
+namespace PHPStreamServer\SchedulerPlugin;
 
 use Amp\Future;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command\SchedulerCommand;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\MetricsHandler;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Internal\Scheduler;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
-use Luzrain\PHPStreamServer\MessageBus\MessageBusInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin;
-use Luzrain\PHPStreamServer\Process;
-use Luzrain\PHPStreamServer\Worker\LoggerInterface;
+use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\SchedulerPlugin\Command\SchedulerCommand;
+use PHPStreamServer\SchedulerPlugin\Internal\MetricsHandler;
+use PHPStreamServer\SchedulerPlugin\Internal\Scheduler;
+use PHPStreamServer\SchedulerPlugin\Status\SchedulerStatus;
+use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin;
+use PHPStreamServer\Process;
+use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Revolt\EventLoop\Suspension;
 

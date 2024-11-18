@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Command;
+namespace PHPStreamServer\SchedulerPlugin\Command;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\PeriodicWorkerInfo;
-use Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Status\SchedulerStatus;
-use Luzrain\PHPStreamServer\Console\Command;
-use Luzrain\PHPStreamServer\Console\Table;
-use Luzrain\PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use Luzrain\PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use PHPStreamServer\SchedulerPlugin\Status\PeriodicWorkerInfo;
+use PHPStreamServer\SchedulerPlugin\Status\SchedulerStatus;
+use PHPStreamServer\Console\Command;
+use PHPStreamServer\Console\Table;
+use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 
 /**
  * @internal

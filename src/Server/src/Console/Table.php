@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Console;
+namespace PHPStreamServer\Console;
 
 final class Table implements \Stringable
 {

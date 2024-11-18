@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Metrics;
+namespace PHPStreamServer\MetricsPlugin;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Exception\LabelsNotMatchException;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Message\IncreaseCounterMessage;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Internal\Metric;
+use PHPStreamServer\MetricsPlugin\Exception\LabelsNotMatchException;
+use PHPStreamServer\MetricsPlugin\Internal\Message\IncreaseCounterMessage;
+use PHPStreamServer\MetricsPlugin\Internal\Metric;
 use Revolt\EventLoop;
 
 final class Counter extends Metric

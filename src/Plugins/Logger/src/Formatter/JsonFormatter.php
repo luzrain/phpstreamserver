@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Logger\Formatter;
+namespace PHPStreamServer\LoggerPlugin\Formatter;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\FormatterInterface;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\FlattenDateTime;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\FlattenEnum;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\FlattenException;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\FlattenObject;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\FlattenNormalizer\FlattenResource;
-use Luzrain\PHPStreamServer\BundledPlugin\Logger\Internal\LogEntry;
+use PHPStreamServer\LoggerPlugin\FormatterInterface;
+use PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer\FlattenDateTime;
+use PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer\FlattenEnum;
+use PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer\FlattenException;
+use PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer\FlattenObject;
+use PHPStreamServer\LoggerPlugin\Internal\FlattenNormalizer\FlattenResource;
+use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
 
 /**
  * Serializes a log record to JSON

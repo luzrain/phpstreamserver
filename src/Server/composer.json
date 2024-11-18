@@ -2,7 +2,7 @@
     "name": "luzrain/phpstreamserver",
     "description": "High performance PHP application server",
     "keywords": ["phpstreamserver", "async", "http", "server", "process", "socket", "stream"],
-    "homepage": "https://github.com/luzrain/phpstreamserver",
+    "homepage": "https://github.com/phpstreamserver/phpstreamserver",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -38,7 +38,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Luzrain\\PHPStreamServer\\": "src/"
+            "PHPStreamServer\\": "src/"
         },
         "files": [
             "src/Internal/functions.php"
@@ -46,7 +46,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Luzrain\\PHPStreamServer\\Test\\": "tests/"
+            "PHPStreamServer\\Test\\": "tests/"
         }
     },
     "suggest": {

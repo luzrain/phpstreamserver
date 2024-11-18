@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\BundledPlugin\Scheduler\Message;
+namespace PHPStreamServer\SchedulerPlugin\Message;
 
-use Luzrain\PHPStreamServer\MessageBus\MessageInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 
 /**
  * @implements MessageInterface<void>

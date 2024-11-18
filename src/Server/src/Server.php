@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer;
+namespace PHPStreamServer;
 
 use Composer\InstalledVersions;
-use Luzrain\PHPStreamServer\Internal\Console\App;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\SupervisorPlugin;
-use Luzrain\PHPStreamServer\Plugin\System\SystemPlugin;
+use PHPStreamServer\Internal\Console\App;
+use PHPStreamServer\Plugin\Supervisor\SupervisorPlugin;
+use PHPStreamServer\Plugin\System\SystemPlugin;
 use Revolt\EventLoop;
-use function Luzrain\PHPStreamServer\Internal\getDefaultPidFile;
-use function Luzrain\PHPStreamServer\Internal\getDefaultSocketFile;
+use function PHPStreamServer\Internal\getDefaultPidFile;
+use function PHPStreamServer\Internal\getDefaultSocketFile;
 
 final class Server
 {

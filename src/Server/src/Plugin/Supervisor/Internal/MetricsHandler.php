@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\Plugin\Supervisor\Internal;
 
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Counter;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\Gauge;
-use Luzrain\PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
-use Luzrain\PHPStreamServer\MessageBus\MessageHandlerInterface;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use Luzrain\PHPStreamServer\Plugin\Supervisor\WorkerProcess;
-use Luzrain\PHPStreamServer\Server;
+use PHPStreamServer\BundledPlugin\Metrics\Counter;
+use PHPStreamServer\BundledPlugin\Metrics\Gauge;
+use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
+use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\Server;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
 
