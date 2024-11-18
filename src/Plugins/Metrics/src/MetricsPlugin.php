@@ -19,7 +19,7 @@ use PHPStreamServer\Internal\Container;
 use PHPStreamServer\MetricsPlugin\Internal\MessageBusRegistry;
 use PHPStreamServer\MetricsPlugin\Internal\MessageBusRegistryHandler;
 use PHPStreamServer\MetricsPlugin\Internal\NotFoundPage;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;

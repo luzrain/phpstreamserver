@@ -15,7 +15,7 @@ use PHPStreamServer\MessageBus\Message\ContainerSetCommand;
 use PHPStreamServer\MessageBus\Message\ReloadServerCommand;
 use PHPStreamServer\MessageBus\Message\StopServerCommand;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use PHPStreamServer\Process;
 use PHPStreamServer\Server;
 use PHPStreamServer\Worker\ContainerInterface;

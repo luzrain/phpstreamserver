@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer;
+namespace PHPStreamServer\Plugin;
 
 use Amp\Future;
 use PHPStreamServer\Console\Command;
+use PHPStreamServer\Process;
 use PHPStreamServer\Worker\ContainerInterface;
 use PHPStreamServer\Worker\Status;
 use function Amp\async;

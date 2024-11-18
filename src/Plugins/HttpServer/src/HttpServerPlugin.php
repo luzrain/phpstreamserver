@@ -6,7 +6,7 @@ namespace PHPStreamServer\HttpServerPlugin;
 
 use Amp\Http\Server\Driver\HttpDriver;
 use Amp\Http\Server\Middleware\CompressionMiddleware;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 
 final class HttpServerPlugin extends Plugin
 {

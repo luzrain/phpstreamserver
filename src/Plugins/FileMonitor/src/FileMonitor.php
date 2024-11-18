@@ -7,7 +7,7 @@ namespace PHPStreamServer\FileMonitorPlugin;
 use PHPStreamServer\FileMonitorPlugin\Internal\InotifyMonitorWatcher;
 use PHPStreamServer\MessageBus\Message\ReloadServerCommand;
 use PHPStreamServer\MessageBus\MessageBusInterface;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 
 final class FileMonitor extends Plugin
 {

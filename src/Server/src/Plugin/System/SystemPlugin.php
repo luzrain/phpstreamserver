@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\System;
 
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use PHPStreamServer\Plugin\System\Command\ConnectionsCommand;
 use PHPStreamServer\Plugin\System\Command\ReloadCommand;
 use PHPStreamServer\Plugin\System\Command\StartCommand;

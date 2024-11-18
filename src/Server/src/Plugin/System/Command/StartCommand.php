@@ -7,7 +7,7 @@ namespace PHPStreamServer\Plugin\System\Command;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
 use PHPStreamServer\Internal\MasterProcess;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
 use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
 use PHPStreamServer\Process;

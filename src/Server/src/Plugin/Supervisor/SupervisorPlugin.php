@@ -8,7 +8,7 @@ use Amp\Future;
 use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use PHPStreamServer\Plugin\Supervisor\Command\ProcessesCommand;
 use PHPStreamServer\Plugin\Supervisor\Internal\MetricsHandler;
 use PHPStreamServer\Plugin\Supervisor\Internal\Supervisor;

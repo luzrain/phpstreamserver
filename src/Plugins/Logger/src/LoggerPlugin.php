@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\LoggerPlugin;
 
+use PHPStreamServer\Internal\Container;
 use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
 use PHPStreamServer\LoggerPlugin\Internal\MasterLogger;
 use PHPStreamServer\LoggerPlugin\Internal\WorkerLogger;
-use PHPStreamServer\Internal\Container;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use Revolt\EventLoop;
 
 final class LoggerPlugin extends Plugin

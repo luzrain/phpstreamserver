@@ -13,7 +13,7 @@ use PHPStreamServer\Internal\ErrorHandler;
 use PHPStreamServer\MessageBus\Message\CompositeMessage;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageInterface;
-use PHPStreamServer\Plugin;
+use PHPStreamServer\Plugin\Plugin;
 use PHPStreamServer\Plugin\Supervisor\Internal\ReloadStrategyStack;
 use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
 use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
