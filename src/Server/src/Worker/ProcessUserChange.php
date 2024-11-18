@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PHPStreamServer\Worker;
 
 use PHPStreamServer\Exception\UserChangeException;
-use function PHPStreamServer\Internal\getCurrentUser;
+use function PHPStreamServer\getCurrentUser;
 
 trait ProcessUserChange
 {

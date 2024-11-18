@@ -1,5 +1,5 @@
 {
-    "name": "luzrain/phpstreamserver",
+    "name": "phpstreamserver/phpstreamserver",
     "description": "High performance PHP application server",
     "keywords": ["phpstreamserver", "async", "http", "server", "process", "socket", "stream"],
     "homepage": "https://github.com/phpstreamserver/phpstreamserver",

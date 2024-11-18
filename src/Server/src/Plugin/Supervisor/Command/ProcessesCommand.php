@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Supervisor\Command;
 
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use PHPStreamServer\Plugin\Supervisor\Status\ProcessInfo;
 use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
 use PHPStreamServer\Plugin\System\Connections\ConnectionsStatus;
-use function PHPStreamServer\Internal\humanFileSize;
+use function PHPStreamServer\humanFileSize;
 
 /**
  * @internal

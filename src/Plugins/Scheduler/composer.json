@@ -1,0 +1,32 @@
+{
+    "name": "phpstreamserver/scheduler-plugin",
+    "description": "Scheduler Plugin",
+    "keywords": ["phpstreamserver", "scheduler"],
+    "homepage": "https://github.com/phpstreamserver/scheduler-plugin",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anton Zenkov",
+            "email": "anton.z@live.com",
+            "homepage": "https://github.com/luzrain/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-pcntl": "*",
+        "ext-posix": "*",
+        "amphp/amp": "^3.0.2",
+        "dragonmantank/cron-expression": "^3.4",
+        "revolt/event-loop": "^1.0.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPStreamServer\\SchedulerPlugin\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

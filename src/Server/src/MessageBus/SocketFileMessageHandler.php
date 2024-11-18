@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Internal\MessageBus;
+namespace Luzrain\PHPStreamServer\Server\src\MessageBus;
 
 use Amp\ByteStream\StreamException;
 use Amp\Future;
@@ -10,16 +10,13 @@ use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\UnixAddress;
 use PHPStreamServer\MessageBus\Message\CompositeMessage;
-use PHPStreamServer\MessageBus\MessageInterface;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\weakClosure;
 
-/**
- * @internal
- */
 final class SocketFileMessageHandler implements MessageHandlerInterface, MessageBusInterface
 {
     public const CHUNK_SIZE = 65536;

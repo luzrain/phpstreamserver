@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\SchedulerPlugin\Command;
 
-use PHPStreamServer\SchedulerPlugin\Status\PeriodicWorkerInfo;
-use PHPStreamServer\SchedulerPlugin\Status\SchedulerStatus;
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
+use PHPStreamServer\SchedulerPlugin\Status\PeriodicWorkerInfo;
+use PHPStreamServer\SchedulerPlugin\Status\SchedulerStatus;
 
 /**
  * @internal

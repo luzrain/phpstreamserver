@@ -12,7 +12,7 @@ use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
 use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
 use PHPStreamServer\Process;
 use PHPStreamServer\Server;
-use function PHPStreamServer\Internal\getDriverName;
+use function PHPStreamServer\getDriverName;
 
 /**
  * @internal

@@ -2,19 +2,17 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\HttpServerPlugin\Internal;
+namespace Luzrain\PHPStreamServer\Plugins\HttpServer\src\HttpServer;
 
 use Amp\Http\HttpStatus;
 use Amp\Http\Server\ErrorHandler;
 use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
+use PHPStreamServer\HttpServerPlugin\Internal\ErrorPage;
 use Psr\Log\LoggerInterface;
-use function PHPStreamServer\Internal\reportErrors;
+use function PHPStreamServer\reportErrors;
 
-/**
- * @internal
- */
 final readonly class HttpErrorHandler implements ErrorHandler
 {
     public function __construct(private LoggerInterface $logger)

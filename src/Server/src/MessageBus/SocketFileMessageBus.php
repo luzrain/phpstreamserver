@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Internal\MessageBus;
+namespace Luzrain\PHPStreamServer\Server\src\MessageBus;
 
 use Amp\Future;
 use Amp\Socket\ConnectException;
@@ -10,14 +10,11 @@ use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\SocketConnector;
 use Amp\Socket\StaticSocketConnector;
 use Amp\Socket\UnixAddress;
-use PHPStreamServer\MessageBus\MessageInterface;
 use PHPStreamServer\MessageBus\MessageBusInterface;
+use PHPStreamServer\MessageBus\MessageInterface;
 use function Amp\async;
 use function Amp\delay;
 
-/**
- * @internal
- */
 final class SocketFileMessageBus implements MessageBusInterface
 {
     private SocketConnector $connector;

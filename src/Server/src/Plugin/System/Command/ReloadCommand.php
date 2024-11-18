@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\System\Command;
 
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\Message\ReloadServerCommand;
 use PHPStreamServer\Server;
 

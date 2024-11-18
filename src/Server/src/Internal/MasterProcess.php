@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Internal;
 
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageHandler;
 use PHPStreamServer\Exception\PHPStreamServerException;
 use PHPStreamServer\Internal\Console\StdoutHandler;
 use PHPStreamServer\Internal\Logger\ConsoleLogger;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageHandler;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use PHPStreamServer\MessageBus\Message\ContainerHasCommand;
 use PHPStreamServer\MessageBus\Message\ContainerSetCommand;

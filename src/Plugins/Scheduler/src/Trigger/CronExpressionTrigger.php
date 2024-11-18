@@ -12,10 +12,6 @@ final class CronExpressionTrigger implements TriggerInterface
 
     public function __construct(string $expression)
     {
-        if (!\class_exists(CronExpression::class)) {
-            throw new \RuntimeException(\sprintf('You cannot use "%s" as the "cron expression" package is not installed. Try running "composer require dragonmantank/cron-expression".', __CLASS__));
-        }
-
         try {
             $this->expression = new CronExpression($expression);
         } catch (\InvalidArgumentException $e) {

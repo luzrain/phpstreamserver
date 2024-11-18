@@ -13,8 +13,8 @@ use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
 use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
-use function PHPStreamServer\Internal\getCurrentUser;
-use function PHPStreamServer\Internal\getMemoryUsageByPid;
+use function PHPStreamServer\getCurrentUser;
+use function PHPStreamServer\getMemoryUsageByPid;
 
 final class SupervisorStatus
 {

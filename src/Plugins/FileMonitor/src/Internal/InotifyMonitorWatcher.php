@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\FileMonitorPlugin\FileMonitor\Internal;
+namespace PHPStreamServer\FileMonitorPlugin\Internal;
 
 use Revolt\EventLoop;
 

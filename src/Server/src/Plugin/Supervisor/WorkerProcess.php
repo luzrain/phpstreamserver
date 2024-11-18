@@ -6,10 +6,10 @@ namespace PHPStreamServer\Plugin\Supervisor;
 
 use Amp\DeferredFuture;
 use Amp\Future;
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Exception\UserChangeException;
 use PHPStreamServer\Internal\Container;
 use PHPStreamServer\Internal\ErrorHandler;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\Message\CompositeMessage;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageInterface;
@@ -27,8 +27,8 @@ use Psr\Container\ContainerInterface;
 use Revolt\EventLoop;
 use Revolt\EventLoop\CallbackType;
 use Revolt\EventLoop\DriverFactory;
-use function PHPStreamServer\Internal\getCurrentGroup;
-use function PHPStreamServer\Internal\getCurrentUser;
+use function PHPStreamServer\getCurrentGroup;
+use function PHPStreamServer\getCurrentUser;
 
 class WorkerProcess implements Process, MessageBusInterface, ContainerInterface
 {

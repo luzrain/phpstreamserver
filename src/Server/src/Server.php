@@ -9,8 +9,8 @@ use PHPStreamServer\Internal\Console\App;
 use PHPStreamServer\Plugin\Supervisor\SupervisorPlugin;
 use PHPStreamServer\Plugin\System\SystemPlugin;
 use Revolt\EventLoop;
-use function PHPStreamServer\Internal\getDefaultPidFile;
-use function PHPStreamServer\Internal\getDefaultSocketFile;
+use function PHPStreamServer\getDefaultPidFile;
+use function PHPStreamServer\getDefaultSocketFile;
 
 final class Server
 {

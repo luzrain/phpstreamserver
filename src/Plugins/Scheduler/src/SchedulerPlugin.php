@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PHPStreamServer\SchedulerPlugin;
 
 use Amp\Future;
-use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\MetricsPlugin\RegistryInterface;
 use PHPStreamServer\SchedulerPlugin\Command\SchedulerCommand;
 use PHPStreamServer\SchedulerPlugin\Internal\MetricsHandler;
 use PHPStreamServer\SchedulerPlugin\Internal\Scheduler;
@@ -30,7 +30,7 @@ final class SchedulerPlugin extends Plugin
 
     protected function beforeStart(): void
     {
-        $this->scheduler = new Scheduler($this->status);
+        $this->scheduler = new Scheduler();
         $this->schedulerStatus = new SchedulerStatus();
     }
 

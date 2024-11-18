@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\Supervisor;
 
 use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use function PHPStreamServer\Internal\getAbsoluteBinaryPath;
+use function PHPStreamServer\getAbsoluteBinaryPath;
 
 class ExternalProcess extends WorkerProcess
 {

@@ -8,7 +8,6 @@ use Amp\Future;
 use PHPStreamServer\Exception\UserChangeException;
 use PHPStreamServer\Internal\Container;
 use PHPStreamServer\Internal\ErrorHandler;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageInterface;
 use PHPStreamServer\Process;
@@ -18,8 +17,8 @@ use PHPStreamServer\Worker\ProcessUserChange;
 use PHPStreamServer\Worker\Status;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
-use function PHPStreamServer\Internal\getCurrentGroup;
-use function PHPStreamServer\Internal\getCurrentUser;
+use function PHPStreamServer\getCurrentGroup;
+use function PHPStreamServer\getCurrentUser;
 
 class PeriodicProcess implements Process, MessageBusInterface
 {
@@ -31,7 +30,7 @@ class PeriodicProcess implements Process, MessageBusInterface
     public readonly int $pid;
     protected readonly Container $container;
     public readonly LoggerInterface $logger;
-    private readonly SocketFileMessageBus $messageBus;
+    private readonly MessageBusInterface $messageBus;
 
     /**
      * $schedule can be one of the following formats:

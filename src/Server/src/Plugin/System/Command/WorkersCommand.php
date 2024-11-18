@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\System\Command;
 
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
 use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;

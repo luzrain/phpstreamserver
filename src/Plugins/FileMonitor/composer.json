@@ -1,0 +1,32 @@
+{
+    "name": "phpstreamserver/filemonitor-plugin",
+    "description": "FileMonitor Plugin",
+    "keywords": ["phpstreamserver", "filemonitor"],
+    "homepage": "https://github.com/phpstreamserver/filemonitor-plugin",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anton Zenkov",
+            "email": "anton.z@live.com",
+            "homepage": "https://github.com/luzrain/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-pcntl": "*",
+        "ext-posix": "*",
+        "amphp/amp": "^3.0.2",
+        "luzrain/polyfill-inotify": "^1.0",
+        "revolt/event-loop": "^1.0.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPStreamServer\\FileMonitorPlugin\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

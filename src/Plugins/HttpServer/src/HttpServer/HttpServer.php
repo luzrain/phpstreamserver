@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\HttpServerPlugin\Internal;
+namespace Luzrain\PHPStreamServer\Plugins\HttpServer\src\HttpServer;
 
 use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
@@ -20,13 +20,11 @@ use Amp\Sync\LocalSemaphore;
 use PHPStreamServer\HttpServerPlugin\Internal\Middleware\AccessLoggerMiddleware;
 use PHPStreamServer\HttpServerPlugin\Internal\Middleware\PhpSSMiddleware;
 use PHPStreamServer\HttpServerPlugin\Internal\Middleware\StaticMiddleware;
+use PHPStreamServer\HttpServerPlugin\Internal\TrafficCountingSocketFactory;
 use PHPStreamServer\HttpServerPlugin\Listen;
 use PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
 use PHPStreamServer\Worker\LoggerInterface;
 
-/**
- * @internal
- */
 final readonly class HttpServer
 {
     private const DEFAULT_TCP_BACKLOG = 65536;

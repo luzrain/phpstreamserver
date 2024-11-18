@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\SchedulerPlugin\Internal;
 
-use PHPStreamServer\BundledPlugin\Metrics\Counter;
-use PHPStreamServer\BundledPlugin\Metrics\Gauge;
-use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\MetricsPlugin\Counter;
+use PHPStreamServer\MetricsPlugin\Gauge;
+use PHPStreamServer\MetricsPlugin\RegistryInterface;
 use PHPStreamServer\SchedulerPlugin\Message\ProcessStartedEvent;
 use PHPStreamServer\SchedulerPlugin\Status\SchedulerStatus;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;

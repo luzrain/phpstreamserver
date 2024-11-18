@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Internal;
+namespace PHPStreamServer;
 
 use Amp\ByteStream\WritableResourceStream;
 use PHPStreamServer\Internal\Console\StdoutHandler;
-use PHPStreamServer\Server;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
 
-/**
- * @internal
- */
 function getStartFile(): string
 {
     static $file;
@@ -23,25 +19,16 @@ function getStartFile(): string
     return $file;
 }
 
-/**
- * @internal
- */
 function getCurrentUser(): string
 {
     return (\posix_getpwuid(\posix_geteuid()) ?: [])['name'] ?? (string) \posix_geteuid();
 }
 
-/**
- * @internal
- */
 function getCurrentGroup(): string
 {
     return (\posix_getgrgid(\posix_getegid()) ?: [])['name'] ?? (string) \posix_getegid();
 }
 
-/**
- * @internal
- */
 function humanFileSize(int $bytes): string
 {
     if ($bytes < 1024) {
@@ -63,58 +50,37 @@ function humanFileSize(int $bytes): string
     return "$bytes PiB";
 }
 
-/**
- * @internal
- */
 function reportErrors(): bool
 {
     return (\error_reporting() & \E_ERROR) === \E_ERROR;
 }
 
-/**
- * @internal
- */
 function isRunning(string $pidFile): bool
 {
     return (0 !== $pid = getPid($pidFile)) && \posix_kill($pid, 0);
 }
 
-/**
- * @internal
- */
 function getPid(string $pidFile): int
 {
     return \is_file($pidFile) ? (int) \file_get_contents($pidFile) : 0;
 }
 
-/**
- * @internal
- */
 function getRunDirectory(): string
 {
     static $dir;
     return $dir ??= \posix_access('/run/', POSIX_R_OK | POSIX_W_OK) ? '/run' : \sys_get_temp_dir();
 }
 
-/**
- * @internal
- */
 function getDefaultPidFile(): string
 {
     return \sprintf('%s/%s%s.pid', getRunDirectory(), Server::SHORTNAME, \hash('xxh32', getStartFile()));
 }
 
-/**
- * @internal
- */
 function getDefaultSocketFile(): string
 {
     return \sprintf('%s/%s%s.socket', getRunDirectory(), Server::SHORTNAME, \hash('xxh32', getStartFile()));
 }
 
-/**
- * @internal
- */
 function getAbsoluteBinaryPath(string $binary): string
 {
     if (!\str_starts_with($binary, '/') && \is_string($absoluteBinaryPath = \shell_exec("command -v $binary"))) {
@@ -124,9 +90,6 @@ function getAbsoluteBinaryPath(string $binary): string
     return $binary;
 }
 
-/**
- * @internal
- */
 function getMemoryUsageByPid(int $pid): int
 {
     if (PHP_VERSION_ID >= 80300 && \is_file("/proc/$pid/statm")) {

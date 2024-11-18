@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\System\Status;
 
-use function PHPStreamServer\Internal\getDriverName;
-use function PHPStreamServer\Internal\getStartFile;
+use function PHPStreamServer\getDriverName;
+use function PHPStreamServer\getStartFile;
 
 final readonly class ServerStatus
 {

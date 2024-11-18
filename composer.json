@@ -1,0 +1,60 @@
+{
+    "authors": [
+        {
+            "name": "Anton Zenkov",
+            "email": "anton.z@live.com",
+            "homepage": "https://github.com/luzrain/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "amphp/amp": "^3.0.2",
+        "amphp/byte-stream": "^2.1.1",
+        "amphp/http-server": "^3.3.1",
+        "amphp/socket": "^2.3.1",
+        "dragonmantank/cron-expression": "^3.4",
+        "ext-pcntl": "*",
+        "ext-posix": "*",
+        "luzrain/polyfill-inotify": "^1.0",
+        "php": ">=8.2",
+        "promphp/prometheus_client_php": "^2.12",
+        "psr/container": "^2.0",
+        "psr/http-message": "^2.0",
+        "psr/log": "^3.0",
+        "revolt/event-loop": "^1.0.6"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.60.0",
+        "guzzlehttp/guzzle": "^7.9.2",
+        "phpunit/phpunit": "^10.5.28",
+        "psalm/phar": "^5.25",
+        "symfony/var-dumper": "^6.4.10",
+        "symplify/monorepo-builder": "^11.2"
+    },
+    "replace": {
+        "luzrain/phpstreamserver": "self.version",
+        "phpstreamserver/filemonitor-plugin": "self.version",
+        "phpstreamserver/httpserver-plugin": "self.version",
+        "phpstreamserver/logger-plugin": "self.version",
+        "phpstreamserver/metrics-plugin": "self.version",
+        "phpstreamserver/scheduler-plugin": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPStreamServer\\": "src/Server/src/",
+            "PHPStreamServer\\FileMonitorPlugin\\": "src/Plugins/FileMonitor/src/",
+            "PHPStreamServer\\HttpServerPlugin\\": "src/Plugins/HttpServer/src/",
+            "PHPStreamServer\\LoggerPlugin\\": "src/Plugins/Logger/src/",
+            "PHPStreamServer\\MetricsPlugin\\": "src/Plugins/Metrics/src/",
+            "PHPStreamServer\\SchedulerPlugin\\": "src/Plugins/Scheduler/src/"
+        },
+        "files": [
+            "src/Server/src/Internal/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PHPStreamServer\\Test\\": "src/Server/tests/"
+        }
+    }
+}

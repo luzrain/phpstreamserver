@@ -8,9 +8,9 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use PHPStreamServer\BundledPlugin\Metrics\Counter;
-use PHPStreamServer\BundledPlugin\Metrics\Histogram;
-use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
+use PHPStreamServer\MetricsPlugin\Counter;
+use PHPStreamServer\MetricsPlugin\Histogram;
+use PHPStreamServer\MetricsPlugin\RegistryInterface;
 use PHPStreamServer\Server;
 
 /**

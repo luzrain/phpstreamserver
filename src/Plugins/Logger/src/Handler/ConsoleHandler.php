@@ -6,15 +6,15 @@ namespace PHPStreamServer\LoggerPlugin\Handler;
 
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
+use Luzrain\PHPStreamServer\Server\src\Console\Colorizer;
 use PHPStreamServer\LoggerPlugin\Formatter\ConsoleFormatter;
 use PHPStreamServer\LoggerPlugin\FormatterInterface;
 use PHPStreamServer\LoggerPlugin\Handler;
 use PHPStreamServer\LoggerPlugin\Internal\LogEntry;
 use PHPStreamServer\LoggerPlugin\Internal\LogLevel;
-use PHPStreamServer\Internal\Console\Colorizer;
 use function Amp\async;
-use function PHPStreamServer\Internal\getStderr;
-use function PHPStreamServer\Internal\getStdout;
+use function PHPStreamServer\getStderr;
+use function PHPStreamServer\getStdout;
 
 final class ConsoleHandler extends Handler
 {

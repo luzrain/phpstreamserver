@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\System\Command;
 
+use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
-use PHPStreamServer\Internal\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
 use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
 use PHPStreamServer\Plugin\System\Status\ServerStatus;
 use PHPStreamServer\Server;
-use function PHPStreamServer\Internal\getDriverName;
-use function PHPStreamServer\Internal\getStartFile;
-use function PHPStreamServer\Internal\humanFileSize;
-use function PHPStreamServer\Internal\isRunning;
+use function PHPStreamServer\getDriverName;
+use function PHPStreamServer\getStartFile;
+use function PHPStreamServer\humanFileSize;
+use function PHPStreamServer\isRunning;
 
 /**
  * @internal

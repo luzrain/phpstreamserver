@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Internal\Logger;
 
-use PHPStreamServer\Internal\Console\Colorizer;
+use Luzrain\PHPStreamServer\Server\src\Console\Colorizer;
 use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Log\LoggerTrait;
-use function PHPStreamServer\Internal\getStderr;
+use function PHPStreamServer\getStderr;
 
 /**
  * @internal
