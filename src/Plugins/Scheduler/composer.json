@@ -21,16 +21,13 @@
         "ext-pcntl": "*",
         "ext-posix": "*",
         "amphp/amp": "^3.0.2",
-        "dragonmantank/cron-expression": "^3.4",
         "revolt/event-loop": "^1.0.6",
-        "phpstreamserver/phpstreamserver": "dev-main"
+        "phpstreamserver/phpstreamserver": "dev-main",
+        "dragonmantank/cron-expression": "^3.4"
     },
     "autoload": {
         "psr-4": {
             "PHPStreamServer\\SchedulerPlugin\\": "src/"
         }
-    },
-    "config": {
-        "sort-packages": true
     }
 }

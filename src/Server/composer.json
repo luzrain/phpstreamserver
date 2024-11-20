@@ -36,7 +36,7 @@
             "PHPStreamServer\\": "src/"
         },
         "files": [
-            "src/Internal/functions.php"
+            "src/functions.php"
         ]
     },
     "autoload-dev": {

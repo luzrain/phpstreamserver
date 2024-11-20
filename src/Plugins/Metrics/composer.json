@@ -18,19 +18,18 @@
     ],
     "require": {
         "php": ">=8.2",
-        "phpstreamserver/http-server": "dev-main",
+        "ext-pcntl": "*",
+        "ext-posix": "*",
         "amphp/amp": "^3.0.2",
-        "amphp/http-server": "^3.3.1",
-        "promphp/prometheus_client_php": "^2.12",
         "revolt/event-loop": "^1.0.6",
-        "phpstreamserver/phpstreamserver": "dev-main"
+        "phpstreamserver/phpstreamserver": "dev-main",
+        "phpstreamserver/http-server": "dev-main",
+        "amphp/http-server": "^3.3.1",
+        "promphp/prometheus_client_php": "^2.12"
     },
     "autoload": {
         "psr-4": {
             "PHPStreamServer\\MetricsPlugin\\": "src/"
         }
-    },
-    "config": {
-        "sort-packages": true
     }
 }
