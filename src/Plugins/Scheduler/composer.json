@@ -1,8 +1,11 @@
 {
-    "name": "phpstreamserver/scheduler-plugin",
-    "description": "Scheduler Plugin",
-    "keywords": ["phpstreamserver", "scheduler"],
-    "homepage": "https://github.com/phpstreamserver/scheduler-plugin",
+    "name": "phpstreamserver/scheduler",
+    "description": "Scheduler plugin for PHPStreamServer",
+    "keywords": [
+        "phpstreamserver",
+        "scheduler"
+    ],
+    "homepage": "https://phpstreamserver.dev",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -19,7 +22,8 @@
         "ext-posix": "*",
         "amphp/amp": "^3.0.2",
         "dragonmantank/cron-expression": "^3.4",
-        "revolt/event-loop": "^1.0.6"
+        "revolt/event-loop": "^1.0.6",
+        "phpstreamserver/phpstreamserver": "dev-main"
     },
     "autoload": {
         "psr-4": {

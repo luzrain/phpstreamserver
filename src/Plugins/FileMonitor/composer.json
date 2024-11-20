@@ -1,8 +1,11 @@
 {
-    "name": "phpstreamserver/filemonitor-plugin",
-    "description": "FileMonitor Plugin",
-    "keywords": ["phpstreamserver", "filemonitor"],
-    "homepage": "https://github.com/phpstreamserver/filemonitor-plugin",
+    "name": "phpstreamserver/file-monitor",
+    "description": "FileMonitor plugin for PHPStreamServer",
+    "keywords": [
+        "phpstreamserver",
+        "file-monitor"
+    ],
+    "homepage": "https://phpstreamserver.dev",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -19,7 +22,8 @@
         "ext-posix": "*",
         "amphp/amp": "^3.0.2",
         "luzrain/polyfill-inotify": "^1.0",
-        "revolt/event-loop": "^1.0.6"
+        "revolt/event-loop": "^1.0.6",
+        "phpstreamserver/phpstreamserver": "dev-main"
     },
     "autoload": {
         "psr-4": {

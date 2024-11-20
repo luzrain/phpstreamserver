@@ -1,8 +1,11 @@
 {
-    "name": "phpstreamserver/metrics-plugin",
-    "description": "Metrics Plugin",
-    "keywords": ["phpstreamserver", "metrics"],
-    "homepage": "https://github.com/phpstreamserver/metrics-plugin",
+    "name": "phpstreamserver/metrics",
+    "description": "Metrics plugin for PHPStreamServer",
+    "keywords": [
+        "phpstreamserver",
+        "metrics"
+    ],
+    "homepage": "https://phpstreamserver.dev",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -15,12 +18,12 @@
     ],
     "require": {
         "php": ">=8.2",
-        "ext-pcntl": "*",
-        "ext-posix": "*",
+        "phpstreamserver/http-server": "dev-main",
         "amphp/amp": "^3.0.2",
         "amphp/http-server": "^3.3.1",
         "promphp/prometheus_client_php": "^2.12",
-        "revolt/event-loop": "^1.0.6"
+        "revolt/event-loop": "^1.0.6",
+        "phpstreamserver/phpstreamserver": "dev-main"
     },
     "autoload": {
         "psr-4": {
