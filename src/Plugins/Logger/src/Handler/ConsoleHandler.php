@@ -6,7 +6,7 @@ namespace PHPStreamServer\LoggerPlugin\Handler;
 
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
-use Luzrain\PHPStreamServer\Server\src\Console\Colorizer;
+use PHPStreamServer\Console\Colorizer;
 use PHPStreamServer\LoggerPlugin\Formatter\ConsoleFormatter;
 use PHPStreamServer\LoggerPlugin\FormatterInterface;
 use PHPStreamServer\LoggerPlugin\Handler;

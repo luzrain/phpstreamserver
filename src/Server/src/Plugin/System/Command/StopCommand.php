@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\System\Command;
 
-use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\MessageBus\Message\StopServerCommand;
 use PHPStreamServer\Server;

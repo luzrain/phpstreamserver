@@ -9,7 +9,7 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use Luzrain\PHPStreamServer\Plugins\HttpServer\src\HttpServer\HttpServer;
+use PHPStreamServer\HttpServerPlugin\HttpServer\HttpServer;
 use PHPStreamServer\HttpServerPlugin\Internal\Middleware\MetricsMiddleware;
 use PHPStreamServer\MetricsPlugin\RegistryInterface;
 use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;

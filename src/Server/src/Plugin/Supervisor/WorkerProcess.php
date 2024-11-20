@@ -6,7 +6,7 @@ namespace PHPStreamServer\Plugin\Supervisor;
 
 use Amp\DeferredFuture;
 use Amp\Future;
-use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Exception\UserChangeException;
 use PHPStreamServer\Internal\Container;
 use PHPStreamServer\Internal\ErrorHandler;

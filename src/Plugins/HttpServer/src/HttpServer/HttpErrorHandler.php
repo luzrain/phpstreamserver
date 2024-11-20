@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Plugins\HttpServer\src\HttpServer;
+namespace PHPStreamServer\HttpServerPlugin\HttpServer;
 
 use Amp\Http\HttpStatus;
 use Amp\Http\Server\ErrorHandler;

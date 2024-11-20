@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Internal\Console;
 
-use Luzrain\PHPStreamServer\Server\src\Console\Colorizer;
+use PHPStreamServer\Console\Colorizer;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Options;
 use PHPStreamServer\Console\Table;

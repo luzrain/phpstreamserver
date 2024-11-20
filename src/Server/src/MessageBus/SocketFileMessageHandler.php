@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Server\src\MessageBus;
+namespace PHPStreamServer\MessageBus;
 
 use Amp\ByteStream\StreamException;
 use Amp\Future;
@@ -10,9 +10,6 @@ use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceServerSocketFactory;
 use Amp\Socket\UnixAddress;
 use PHPStreamServer\MessageBus\Message\CompositeMessage;
-use PHPStreamServer\MessageBus\MessageBusInterface;
-use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\MessageBus\MessageInterface;
 use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\weakClosure;

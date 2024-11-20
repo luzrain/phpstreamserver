@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Luzrain\PHPStreamServer\Server\src\Console;
+namespace PHPStreamServer\Console;
 
 final class Colorizer
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Internal\Console;
 
-use Luzrain\PHPStreamServer\Server\src\Console\Colorizer;
+use PHPStreamServer\Console\Colorizer;
 
 /**
  * Handler for redirect standard output to custom stream with colorize filters

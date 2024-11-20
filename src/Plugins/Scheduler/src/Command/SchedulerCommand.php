@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\SchedulerPlugin\Command;
 
-use Luzrain\PHPStreamServer\Server\src\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
