@@ -7,8 +7,8 @@ namespace PHPStreamServer;
 use Composer\InstalledVersions;
 use PHPStreamServer\Internal\Console\App;
 use PHPStreamServer\Plugin\Plugin;
-use PHPStreamServer\Plugin\Supervisor\SupervisorPlugin;
 use PHPStreamServer\Plugin\System\SystemPlugin;
+use PHPStreamServer\SupervisorPlugin\SupervisorPlugin;
 use Revolt\EventLoop;
 
 final class Server

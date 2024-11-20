@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\SupervisorPlugin\Internal;
 
 use Amp\DeferredFuture;
 use Amp\Future;
@@ -10,11 +10,11 @@ use PHPStreamServer\Exception\PHPStreamServerException;
 use PHPStreamServer\Internal\SIGCHLDHandler;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessBlockedEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
-use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessBlockedEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessDetachedEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessExitEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessHeartbeatEvent;
+use PHPStreamServer\SupervisorPlugin\WorkerProcess;
 use PHPStreamServer\Worker\Status;
 use Psr\Log\LoggerInterface;
 use Revolt\EventLoop;

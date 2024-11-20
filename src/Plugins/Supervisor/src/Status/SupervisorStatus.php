@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Status;
+namespace PHPStreamServer\SupervisorPlugin\Status;
 
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessBlockedEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
-use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessBlockedEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessDetachedEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessExitEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessHeartbeatEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessSpawnedEvent;
+use PHPStreamServer\SupervisorPlugin\WorkerProcess;
 use Revolt\EventLoop;
 use function Amp\weakClosure;
 use function PHPStreamServer\getCurrentUser;

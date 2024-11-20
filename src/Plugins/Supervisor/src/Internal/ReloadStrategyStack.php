@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\SupervisorPlugin\Internal;
 
-use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
-use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\TimerReloadStrategyInterface;
+use PHPStreamServer\SupervisorPlugin\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\SupervisorPlugin\ReloadStrategy\TimerReloadStrategyInterface;
 use Revolt\EventLoop;
 
 /**

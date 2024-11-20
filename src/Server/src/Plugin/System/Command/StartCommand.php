@@ -8,10 +8,10 @@ use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
 use PHPStreamServer\Internal\MasterProcess;
 use PHPStreamServer\Plugin\Plugin;
-use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
 use PHPStreamServer\Process;
 use PHPStreamServer\Server;
+use PHPStreamServer\SupervisorPlugin\Status\SupervisorStatus;
+use PHPStreamServer\SupervisorPlugin\Status\WorkerInfo;
 use function PHPStreamServer\getDriverName;
 
 /**

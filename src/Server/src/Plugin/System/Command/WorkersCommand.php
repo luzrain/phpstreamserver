@@ -8,8 +8,8 @@ use PHPStreamServer\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
-use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use PHPStreamServer\Plugin\Supervisor\Status\WorkerInfo;
+use PHPStreamServer\SupervisorPlugin\Status\SupervisorStatus;
+use PHPStreamServer\SupervisorPlugin\Status\WorkerInfo;
 
 /**
  * @internal

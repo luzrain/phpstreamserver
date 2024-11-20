@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Command;
+namespace PHPStreamServer\SupervisorPlugin\Command;
 
 use PHPStreamServer\MessageBus\SocketFileMessageBus;
 use PHPStreamServer\Console\Command;
 use PHPStreamServer\Console\Table;
 use PHPStreamServer\MessageBus\Message\ContainerGetCommand;
-use PHPStreamServer\Plugin\Supervisor\Status\ProcessInfo;
-use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\SupervisorPlugin\Status\ProcessInfo;
+use PHPStreamServer\SupervisorPlugin\Status\SupervisorStatus;
 use PHPStreamServer\Plugin\System\Connections\ConnectionsStatus;
 use function PHPStreamServer\humanFileSize;
 

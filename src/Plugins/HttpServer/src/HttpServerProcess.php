@@ -12,9 +12,9 @@ use Amp\Http\Server\Response;
 use PHPStreamServer\HttpServerPlugin\HttpServer\HttpServer;
 use PHPStreamServer\HttpServerPlugin\Internal\Middleware\MetricsMiddleware;
 use PHPStreamServer\MetricsPlugin\RegistryInterface;
-use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
-use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
 use PHPStreamServer\Plugin\System\Connections\NetworkTrafficCounter;
+use PHPStreamServer\SupervisorPlugin\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\SupervisorPlugin\WorkerProcess;
 use Psr\Container\NotFoundExceptionInterface;
 
 final class HttpServerProcess extends WorkerProcess

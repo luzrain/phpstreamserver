@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Status;
+namespace PHPStreamServer\SupervisorPlugin\Status;
 
 final readonly class WorkerInfo
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PHPStreamServer\HttpServerPlugin\ReloadStrategy;
 
 use Amp\Http\Server\Request;
-use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\SupervisorPlugin\ReloadStrategy\ReloadStrategyInterface;
 
 /**
  * Reload worker on every $maxRequests requests.

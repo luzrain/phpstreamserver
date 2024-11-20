@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor;
+namespace PHPStreamServer\SupervisorPlugin;
 
 use Amp\DeferredFuture;
 use Amp\Future;
@@ -14,10 +14,10 @@ use PHPStreamServer\MessageBus\Message\CompositeMessage;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageInterface;
 use PHPStreamServer\Plugin\Plugin;
-use PHPStreamServer\Plugin\Supervisor\Internal\ReloadStrategyStack;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessHeartbeatEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
-use PHPStreamServer\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\SupervisorPlugin\Internal\ReloadStrategyStack;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessHeartbeatEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessSpawnedEvent;
+use PHPStreamServer\SupervisorPlugin\ReloadStrategy\ReloadStrategyInterface;
 use PHPStreamServer\Process;
 use PHPStreamServer\Server;
 use PHPStreamServer\Worker\LoggerInterface;

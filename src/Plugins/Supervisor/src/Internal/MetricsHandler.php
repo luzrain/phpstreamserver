@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\SupervisorPlugin\Internal;
 
-use PHPStreamServer\BundledPlugin\Metrics\Counter;
-use PHPStreamServer\BundledPlugin\Metrics\Gauge;
-use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessExitEvent;
-use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
-use PHPStreamServer\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\MetricsPlugin\Counter;
+use PHPStreamServer\MetricsPlugin\Gauge;
+use PHPStreamServer\MetricsPlugin\RegistryInterface;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessExitEvent;
+use PHPStreamServer\SupervisorPlugin\Status\SupervisorStatus;
+use PHPStreamServer\SupervisorPlugin\WorkerProcess;
 use PHPStreamServer\Server;
 use Revolt\EventLoop;
 use function Amp\weakClosure;

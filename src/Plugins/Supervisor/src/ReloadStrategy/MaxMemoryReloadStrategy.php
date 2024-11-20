@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\ReloadStrategy;
+namespace PHPStreamServer\SupervisorPlugin\ReloadStrategy;
 
 /**
  * Reload worker if worker memory usage has increased $maxMemory value

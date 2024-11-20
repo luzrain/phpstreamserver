@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Internal;
+namespace PHPStreamServer\SupervisorPlugin\Internal;
 
 /**
  * @internal

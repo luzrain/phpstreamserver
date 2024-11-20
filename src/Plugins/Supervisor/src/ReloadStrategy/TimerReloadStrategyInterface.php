@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\ReloadStrategy;
+namespace PHPStreamServer\SupervisorPlugin\ReloadStrategy;
 
 interface TimerReloadStrategyInterface extends ReloadStrategyInterface
 {

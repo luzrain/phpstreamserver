@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\System\Connections;
 
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessDetachedEvent;
-use PHPStreamServer\Plugin\Supervisor\Message\ProcessSpawnedEvent;
 use PHPStreamServer\Plugin\System\Message\ConnectionClosedEvent;
 use PHPStreamServer\Plugin\System\Message\ConnectionCreatedEvent;
 use PHPStreamServer\Plugin\System\Message\RequestCounterIncreaseEvent;
 use PHPStreamServer\Plugin\System\Message\RxCounterIncreaseEvent;
 use PHPStreamServer\Plugin\System\Message\TxCounterIncreaseEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessDetachedEvent;
+use PHPStreamServer\SupervisorPlugin\Message\ProcessSpawnedEvent;
 use function Amp\weakClosure;
 
 final class ConnectionsStatus

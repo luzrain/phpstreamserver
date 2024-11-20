@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor\Message;
+namespace PHPStreamServer\SupervisorPlugin\Message;
 
 use PHPStreamServer\MessageBus\MessageInterface;
 

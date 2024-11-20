@@ -42,7 +42,8 @@
         "phpstreamserver/logger": "self.version",
         "phpstreamserver/metrics": "self.version",
         "phpstreamserver/phpstreamserver": "self.version",
-        "phpstreamserver/scheduler": "self.version"
+        "phpstreamserver/scheduler": "self.version",
+        "phpstreamserver/supervisor": "self.version"
     },
     "autoload": {
         "psr-4": {
@@ -51,7 +52,8 @@
             "PHPStreamServer\\HttpServerPlugin\\": "src/Plugins/HttpServer/src/",
             "PHPStreamServer\\LoggerPlugin\\": "src/Plugins/Logger/src/",
             "PHPStreamServer\\MetricsPlugin\\": "src/Plugins/Metrics/src/",
-            "PHPStreamServer\\SchedulerPlugin\\": "src/Plugins/Scheduler/src/"
+            "PHPStreamServer\\SchedulerPlugin\\": "src/Plugins/Scheduler/src/",
+            "PHPStreamServer\\SupervisorPlugin\\": "src/Plugins/Supervisor/src/"
         },
         "files": [
             "src/Server/src/functions.php"

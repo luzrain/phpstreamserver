@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace PHPStreamServer\Plugin\Supervisor;
+namespace PHPStreamServer\SupervisorPlugin;
 
 use Amp\Future;
-use PHPStreamServer\BundledPlugin\Metrics\RegistryInterface;
 use PHPStreamServer\MessageBus\MessageBusInterface;
 use PHPStreamServer\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\MetricsPlugin\RegistryInterface;
 use PHPStreamServer\Plugin\Plugin;
-use PHPStreamServer\Plugin\Supervisor\Command\ProcessesCommand;
-use PHPStreamServer\Plugin\Supervisor\Internal\MetricsHandler;
-use PHPStreamServer\Plugin\Supervisor\Internal\Supervisor;
-use PHPStreamServer\Plugin\Supervisor\Status\SupervisorStatus;
+use PHPStreamServer\SupervisorPlugin\Command\ProcessesCommand;
+use PHPStreamServer\SupervisorPlugin\Internal\MetricsHandler;
+use PHPStreamServer\SupervisorPlugin\Internal\Supervisor;
+use PHPStreamServer\SupervisorPlugin\Status\SupervisorStatus;
 use PHPStreamServer\Process;
 use PHPStreamServer\Worker\LoggerInterface;
 use Psr\Container\NotFoundExceptionInterface;
