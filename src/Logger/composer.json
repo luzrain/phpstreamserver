@@ -1,0 +1,35 @@
+{
+    "name": "phpstreamserver/logger",
+    "description": "Logger plugin for PHPStreamServer",
+    "keywords": [
+        "phpstreamserver",
+        "logger"
+    ],
+    "homepage": "https://phpstreamserver.dev",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anton Zenkov",
+            "email": "anton.z@live.com",
+            "homepage": "https://github.com/luzrain/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-pcntl": "*",
+        "ext-posix": "*",
+        "amphp/amp": "^3.0.2",
+        "revolt/event-loop": "^1.0.6",
+        "phpstreamserver/core": "dev-main",
+        "amphp/byte-stream": "^2.1.1",
+        "amphp/socket": "^2.3.1",
+        "psr/log": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPStreamServer\\Plugin\\Logger\\": "src/"
+        }
+    }
+}

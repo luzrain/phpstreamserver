@@ -1,5 +1,5 @@
 {
-    "name": "phpstreamserver/core",
+    "name": "phpstreamserver/phpstreamserver",
     "description": "PHPStreamServer",
     "keywords": [
         "phpstreamserver"
@@ -33,38 +33,40 @@
         "guzzlehttp/guzzle": "^7.9.2",
         "phpunit/phpunit": "^10.5.28",
         "psalm/phar": "^5.25",
-        "symfony/var-dumper": "^6.4.10",
-        "symplify/monorepo-builder": "^11.2"
+        "symfony/var-dumper": "^6.4.10"
     },
     "replace": {
+        "phpstreamserver/core": "self.version",
         "phpstreamserver/file-monitor": "self.version",
         "phpstreamserver/http-server": "self.version",
         "phpstreamserver/logger": "self.version",
         "phpstreamserver/metrics": "self.version",
-        "phpstreamserver/phpstreamserver": "self.version",
-        "phpstreamserver/scheduler": "self.version",
-        "phpstreamserver/supervisor": "self.version"
+        "phpstreamserver/scheduler": "self.version"
     },
     "autoload": {
         "psr-4": {
-            "PHPStreamServer\\": "src/Server/src/",
-            "PHPStreamServer\\FileMonitorPlugin\\": "src/Plugins/FileMonitor/src/",
-            "PHPStreamServer\\HttpServerPlugin\\": "src/Plugins/HttpServer/src/",
-            "PHPStreamServer\\LoggerPlugin\\": "src/Plugins/Logger/src/",
-            "PHPStreamServer\\MetricsPlugin\\": "src/Plugins/Metrics/src/",
-            "PHPStreamServer\\SchedulerPlugin\\": "src/Plugins/Scheduler/src/",
-            "PHPStreamServer\\SupervisorPlugin\\": "src/Plugins/Supervisor/src/"
+            "PHPStreamServer\\Core\\": "src/Core/src/",
+            "PHPStreamServer\\Plugin\\FileMonitor\\": "src/FileMonitor/src/",
+            "PHPStreamServer\\Plugin\\HttpServer\\": "src/HttpServer/src/",
+            "PHPStreamServer\\Plugin\\Logger\\": "src/Logger/src/",
+            "PHPStreamServer\\Plugin\\Metrics\\": "src/Metrics/src/",
+            "PHPStreamServer\\Plugin\\Scheduler\\": "src/Scheduler/src/"
         },
         "files": [
-            "src/Server/src/functions.php"
+            "src/Core/src/functions.php"
         ]
     },
     "autoload-dev": {
         "psr-4": {
-            "PHPStreamServer\\Test\\": "src/Server/tests/"
+            "PHPStreamServer\\Core\\Test\\": "src/Core/tests/"
         }
     },
     "config": {
         "sort-packages": true
+    },
+    "scripts": {
+        "merge": [
+            "monorepo-builder merge"
+        ]
     }
 }
