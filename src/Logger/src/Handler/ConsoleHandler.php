@@ -12,7 +12,6 @@ use PHPStreamServer\Plugin\Logger\Handler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 use PHPStreamServer\Core\Console\Colorizer;
-use function Amp\async;
 use function PHPStreamServer\Core\getStderr;
 use function PHPStreamServer\Core\getStdout;
 
@@ -38,7 +37,7 @@ final class ConsoleHandler extends Handler
         $this->stream = $this->output === self::OUTPUT_STDERR ? getStderr() : getStdout();
         $this->colorSupport = Colorizer::hasColorSupport($this->stream->getResource());
 
-        return async(static fn() => null);
+        return Future::complete();
     }
 
     public function handle(LogEntry $record): void
