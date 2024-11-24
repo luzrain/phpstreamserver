@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger;
 
+use PHPStreamServer\Core\MessageBus\MessageBusInterface;
+use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\MasterLogger;
 use PHPStreamServer\Plugin\Logger\Internal\WorkerLogger;
@@ -26,33 +28,32 @@ final class LoggerPlugin extends Plugin
 
     public function onStart(): void
     {
-        $logger = new MasterLogger();
+        $masterLogger = new MasterLogger();
 
         $workerLoggerFactory = static function (Container $container) {
-            return new WorkerLogger($container->get('bus'));
+            return new WorkerLogger($container->getService(MessageBusInterface::class));
         };
 
-        $this->masterContainer->set('logger', $logger);
-        $this->workerContainer->register('logger', $workerLoggerFactory);
+        $this->masterContainer->setService(LoggerInterface::class, $masterLogger);
+        $this->workerContainer->registerService(LoggerInterface::class, $workerLoggerFactory);
 
-        /** @var MessageHandlerInterface $messageBusHandler */
-        $messageBusHandler = $this->masterContainer->get('handler');
+        $messageBusHandler = $this->masterContainer->getService(MessageHandlerInterface::class);
 
         foreach ($this->handlers as $loggerHandler) {
             $loggerHandler
                 ->start()
-                ->map(function () use ($logger, $loggerHandler) {
-                    $logger->addHandler($loggerHandler);
+                ->map(function () use ($masterLogger, $loggerHandler) {
+                    $masterLogger->addHandler($loggerHandler);
                 })
-                ->catch(function (\Throwable $e) use ($logger) {
-                    $logger->error($e->getMessage(), ['exception' => $e]);
+                ->catch(function (\Throwable $e) use ($masterLogger) {
+                    $masterLogger->error($e->getMessage(), ['exception' => $e]);
                 })
             ;
         }
 
-        $messageBusHandler->subscribe(LogEntry::class, static function (LogEntry $event) use ($logger): void {
-            EventLoop::queue(static function () use ($event, $logger) {
-                $logger->logEntry($event);
+        $messageBusHandler->subscribe(LogEntry::class, static function (LogEntry $event) use ($masterLogger): void {
+            EventLoop::queue(static function () use ($event, $masterLogger) {
+                $masterLogger->logEntry($event);
             });
         });
     }

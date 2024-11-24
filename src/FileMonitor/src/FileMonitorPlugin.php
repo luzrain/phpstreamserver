@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\FileMonitor;
 
-use FileMonitor\src\Internal\InotifyMonitorWatcher;
 use PHPStreamServer\Core\MessageBus\Message\ReloadServerCommand;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\Plugin\Plugin;
+use PHPStreamServer\Plugin\FileMonitor\Internal\InotifyMonitorWatcher;
 
-final class FileMonitor extends Plugin
+final class FileMonitorPlugin extends Plugin
 {
     private MessageBusInterface $messageBus;
     private array $watchDirs;
@@ -21,8 +21,7 @@ final class FileMonitor extends Plugin
 
     public function onStart(): void
     {
-        /** @var MessageBusInterface */
-        $this->messageBus = &$this->masterContainer->get('bus');
+        $this->messageBus = $this->masterContainer->getService(MessageBusInterface::class);
 
         foreach ($this->watchDirs as $watchDir) {
             $fileMonitor = new InotifyMonitorWatcher(

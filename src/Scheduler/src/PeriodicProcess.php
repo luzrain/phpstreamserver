@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Scheduler;
 
-use Amp\Future;
 use PHPStreamServer\Core\Exception\UserChangeException;
-use PHPStreamServer\Core\Internal\Container;
 use PHPStreamServer\Core\Internal\ErrorHandler;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
-use PHPStreamServer\Core\MessageBus\MessageInterface;
 use PHPStreamServer\Core\Process;
 use PHPStreamServer\Core\Server;
+use PHPStreamServer\Core\Worker\ContainerInterface;
 use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Core\Worker\ProcessUserChange;
 use PHPStreamServer\Core\Worker\Status;
@@ -20,7 +18,7 @@ use Revolt\EventLoop\DriverFactory;
 use function PHPStreamServer\Core\getCurrentGroup;
 use function PHPStreamServer\Core\getCurrentUser;
 
-class PeriodicProcess implements Process, MessageBusInterface
+class PeriodicProcess implements Process
 {
     use ProcessUserChange;
 
@@ -28,9 +26,9 @@ class PeriodicProcess implements Process, MessageBusInterface
     private int $exitCode = 0;
     public readonly int $id;
     public readonly int $pid;
-    protected readonly Container $container;
+    public readonly ContainerInterface $container;
     public readonly LoggerInterface $logger;
-    private readonly MessageBusInterface $messageBus;
+    public readonly MessageBusInterface $bus;
 
     /**
      * $schedule can be one of the following formats:
@@ -59,7 +57,7 @@ class PeriodicProcess implements Process, MessageBusInterface
     /**
      * @internal
      */
-    final public function run(Container $workerContainer): int
+    final public function run(ContainerInterface $workerContainer): int
     {
         // some command line SAPIs (e.g. phpdbg) don't have that function
         if (\function_exists('cli_set_process_title')) {
@@ -70,8 +68,8 @@ class PeriodicProcess implements Process, MessageBusInterface
 
         $this->pid = \posix_getpid();
         $this->container = $workerContainer;
-        $this->logger = $workerContainer->get('logger')->withChannel('worker');
-        $this->messageBus = $workerContainer->get('bus');
+        $this->logger = $workerContainer->getService(LoggerInterface::class);
+        $this->bus = $workerContainer->getService(MessageBusInterface::class);
 
         ErrorHandler::register($this->logger);
         EventLoop::setErrorHandler(function (\Throwable $exception) {
@@ -101,16 +99,6 @@ class PeriodicProcess implements Process, MessageBusInterface
     static public function handleBy(): array
     {
         return [SchedulerPlugin::class];
-    }
-
-    /**
-     * @template T
-     * @param MessageInterface<T> $message
-     * @return Future<T>
-     */
-    public function dispatch(MessageInterface $message): Future
-    {
-        return $this->messageBus->dispatch($message);
     }
 
     final public function getUser(): string

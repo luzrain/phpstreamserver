@@ -12,6 +12,8 @@ use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\ResourceServerSocketFactory;
+use PHPStreamServer\Core\MessageBus\MessageBusInterface;
+use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpErrorHandler;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpServer;
 use PHPStreamServer\Plugin\HttpServer\Listen;
@@ -35,15 +37,17 @@ final class MetricsPlugin extends Plugin
     {
         $listen = \is_string($this->listen) ? new Listen($this->listen) : $this->listen;
 
-        $this->masterContainer->set(RegistryInterface::class, new MessageBusRegistry($this->masterContainer->get('bus')));
+        $this->masterContainer->setService(
+            RegistryInterface::class,
+            new MessageBusRegistry($this->masterContainer->getService(MessageBusInterface::class)),
+        );
 
-        $this->workerContainer->register(RegistryInterface::class, static function (Container $container): RegistryInterface {
-            return new MessageBusRegistry($container->get('bus'));
+        $this->workerContainer->registerService(RegistryInterface::class, static function (Container $container): RegistryInterface {
+            return new MessageBusRegistry($container->getService(MessageBusInterface::class));
         });
 
-        /** @var LoggerInterface $logger */
-        $logger = &$this->masterContainer->get('logger');
-        $handler = &$this->masterContainer->get('handler');
+        $logger = $this->masterContainer->getService(LoggerInterface::class);
+        $handler = $this->masterContainer->getService(MessageHandlerInterface::class);
 
         $nullLogger = new NullLogger();
         $serverSocketFactory = new ResourceServerSocketFactory();

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\Scheduler;
 
 use Amp\Future;
+use PHPStreamServer\Core\Exception\ServiceNotFoundException;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use PHPStreamServer\Core\Plugin\Plugin;
 use PHPStreamServer\Core\Process;
 use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\Metrics\RegistryInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Revolt\EventLoop\Suspension;
 use PHPStreamServer\Plugin\Scheduler\Command\SchedulerCommand;
 use PHPStreamServer\Plugin\Scheduler\Internal\MetricsHandler;
@@ -43,15 +43,13 @@ final class SchedulerPlugin extends Plugin
 
     public function onStart(): void
     {
-        $this->masterContainer->set(SchedulerStatus::class, $this->schedulerStatus);
+        $this->masterContainer->setService(SchedulerStatus::class, $this->schedulerStatus);
 
         /** @var Suspension $suspension */
-        $suspension = $this->masterContainer->get('suspension');
-        /** @var LoggerInterface $logger */
-        $logger = &$this->masterContainer->get('logger');
-        /** @var MessageBusInterface $bus */
-        $bus = &$this->masterContainer->get('bus');
-        $this->handler = &$this->masterContainer->get('handler');
+        $suspension = $this->masterContainer->getService('main_suspension');
+        $logger = $this->masterContainer->getService(LoggerInterface::class);
+        $bus = $this->masterContainer->getService(MessageBusInterface::class);
+        $this->handler = $this->masterContainer->getService(MessageHandlerInterface::class);
 
         $this->schedulerStatus->subscribeToWorkerMessages($this->handler);
         $this->scheduler->start($suspension, $logger, $bus);
@@ -61,9 +59,9 @@ final class SchedulerPlugin extends Plugin
     {
         if (\interface_exists(RegistryInterface::class)) {
             try {
-                $registry = $this->masterContainer->get(RegistryInterface::class);
-                $this->masterContainer->set('scheduler_metrics_handler', new MetricsHandler($registry, $this->schedulerStatus, $this->handler));
-            } catch (NotFoundExceptionInterface) {}
+                $registry = $this->masterContainer->getService(RegistryInterface::class);
+                $this->masterContainer->setService(MetricsHandler::class, new MetricsHandler($registry, $this->schedulerStatus, $this->handler));
+            } catch (ServiceNotFoundException) {}
         }
     }
 

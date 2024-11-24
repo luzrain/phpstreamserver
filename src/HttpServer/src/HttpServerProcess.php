@@ -9,6 +9,7 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
+use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpServer;
 use PHPStreamServer\Plugin\HttpServer\Internal\Middleware\MetricsMiddleware;
 use PHPStreamServer\Plugin\Metrics\RegistryInterface;
@@ -87,19 +88,19 @@ final class HttpServerProcess extends WorkerProcess
             }
         };
 
-        $networkTrafficCounter = new NetworkTrafficCounter($this->container->get('bus'));
+        $networkTrafficCounter = new NetworkTrafficCounter($this->container->getService(MessageBusInterface::class));
 
         $middleware = [];
 
         if ($this->gzip) {
-            $gzipMinLength = $this->container->get('httpServerPlugin.gzipMinLength');
-            $gzipTypesRegex = $this->container->get('httpServerPlugin.gzipTypesRegex');
+            $gzipMinLength = $this->container->getParameter('httpServerPlugin.gzipMinLength');
+            $gzipTypesRegex = $this->container->getParameter('httpServerPlugin.gzipTypesRegex');
             $middleware[] = new Middleware\CompressionMiddleware($gzipMinLength, $gzipTypesRegex);
         }
 
         if (\interface_exists(RegistryInterface::class)) {
             try {
-                $registry = $this->container->get(RegistryInterface::class);
+                $registry = $this->container->getService(RegistryInterface::class);
                 $middleware[] = new MetricsMiddleware($registry);
             } catch (NotFoundExceptionInterface) {}
         }
@@ -111,10 +112,10 @@ final class HttpServerProcess extends WorkerProcess
             connectionLimit: $this->connectionLimit,
             connectionLimitPerIp: $this->connectionLimitPerIp,
             concurrencyLimit: $this->concurrencyLimit,
-            http2Enabled: $this->container->get('httpServerPlugin.http2Enable'),
-            connectionTimeout: $this->container->get('httpServerPlugin.httpConnectionTimeout'),
-            headerSizeLimit: $this->container->get('httpServerPlugin.httpHeaderSizeLimit'),
-            bodySizeLimit: $this->container->get('httpServerPlugin.httpBodySizeLimit'),
+            http2Enabled: $this->container->getParameter('httpServerPlugin.http2Enable'),
+            connectionTimeout: $this->container->getParameter('httpServerPlugin.httpConnectionTimeout'),
+            headerSizeLimit: $this->container->getParameter('httpServerPlugin.httpHeaderSizeLimit'),
+            bodySizeLimit: $this->container->getParameter('httpServerPlugin.httpBodySizeLimit'),
             logger: $this->logger,
             networkTrafficCounter: $networkTrafficCounter,
             reloadStrategyTrigger: $this->reloadStrategyTrigger,

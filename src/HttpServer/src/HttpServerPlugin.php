@@ -22,11 +22,11 @@ final class HttpServerPlugin extends Plugin
 
     public function onStart(): void
     {
-        $this->workerContainer->set('httpServerPlugin.http2Enable', $this->http2Enable);
-        $this->workerContainer->set('httpServerPlugin.httpConnectionTimeout', $this->httpConnectionTimeout);
-        $this->workerContainer->set('httpServerPlugin.httpHeaderSizeLimit', $this->httpHeaderSizeLimit);
-        $this->workerContainer->set('httpServerPlugin.httpBodySizeLimit', $this->httpBodySizeLimit);
-        $this->workerContainer->set('httpServerPlugin.gzipMinLength', $this->gzipMinLength);
-        $this->workerContainer->set('httpServerPlugin.gzipTypesRegex', $this->gzipTypesRegex);
+        $this->workerContainer->setParameter('httpServerPlugin.http2Enable', $this->http2Enable);
+        $this->workerContainer->setParameter('httpServerPlugin.httpConnectionTimeout', $this->httpConnectionTimeout);
+        $this->workerContainer->setParameter('httpServerPlugin.httpHeaderSizeLimit', $this->httpHeaderSizeLimit);
+        $this->workerContainer->setParameter('httpServerPlugin.httpBodySizeLimit', $this->httpBodySizeLimit);
+        $this->workerContainer->setParameter('httpServerPlugin.gzipMinLength', $this->gzipMinLength);
+        $this->workerContainer->setParameter('httpServerPlugin.gzipTypesRegex', $this->gzipTypesRegex);
     }
 }
