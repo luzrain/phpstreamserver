@@ -1,5 +1,3 @@
 var/
 vendor/
-vendor-bin/**/vendor/
 composer.lock
-vendor-bin/**/composer.lock
