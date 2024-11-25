@@ -16,6 +16,13 @@
         </ignoreFiles>
     </projectFiles>
 
+    <forbiddenFunctions>
+        <function name="dd"/>
+        <function name="dump"/>
+        <function name="var_dump"/>
+        <function name="empty"/>
+    </forbiddenFunctions>
+
     <issueHandlers>
         <RedundantPropertyInitializationCheck>
             <errorLevel type="suppress">
@@ -32,5 +39,20 @@
                 <directory name="src" />
             </errorLevel>
         </RedundantCastGivenDocblockType>
+        <InaccessibleProperty>
+            <errorLevel type="suppress">
+                <directory name="src" />
+            </errorLevel>
+        </InaccessibleProperty>
+        <UnsupportedPropertyReferenceUsage>
+            <errorLevel type="suppress">
+                <directory name="src" />
+            </errorLevel>
+        </UnsupportedPropertyReferenceUsage>
+        <RedundantConditionGivenDocblockType>
+            <errorLevel type="suppress">
+                <directory name="src" />
+            </errorLevel>
+        </RedundantConditionGivenDocblockType>
     </issueHandlers>
 </psalm>

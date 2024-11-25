@@ -50,8 +50,9 @@ final class InotifyMonitorWatcher
      */
     private function onNotify(mixed $inotifyFd): void
     {
-        /** @psalm-suppress RiskyTruthyFalsyComparison */
-        $events = \inotify_read($inotifyFd) ?: [];
+        if (false === $events = \inotify_read($inotifyFd)) {
+            $events = [];
+        }
 
         if ($this->delayedRebootCallback !== null) {
             return;

@@ -24,6 +24,9 @@ final class WorkerPool
 
     public function __construct()
     {
+        /**
+         * @var \WeakMap<PeriodicProcess, int>
+         */
         $this->pidMap = new \WeakMap();
     }
 

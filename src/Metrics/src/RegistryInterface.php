@@ -41,7 +41,7 @@ interface RegistryInterface
 
     /**
      * @param list<string> $labels
-     * @param null|list<float<0, 1>> $quantiles
+     * @param null|list<float> $quantiles
      */
     public function registerSummary(string $namespace, string $name, string $help, array $labels = [], array|null $quantiles = null): Summary;
 

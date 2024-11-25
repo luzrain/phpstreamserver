@@ -6,6 +6,9 @@ namespace PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer;
 
 final readonly class FlattenObject
 {
+    /**
+     * @param class-string $class
+     */
     private function __construct(
         public string $class,
     ) {
@@ -21,6 +24,11 @@ final readonly class FlattenObject
         return \sprintf('[object(%s)]', $this->class);
     }
 
+    /**
+     * @param class-string $class
+     * @return class-string
+     * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, RiskyTruthyFalsyComparison
+     */
     private static function parseAnonymousClass(string $class): string
     {
         return \str_contains($class, "@anonymous\0")

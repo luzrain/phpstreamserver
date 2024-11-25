@@ -43,7 +43,7 @@ final class Summary extends Metric
     /**
      * Creates default quantiles.
      *
-     * @return list<float<0, 1>>
+     * @return list<float>
      */
     public static function getDefaultQuantiles(): array
     {

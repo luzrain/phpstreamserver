@@ -21,6 +21,9 @@ final class WorkerLogger implements LoggerInterface
     private const MAX_FLUSH_SIZE = 1200;
     private const MAX_FLUSH_TIME = 0.005;
 
+    /**
+     * @var list<LogEntry>
+     */
     private array $log = [];
     private string $channel = 'worker';
     private string $callbackId = '';

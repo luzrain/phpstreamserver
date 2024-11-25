@@ -6,6 +6,9 @@ namespace PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer;
 
 final readonly class FlattenException implements \Stringable
 {
+    /**
+     * @param class-string $class
+     */
     private function __construct(
         public string $class,
         public string $message,
@@ -29,7 +32,7 @@ final readonly class FlattenException implements \Stringable
         return new self(
             class: self::parseAnonymousClass($exception::class),
             message: $exception->getMessage(),
-            code: $exception->getCode(),
+            code: (int) $exception->getCode(),
             file: $exception->getFile(),
             line: $exception->getLine(),
             trace: $trace,
@@ -85,6 +88,11 @@ final readonly class FlattenException implements \Stringable
         );
     }
 
+    /**
+     * @param class-string $class
+     * @return class-string
+     * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, RiskyTruthyFalsyComparison
+     */
     private static function parseAnonymousClass(string $class): string
     {
         return \str_contains($class, "@anonymous\0")

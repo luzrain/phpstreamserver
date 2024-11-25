@@ -21,17 +21,11 @@ final class CronExpressionTrigger implements TriggerInterface
 
     public function __toString(): string
     {
-        return $this->expression->getExpression();
+        return $this->expression->getExpression() ?? '???';
     }
 
-    public function getNextRunDate(\DateTimeImmutable $now): \DateTimeImmutable|null
+    public function getNextRunDate(\DateTimeImmutable $now): \DateTimeImmutable
     {
-        $next = $this->expression->getNextRunDate($now);
-
-        if ($next instanceof \DateTime) {
-            $next = \DateTimeImmutable::createFromMutable($next);
-        }
-
-        return $next;
+        return \DateTimeImmutable::createFromMutable($this->expression->getNextRunDate($now));
     }
 }

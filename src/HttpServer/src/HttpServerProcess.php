@@ -30,6 +30,9 @@ final class HttpServerProcess extends WorkerProcess
      * @param null|\Closure(self):void $onReload
      * @param array<Middleware> $middleware
      * @param array<ReloadStrategyInterface> $reloadStrategies
+     * @param positive-int|null $connectionLimit
+     * @param positive-int|null $connectionLimitPerIp
+     * @param positive-int|null $concurrencyLimit
      */
     public function __construct(
         private Listen|string|array $listen,
@@ -75,7 +78,7 @@ final class HttpServerProcess extends WorkerProcess
             ($this->onStart)($this, $this->context);
         }
 
-        $this->onRequest ??= static fn() => throw new HttpErrorException(404);
+        $this->onRequest ??= static fn(): never => throw new HttpErrorException(404);
 
         $requestHandler = new class ($this->onRequest, $this->context) implements RequestHandler {
             public function __construct(private readonly \Closure $handler, private mixed &$context)
@@ -93,8 +96,11 @@ final class HttpServerProcess extends WorkerProcess
         $middleware = [];
 
         if ($this->gzip) {
+            /** @psalm-suppress InvalidArgument */
             $gzipMinLength = $this->container->getParameter('httpServerPlugin.gzipMinLength');
+            /** @psalm-suppress InvalidArgument */
             $gzipTypesRegex = $this->container->getParameter('httpServerPlugin.gzipTypesRegex');
+            /** @psalm-suppress InvalidArgument */
             $middleware[] = new Middleware\CompressionMiddleware($gzipMinLength, $gzipTypesRegex);
         }
 
@@ -106,6 +112,9 @@ final class HttpServerProcess extends WorkerProcess
             }
         }
 
+        /**
+         * @psalm-suppress InvalidArgument
+         */
         $httpServer = new HttpServer(
             listen: self::normalizeListenList($this->listen),
             requestHandler: $requestHandler,

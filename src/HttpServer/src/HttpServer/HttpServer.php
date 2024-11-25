@@ -32,6 +32,12 @@ final readonly class HttpServer
     /**
      * @param array<Listen> $listen
      * @param array<Middleware> $middleware
+     * @param positive-int|null $connectionLimit
+     * @param positive-int|null $connectionLimitPerIp
+     * @param positive-int|null $concurrencyLimit
+     * @param positive-int $connectionTimeout
+     * @param positive-int $headerSizeLimit
+     * @param positive-int $bodySizeLimit
      */
     public function __construct(
         private array $listen,
@@ -104,6 +110,9 @@ final readonly class HttpServer
         );
 
         foreach ($this->listen as $listen) {
+            /**
+             * @psalm-suppress TooFewArguments
+             */
             $socketHttpServer->expose(...self::createInternetAddressAndContext($listen, true, self::DEFAULT_TCP_BACKLOG));
         }
 

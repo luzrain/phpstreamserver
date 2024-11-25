@@ -30,7 +30,7 @@ final class LoggerPlugin extends Plugin
     {
         $masterLogger = new MasterLogger();
 
-        $workerLoggerFactory = static function (Container $container) {
+        $workerLoggerFactory = static function (Container $container): WorkerLogger {
             return new WorkerLogger($container->getService(MessageBusInterface::class));
         };
 

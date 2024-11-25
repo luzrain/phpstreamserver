@@ -7,6 +7,10 @@ namespace PHPStreamServer\Plugin\HttpServer;
 final readonly class Listen
 {
     public string $host;
+
+    /**
+     * @var int<0, 65535>
+     */
     public int $port;
 
     public function __construct(
@@ -16,20 +20,23 @@ final readonly class Listen
         public string|null $tlsCertificateKey = null,
     ) {
         $p = \parse_url('tcp://' . $listen);
-        $this->host = $p['host'] ?? $p;
-        $this->port = $p['port'] ?? ($tls ? 443 : 80);
+        $host = $p['host'] ?? $listen;
+        $port = $p['port'] ?? ($tls ? 443 : 80);
 
         if (\str_contains($listen, '://')) {
             throw new \InvalidArgumentException('Listen should not contain schema');
         }
 
-        if ($this->port < 0 || $this->port > 65535) {
-            throw new \InvalidArgumentException('Port number must be an integer between 0 and 65535; got ' . $this->port);
+        if ($port < 0 || $port > 65535) {
+            throw new \InvalidArgumentException('Port number must be an integer between 0 and 65535; got ' . $port);
         }
 
         if ($tls && $tlsCertificate === null) {
             throw new \InvalidArgumentException('Certificate file must be provided');
         }
+
+        $this->host = $host;
+        $this->port = $port;
     }
 
     public function getAddress(): string

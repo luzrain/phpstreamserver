@@ -61,6 +61,9 @@ final class MetricsPlugin extends Plugin
             httpDriverFactory: new DefaultHttpDriverFactory(logger: $nullLogger),
         );
 
+        /**
+         * @psalm-suppress TooFewArguments
+         */
         $socketHttpServer->expose(...HttpServer::createInternetAddressAndContext($listen));
 
         $messageBusRegistryHandler = new MessageBusRegistryHandler($handler);

@@ -88,7 +88,7 @@ final readonly class ConsoleFormatter implements FormatterInterface
         }
 
         if (\is_scalar($data)) {
-            return \sprintf('<color;fg=%s>%s</>', self::SCALAR_COLOR, $data);
+            return \sprintf('<color;fg=%s>%s</>', self::SCALAR_COLOR, (string) $data);
         }
 
         if ($data instanceof FlattenException) {

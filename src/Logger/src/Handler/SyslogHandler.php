@@ -24,7 +24,7 @@ final class SyslogHandler extends Handler
     public function __construct(
         private readonly string $prefix = Server::SHORTNAME,
         private readonly int $flags = 0,
-        private readonly string|int $facility = LOG_USER,
+        private readonly int $facility = LOG_USER,
         LogLevel $level = LogLevel::DEBUG,
         array $channels = [],
     ) {

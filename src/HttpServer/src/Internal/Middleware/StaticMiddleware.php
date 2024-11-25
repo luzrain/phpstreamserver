@@ -31,7 +31,7 @@ final readonly class StaticMiddleware implements Middleware
         ];
 
         if ($size > 0) {
-            $headers['Content-Length'] = $size;
+            $headers['Content-Length'] = (string) $size;
         }
 
         return new Response(body: new ReadableResourceStream($fd), headers: $headers);

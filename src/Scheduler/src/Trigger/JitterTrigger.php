@@ -15,12 +15,9 @@ final class JitterTrigger implements TriggerInterface
         return \sprintf('%s with 0-%d second jitter', $this->trigger, $this->jitter);
     }
 
-    /**
-     * @psalm-suppress FalsableReturnStatement
-     * @psalm-suppress InvalidFalsableReturnType
-     */
     public function getNextRunDate(\DateTimeImmutable $now): \DateTimeImmutable|null
     {
+        /** @var \DateTimeImmutable|null */
         return $this->trigger->getNextRunDate($now)?->modify(\sprintf('+%d seconds', \random_int(0, $this->jitter)));
     }
 }

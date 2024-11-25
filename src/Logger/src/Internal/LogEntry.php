@@ -8,6 +8,7 @@ use PHPStreamServer\Core\MessageBus\MessageInterface;
 
 /**
  * @internal
+ * @implements MessageInterface<null>
  */
 final readonly class LogEntry implements MessageInterface
 {

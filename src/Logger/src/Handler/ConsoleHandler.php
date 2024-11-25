@@ -36,6 +36,7 @@ final class ConsoleHandler extends Handler
     public function start(): Future
     {
         $this->stream = $this->output === self::OUTPUT_STDERR ? getStderr() : getStdout();
+        /** @psalm-suppress PossiblyInvalidArgument */
         $this->colorSupport = Colorizer::hasColorSupport($this->stream->getResource());
 
         return Future::complete();

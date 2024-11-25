@@ -41,11 +41,14 @@ final class FileMonitorPlugin extends Plugin
         $this->messageBus->dispatch(new ReloadServerCommand());
     }
 
+    /**
+     * @psalm-suppress NoValue
+     */
     private function triggerReloadWithOpcacheReset(): void
     {
         $this->messageBus->dispatch(new ReloadServerCommand());
 
-        if (\function_exists('opcache_get_status') && $status = \opcache_get_status()) {
+        if (\function_exists('opcache_get_status') && false !== $status = \opcache_get_status()) {
             foreach (\array_keys($status['scripts'] ?? []) as $file) {
                 \opcache_invalidate($file, true);
             }

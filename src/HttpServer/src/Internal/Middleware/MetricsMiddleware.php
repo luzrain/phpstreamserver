@@ -45,7 +45,7 @@ final readonly class MetricsMiddleware implements Middleware
         $handleTimeSeconds = (\hrtime(true) - $tsStart) * 1e-9;
         $statusCode = $response->getStatus();
 
-        $this->requestCounter->inc(['code' => $statusCode]);
+        $this->requestCounter->inc(['code' => (string) $statusCode]);
         $this->requestDuration->observe($handleTimeSeconds);
 
         return $response;
