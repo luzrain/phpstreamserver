@@ -33,7 +33,8 @@
         "guzzlehttp/guzzle": "^7.9.2",
         "phpunit/phpunit": "^10.5.28",
         "psalm/phar": "^5.25",
-        "symfony/var-dumper": "^6.4.10"
+        "symfony/var-dumper": "^6.4.10",
+        "symplify/monorepo-builder": "^11.2"
     },
     "replace": {
         "phpstreamserver/core": "self.version",

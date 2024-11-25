@@ -9,9 +9,12 @@ use PHPStreamServer\Core\Exception\ServiceNotFoundException;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use PHPStreamServer\Core\Plugin\Plugin;
+use PHPStreamServer\Core\Plugin\System\Connections\ConnectionsStatus;
+use PHPStreamServer\Core\Plugin\System\Message\GetConnectionsStatusCommand;
 use PHPStreamServer\Core\Process;
 use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\Metrics\RegistryInterface;
+use PHPStreamServer\Plugin\Scheduler\Message\GetSchedulerStatusCommand;
 use Revolt\EventLoop\Suspension;
 use PHPStreamServer\Plugin\Scheduler\Command\SchedulerCommand;
 use PHPStreamServer\Plugin\Scheduler\Internal\MetricsHandler;
@@ -53,6 +56,11 @@ final class SchedulerPlugin extends Plugin
 
         $this->schedulerStatus->subscribeToWorkerMessages($this->handler);
         $this->scheduler->start($suspension, $logger, $bus);
+
+        $schedulerStatus = $this->schedulerStatus;
+        $this->handler->subscribe(GetSchedulerStatusCommand::class, static function () use ($schedulerStatus): SchedulerStatus {
+            return $schedulerStatus;
+        });
     }
 
     public function afterStart(): void

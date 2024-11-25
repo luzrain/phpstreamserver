@@ -6,8 +6,8 @@ namespace PHPStreamServer\Plugin\Scheduler\Command;
 
 use PHPStreamServer\Core\Console\Command;
 use PHPStreamServer\Core\Console\Table;
-use PHPStreamServer\Core\MessageBus\Message\ContainerGetCommand;
 use PHPStreamServer\Core\MessageBus\SocketFileMessageBus;
+use PHPStreamServer\Plugin\Scheduler\Message\GetSchedulerStatusCommand;
 use PHPStreamServer\Plugin\Scheduler\Status\PeriodicWorkerInfo;
 use PHPStreamServer\Plugin\Scheduler\Status\SchedulerStatus;
 
@@ -30,7 +30,7 @@ final class SchedulerCommand extends Command
         echo "❯ Scheduler\n";
 
         $bus = new SocketFileMessageBus($args['socketFile']);
-        $status = $bus->dispatch(new ContainerGetCommand(SchedulerStatus::class))->await();
+        $status = $bus->dispatch(new GetSchedulerStatusCommand())->await();
         \assert($status instanceof SchedulerStatus);
 
         if ($status->getPeriodicTasksCount() > 0) {
