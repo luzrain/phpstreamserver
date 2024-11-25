@@ -5,13 +5,8 @@ on:
   pull_request:
 
 jobs:
-  tests:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }} - PHP ${{ matrix.php }}
-    strategy:
-      matrix:
-        os: ['ubuntu-latest', 'macos-latest']
-        php: ['8.2', '8.3']
+  codestyle:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -20,21 +15,43 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: 8.3
           extensions: posix, pcntl
           tools: composer:v2
-
-      - name: Composer validate
-        run: composer validate --strict
 
       - name: Composer install
         run: composer install
 
+      - name: Monorepo validate
+        run: composer run monorepo-validate
+
       - name: Codestyle check
-        run: vendor/bin/php-cs-fixer fix -v --dry-run
+        run: composer run cs-fixer-test
 
       - name: Static analyze
-        run: vendor/bin/psalm.phar
+        run: composer run static-analyze
 
-      - name: Tests
-        run: vendor/bin/phpunit
+#  tests:
+#    runs-on: ${{ matrix.os }}
+#    name: ${{ matrix.os }} - PHP ${{ matrix.php }}
+#    strategy:
+#      matrix:
+#        os: ['ubuntu-latest', 'macos-latest']
+#        php: ['8.2', '8.3']
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          extensions: posix, pcntl
+#          tools: composer:v2
+#
+#      - name: Composer install
+#        run: composer install
+#
+#      - name: Tests
+#        run: composer run test

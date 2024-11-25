@@ -29,10 +29,11 @@
         "revolt/event-loop": "^1.0.6"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.60.0",
+        "amphp/http-client": "^5.1",
+        "friendsofphp/php-cs-fixer": "^3.65",
         "guzzlehttp/guzzle": "^7.9.2",
-        "phpunit/phpunit": "^10.5.28",
-        "psalm/phar": "^5.25",
+        "phpunit/phpunit": "^10.5",
+        "psalm/phar": "^5.26",
         "symfony/var-dumper": "^6.4.10",
         "symplify/monorepo-builder": "^11.2"
     },
@@ -66,13 +67,23 @@
         "sort-packages": true
     },
     "scripts": {
-        "merge": [
+        "monorepo-validate": [
+            "monorepo-builder validate"
+        ],
+        "monorepo-merge": [
             "monorepo-builder merge"
         ],
+        "cs-fixer-test": [
+            "php-cs-fixer fix -v --dry-run"
+        ],
+        "cs-fixer-fix": [
+            "php-cs-fixer fix -v"
+        ],
+        "static-analyze": [
+            "psalm.phar --no-cache"
+        ],
         "test": [
-            "vendor/bin/php-cs-fixer fix -v --dry-run",
-            "vendor/bin/psalm",
-            "vendor/bin/phpunit"
+            "phpunit"
         ]
     }
 }
