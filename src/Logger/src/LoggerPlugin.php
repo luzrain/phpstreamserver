@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger;
 
+use PHPStreamServer\Core\Internal\Container;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
+use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Core\Plugin\Plugin;
 use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\MasterLogger;
 use PHPStreamServer\Plugin\Logger\Internal\WorkerLogger;
-use PHPStreamServer\Core\Internal\Container;
-use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
-use PHPStreamServer\Core\Plugin\Plugin;
 use Revolt\EventLoop;
 
 final class LoggerPlugin extends Plugin
@@ -42,10 +42,10 @@ final class LoggerPlugin extends Plugin
         foreach ($this->handlers as $loggerHandler) {
             $loggerHandler
                 ->start()
-                ->map(function () use ($masterLogger, $loggerHandler) {
+                ->map(static function () use ($masterLogger, $loggerHandler) {
                     $masterLogger->addHandler($loggerHandler);
                 })
-                ->catch(function (\Throwable $e) use ($masterLogger) {
+                ->catch(static function (\Throwable $e) use ($masterLogger) {
                     $masterLogger->error($e->getMessage(), ['exception' => $e]);
                 })
             ;

@@ -68,6 +68,11 @@
     "scripts": {
         "merge": [
             "monorepo-builder merge"
+        ],
+        "test": [
+            "vendor/bin/php-cs-fixer fix -v --dry-run",
+            "vendor/bin/psalm",
+            "vendor/bin/phpunit"
         ]
     }
 }

@@ -28,7 +28,7 @@ final class InotifyMonitorWatcher
 
     public function start(): void
     {
-        $this->fd = inotify_init();
+        $this->fd = \inotify_init();
         \stream_set_blocking($this->fd, false);
 
         $dirIterator = new \RecursiveDirectoryIterator($this->sourceDir, \FilesystemIterator::SKIP_DOTS);
@@ -51,13 +51,13 @@ final class InotifyMonitorWatcher
     private function onNotify(mixed $inotifyFd): void
     {
         /** @psalm-suppress RiskyTruthyFalsyComparison */
-        $events = inotify_read($inotifyFd) ?: [];
+        $events = \inotify_read($inotifyFd) ?: [];
 
         if ($this->delayedRebootCallback !== null) {
             return;
         }
 
-        foreach($events as $event) {
+        foreach ($events as $event) {
             if ($this->isFlagSet($event['mask'], IN_IGNORED)) {
                 unset($this->pathByWd[$event['wd']]);
                 continue;
@@ -85,7 +85,7 @@ final class InotifyMonitorWatcher
 
     private function watchDir(string $path): void
     {
-        $wd = inotify_add_watch($this->fd, $path, IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVED_TO);
+        $wd = \inotify_add_watch($this->fd, $path, IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVED_TO);
         $this->pathByWd[$wd] = $path;
     }
 

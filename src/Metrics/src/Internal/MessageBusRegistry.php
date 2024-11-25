@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PHPStreamServer\Plugin\Metrics\Internal;
 
+use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Plugin\Metrics\Counter;
 use PHPStreamServer\Plugin\Metrics\Exception\MetricNotFoundException;
 use PHPStreamServer\Plugin\Metrics\Gauge;
@@ -11,7 +14,6 @@ use PHPStreamServer\Plugin\Metrics\Internal\Message\GetMetricResponse;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\RegisterMetricMessage;
 use PHPStreamServer\Plugin\Metrics\RegistryInterface;
 use PHPStreamServer\Plugin\Metrics\Summary;
-use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 
 final class MessageBusRegistry implements RegistryInterface
 {
@@ -23,7 +25,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function registerCounter(string $namespace, string $name, string $help, array $labels = []): Counter
     {
-        $key = \hash('xxh128', 'counter'.$namespace.$name);
+        $key = \hash('xxh128', 'counter' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -35,7 +37,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function getCounter(string $namespace, string $name): Counter
     {
-        $key = \hash('xxh128', 'counter'.$namespace.$name);
+        $key = \hash('xxh128', 'counter' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -52,7 +54,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function registerGauge(string $namespace, string $name, string $help, array $labels = []): Gauge
     {
-        $key = \hash('xxh128', 'gauge'.$namespace.$name);
+        $key = \hash('xxh128', 'gauge' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -64,7 +66,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function getGauge(string $namespace, string $name): Gauge
     {
-        $key = \hash('xxh128', 'gauge'.$namespace.$name);
+        $key = \hash('xxh128', 'gauge' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -81,7 +83,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function registerHistogram(string $namespace, string $name, string $help, array $labels = [], array|null $buckets = null): Histogram
     {
-        $key = \hash('xxh128', 'histogram'.$namespace.$name);
+        $key = \hash('xxh128', 'histogram' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -94,7 +96,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function getHistogram(string $namespace, string $name): Histogram
     {
-        $key = \hash('xxh128', 'histogram'.$namespace.$name);
+        $key = \hash('xxh128', 'histogram' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -111,7 +113,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function registerSummary(string $namespace, string $name, string $help, array $labels = [], array|null $quantiles = null): Summary
     {
-        $key = \hash('xxh128', 'summary'.$namespace.$name);
+        $key = \hash('xxh128', 'summary' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }
@@ -124,7 +126,7 @@ final class MessageBusRegistry implements RegistryInterface
 
     public function getSummary(string $namespace, string $name): Summary
     {
-        $key = \hash('xxh128', 'summary'.$namespace.$name);
+        $key = \hash('xxh128', 'summary' . $namespace . $name);
         if (isset($this->map[$key])) {
             return $this->map[$key];
         }

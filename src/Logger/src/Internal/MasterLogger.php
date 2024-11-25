@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger\Internal;
 
+use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\Logger\HandlerInterface;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
-use PHPStreamServer\Core\Worker\LoggerInterface;
 use Psr\Log\LoggerTrait;
 
 /**

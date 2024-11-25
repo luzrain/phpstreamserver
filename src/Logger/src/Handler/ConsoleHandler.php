@@ -6,12 +6,13 @@ namespace PHPStreamServer\Plugin\Logger\Handler;
 
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
+use PHPStreamServer\Core\Console\Colorizer;
 use PHPStreamServer\Plugin\Logger\Formatter\ConsoleFormatter;
 use PHPStreamServer\Plugin\Logger\FormatterInterface;
 use PHPStreamServer\Plugin\Logger\Handler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
-use PHPStreamServer\Core\Console\Colorizer;
+
 use function PHPStreamServer\Core\getStderr;
 use function PHPStreamServer\Core\getStdout;
 

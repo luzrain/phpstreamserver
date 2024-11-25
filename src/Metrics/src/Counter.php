@@ -42,7 +42,7 @@ final class Counter extends Metric
             return;
         }
 
-        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function() use($labels, &$buffer, $key) {
+        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function () use ($labels, &$buffer, $key) {
             $value = $buffer;
             unset($this->buffer[$key]);
             $this->messageBus->dispatch(new IncreaseCounterMessage($this->namespace, $this->name, $labels, $value));

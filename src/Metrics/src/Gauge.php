@@ -23,7 +23,7 @@ final class Gauge extends Metric
     {
         $this->checkLabels($labels);
 
-        $key = \hash('xxh128', \json_encode($labels).'set');
+        $key = \hash('xxh128', \json_encode($labels) . 'set');
         $this->buffer[$key] ??= [0, ''];
         $buffer = &$this->buffer[$key][0];
         $callbackId = &$this->buffer[$key][1];
@@ -33,7 +33,7 @@ final class Gauge extends Metric
             return;
         }
 
-        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function() use($labels, &$buffer, $key) {
+        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function () use ($labels, &$buffer, $key) {
             $value = $buffer;
             unset($this->buffer[$key]);
             $this->messageBus->dispatch(new SetGaugeMessage($this->namespace, $this->name, $labels, $value, false));
@@ -66,7 +66,7 @@ final class Gauge extends Metric
     {
         $this->checkLabels($labels);
 
-        $key = \hash('xxh128', \json_encode($labels).'add');
+        $key = \hash('xxh128', \json_encode($labels) . 'add');
         $this->buffer[$key] ??= [0, ''];
         $buffer = &$this->buffer[$key][0];
         $callbackId = &$this->buffer[$key][1];
@@ -76,7 +76,7 @@ final class Gauge extends Metric
             return;
         }
 
-        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function() use($labels, &$buffer, $key) {
+        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function () use ($labels, &$buffer, $key) {
             $value = $buffer;
             unset($this->buffer[$key]);
             $this->messageBus->dispatch(new SetGaugeMessage($this->namespace, $this->name, $labels, $value, true));

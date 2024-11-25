@@ -8,9 +8,9 @@ use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
-use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpErrorHandler;
 use PHPStreamServer\Core\Plugin\System\Connections\NetworkTrafficCounter;
 use PHPStreamServer\Core\Server;
+use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpErrorHandler;
 
 /**
  * @internal

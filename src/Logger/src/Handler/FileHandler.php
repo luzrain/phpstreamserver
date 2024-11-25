@@ -13,6 +13,7 @@ use PHPStreamServer\Plugin\Logger\Handler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 use Revolt\EventLoop;
+
 use function Amp\async;
 use function Amp\delay;
 
@@ -52,7 +53,7 @@ final class FileHandler extends Handler
             $file = !\str_starts_with($this->filename, '/') ? \getcwd() . '/' . $this->filename : $this->filename;
             $this->logFile = new \SplFileInfo($file);
 
-            if(!\is_dir($this->logFile->getPath())) {
+            if (!\is_dir($this->logFile->getPath())) {
                 \mkdir(directory: $this->logFile->getPath(), recursive: true);
             }
 
@@ -72,7 +73,7 @@ final class FileHandler extends Handler
         $currentTime = new \DateTimeImmutable('now');
         $nextRotation = new \DateTimeImmutable('tomorrow');
         $delay = $nextRotation->getTimestamp() - $currentTime->getTimestamp();
-        EventLoop::delay($delay, function () use($nextRotation): void {
+        EventLoop::delay($delay, function () use ($nextRotation): void {
             $this->rotate($nextRotation);
             $this->scheduleRotate();
         });

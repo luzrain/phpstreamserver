@@ -9,17 +9,15 @@ use PHPStreamServer\Core\Exception\ServiceNotFoundException;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use PHPStreamServer\Core\Plugin\Plugin;
-use PHPStreamServer\Core\Plugin\System\Connections\ConnectionsStatus;
-use PHPStreamServer\Core\Plugin\System\Message\GetConnectionsStatusCommand;
 use PHPStreamServer\Core\Process;
 use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\Metrics\RegistryInterface;
-use PHPStreamServer\Plugin\Scheduler\Message\GetSchedulerStatusCommand;
-use Revolt\EventLoop\Suspension;
 use PHPStreamServer\Plugin\Scheduler\Command\SchedulerCommand;
 use PHPStreamServer\Plugin\Scheduler\Internal\MetricsHandler;
 use PHPStreamServer\Plugin\Scheduler\Internal\Scheduler;
+use PHPStreamServer\Plugin\Scheduler\Message\GetSchedulerStatusCommand;
 use PHPStreamServer\Plugin\Scheduler\Status\SchedulerStatus;
+use Revolt\EventLoop\Suspension;
 
 final class SchedulerPlugin extends Plugin
 {
@@ -69,7 +67,8 @@ final class SchedulerPlugin extends Plugin
             try {
                 $registry = $this->masterContainer->getService(RegistryInterface::class);
                 $this->masterContainer->setService(MetricsHandler::class, new MetricsHandler($registry, $this->schedulerStatus, $this->handler));
-            } catch (ServiceNotFoundException) {}
+            } catch (ServiceNotFoundException) {
+            }
         }
     }
 

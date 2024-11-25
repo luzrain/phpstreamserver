@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\Logger\Handler;
 
 use Amp\Future;
+use PHPStreamServer\Core\Server;
 use PHPStreamServer\Plugin\Logger\Formatter\StringFormatter;
 use PHPStreamServer\Plugin\Logger\FormatterInterface;
 use PHPStreamServer\Plugin\Logger\Handler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
-use PHPStreamServer\Core\Server;
+
 use function Amp\async;
 
 final class SyslogHandler extends Handler
@@ -35,7 +36,7 @@ final class SyslogHandler extends Handler
         $this->formatter = new StringFormatter(messageFormat: '{channel}.{level} {message} {context}');
         \openlog($this->prefix, $this->flags, $this->facility);
 
-        return async(static fn () => null);
+        return async(static fn() => null);
     }
 
     public function handle(LogEntry $record): void

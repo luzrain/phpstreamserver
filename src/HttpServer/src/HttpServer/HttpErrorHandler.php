@@ -11,6 +11,7 @@ use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use PHPStreamServer\Plugin\HttpServer\Internal\ErrorPage;
 use Psr\Log\LoggerInterface;
+
 use function PHPStreamServer\Core\reportErrors;
 
 final readonly class HttpErrorHandler implements ErrorHandler

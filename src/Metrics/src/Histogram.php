@@ -33,7 +33,7 @@ final class Histogram extends Metric
             return;
         }
 
-        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function() use($labels, &$buffer, $key) {
+        $callbackId = EventLoop::delay(self::FLUSH_TIMEOUT, function () use ($labels, &$buffer, $key) {
             $values = $buffer;
             unset($this->buffer[$key]);
             $this->messageBus->dispatch(new ObserveHistorgamMessage($this->namespace, $this->name, $labels, $values));

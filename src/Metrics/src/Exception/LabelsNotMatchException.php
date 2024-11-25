@@ -10,7 +10,7 @@ final class LabelsNotMatchException extends \InvalidArgumentException
     {
         if ($labels === [] && $givenLabels !== []) {
             $text = \sprintf('Labels do not match. Should not contain labels, %s assigned', \json_encode($givenLabels));
-        } else if($labels !== [] && $givenLabels === []) {
+        } elseif ($labels !== [] && $givenLabels === []) {
             $text = \sprintf('Labels do not match. Should contain %s labels, no labels assigned', \json_encode($labels));
         } else {
             $text = \sprintf('Labels do not match. Should contain %s labels, %s assigned', \json_encode($labels), \json_encode($givenLabels));

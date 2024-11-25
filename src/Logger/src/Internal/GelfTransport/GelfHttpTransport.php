@@ -36,7 +36,7 @@ final class GelfHttpTransport implements GelfTransport
             $this->httpClient->request($request);
             $this->inErrorState = false;
         } catch (SocketException $e) {
-            if($this->inErrorState === false) {
+            if ($this->inErrorState === false) {
                 \trigger_error($e->getMessage(), E_USER_WARNING);
                 $this->inErrorState = true;
             }

@@ -9,14 +9,15 @@ use Amp\Future;
 use PHPStreamServer\Core\Exception\PHPStreamServerException;
 use PHPStreamServer\Core\Internal\SIGCHLDHandler;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
-use Psr\Log\LoggerInterface;
-use Revolt\EventLoop;
-use Revolt\EventLoop\Suspension;
 use PHPStreamServer\Plugin\Scheduler\Message\ProcessScheduledEvent;
 use PHPStreamServer\Plugin\Scheduler\Message\ProcessStartedEvent;
 use PHPStreamServer\Plugin\Scheduler\PeriodicProcess;
 use PHPStreamServer\Plugin\Scheduler\Trigger\TriggerFactory;
 use PHPStreamServer\Plugin\Scheduler\Trigger\TriggerInterface;
+use Psr\Log\LoggerInterface;
+use Revolt\EventLoop;
+use Revolt\EventLoop\Suspension;
+
 use function Amp\weakClosure;
 
 /**
@@ -72,7 +73,7 @@ final class Scheduler
 
         if ($nextRunDate !== null) {
             $delay = $nextRunDate->getTimestamp() - $currentDate->getTimestamp();
-            EventLoop::delay($delay, function () use($worker, $trigger): void {
+            EventLoop::delay($delay, function () use ($worker, $trigger): void {
                 $this->startWorker($worker, $trigger);
             });
         }
@@ -88,7 +89,7 @@ final class Scheduler
     {
         // Reschedule a task without running it if the previous task is still running
         if ($this->pool->isWorkerRun($worker)) {
-            if($this->scheduleWorker($worker, $trigger)) {
+            if ($this->scheduleWorker($worker, $trigger)) {
                 $this->logger->info(\sprintf('Periodic process "%s" is already running. Rescheduled', $worker->name));
             }
             return;

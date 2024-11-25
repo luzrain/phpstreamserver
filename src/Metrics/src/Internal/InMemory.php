@@ -21,11 +21,11 @@ final class InMemory extends PrometheusInMemory
 
         if ($type === 'counter') {
             unset($this->counters[$metaKey]['samples'][$valueKey]);
-        } elseif($type === 'gauge') {
+        } elseif ($type === 'gauge') {
             unset($this->gauges[$metaKey]['samples'][$valueKey]);
-        } elseif($type === 'histogram') {
+        } elseif ($type === 'histogram') {
             unset($this->histograms[$metaKey]['samples'][$valueKey]);
-        } elseif($type === 'summary') {
+        } elseif ($type === 'summary') {
             unset($this->summaries[$metaKey]['samples'][$valueKey]);
         }
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Metrics\Internal;
 
+use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\GetMetricMessage;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\GetMetricResponse;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\IncreaseCounterMessage;
@@ -12,12 +13,12 @@ use PHPStreamServer\Plugin\Metrics\Internal\Message\ObserveSummaryMessage;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\RegisterMetricMessage;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\RemoveMetricMessage;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\SetGaugeMessage;
-use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use Prometheus\CollectorRegistry;
 use Prometheus\Exception\MetricNotFoundException as PrometheusMetricNotFoundException;
 use Prometheus\Exception\MetricsRegistrationException as PrometheusMetricRegistrationException;
 use Prometheus\RegistryInterface as PrometheusRegistryInterface;
 use Prometheus\RenderTextFormat;
+
 use function Amp\weakClosure;
 
 final class MessageBusRegistryHandler
@@ -44,16 +45,31 @@ final class MessageBusRegistryHandler
         try {
             match ($message->type) {
                 'counter' => $this->registry->registerCounter(
-                    $message->namespace, $message->name, $message->help, $message->labels,
+                    $message->namespace,
+                    $message->name,
+                    $message->help,
+                    $message->labels,
                 ),
                 'gauge' => $this->registry->registerGauge(
-                    $message->namespace, $message->name, $message->help, $message->labels,
+                    $message->namespace,
+                    $message->name,
+                    $message->help,
+                    $message->labels,
                 ),
                 'histogram' => $this->registry->registerHistogram(
-                    $message->namespace, $message->name, $message->help, $message->labels, $message->buckets,
+                    $message->namespace,
+                    $message->name,
+                    $message->help,
+                    $message->labels,
+                    $message->buckets,
                 ),
                 'summary' => $this->registry->registerSummary(
-                    $message->namespace, $message->name, $message->help, $message->labels, 600, $message->buckets,
+                    $message->namespace,
+                    $message->name,
+                    $message->help,
+                    $message->labels,
+                    600,
+                    $message->buckets,
                 ),
             };
         } catch (PrometheusMetricRegistrationException) {

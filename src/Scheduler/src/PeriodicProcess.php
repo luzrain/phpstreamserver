@@ -15,6 +15,7 @@ use PHPStreamServer\Core\Worker\ProcessUserChange;
 use PHPStreamServer\Core\Worker\Status;
 use Revolt\EventLoop;
 use Revolt\EventLoop\DriverFactory;
+
 use function PHPStreamServer\Core\getCurrentGroup;
 use function PHPStreamServer\Core\getCurrentUser;
 
@@ -96,7 +97,7 @@ class PeriodicProcess implements Process
         return $this->exitCode;
     }
 
-    static public function handleBy(): array
+    public static function handleBy(): array
     {
         return [SchedulerPlugin::class];
     }

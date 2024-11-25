@@ -46,8 +46,11 @@ $rules = [
     // Comparisons should be strict.
     'strict_comparison' => true,
 
-    // Ordering use statements
-    'ordered_imports' => true,
+    // Ordering use statements.
+    'ordered_imports' => [
+        'imports_order' => ['class', 'function', 'const'],
+        'sort_algorithm' => 'alpha',
+    ],
 
     // Replace get_class calls on object variables with class keyword syntax.
     'get_class_to_class_keyword' => true,
@@ -64,9 +67,6 @@ $rules = [
     // Empty body of class, interface, trait, enum or function must be abbreviated as {} and placed on the same line
     'single_line_empty_body' => false,
 
-    // Class DateTimeImmutable should be used instead of DateTime.
-    'date_time_immutable' => true,
-
     // Functions should be used with $strict param set to true.
     'strict_param' => true,
 
@@ -80,8 +80,20 @@ $rules = [
         'strict' => true,
     ],
 
+    // Imports or fully qualifies global classes/functions/constants.
+    'global_namespace_import' => [
+        'import_classes' => false,
+        'import_constants' => false,
+        'import_functions' => false,
+    ],
+
     // Lambdas not (indirectly) referencing $this must be declared static.
     'static_lambda' => true,
+
+    // Class, trait and interface elements must be separated with one or none blank line.
+    'class_attributes_separation' => ['elements' => [
+        'method' => 'one',
+    ]],
 ];
 
 return (new PhpCsFixer\Config())

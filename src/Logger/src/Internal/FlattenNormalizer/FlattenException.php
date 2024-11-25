@@ -88,7 +88,7 @@ final readonly class FlattenException implements \Stringable
     private static function parseAnonymousClass(string $class): string
     {
         return \str_contains($class, "@anonymous\0")
-            ? (\get_parent_class($class) ?: \key(\class_implements($class)) ?: 'class').'@anonymous'
+            ? (\get_parent_class($class) ?: \key(\class_implements($class)) ?: 'class') . '@anonymous'
             : $class
         ;
     }

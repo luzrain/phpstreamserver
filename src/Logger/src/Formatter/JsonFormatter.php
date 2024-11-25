@@ -90,13 +90,13 @@ final readonly class JsonFormatter implements FormatterInterface
             'class' => $exception->class,
             'message' => $exception->message,
             'code' => $exception->code,
-            'file' => $exception->file.':'.$exception->line,
+            'file' => $exception->file . ':' . $exception->line,
         ];
 
         if ($this->includeStacktraces) {
             foreach ($exception->trace as $frame) {
                 if (isset($frame['file'], $frame['line'])) {
-                    $data['trace'][] = $frame['file'].':'.$frame['line'];
+                    $data['trace'][] = $frame['file'] . ':' . $frame['line'];
                 }
             }
         }

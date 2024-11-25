@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger\Internal;
 
-use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
 use PHPStreamServer\Core\MessageBus\Message\CompositeMessage;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\Worker\LoggerInterface;
+use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
 use Psr\Log\LoggerTrait;
 use Revolt\EventLoop;
 
@@ -16,10 +16,10 @@ use Revolt\EventLoop;
  */
 final class WorkerLogger implements LoggerInterface
 {
+    use LoggerTrait;
+
     private const MAX_FLUSH_SIZE = 1200;
     private const MAX_FLUSH_TIME = 0.005;
-
-    use LoggerTrait;
 
     private array $log = [];
     private string $channel = 'worker';
@@ -55,7 +55,7 @@ final class WorkerLogger implements LoggerInterface
         }
 
         if ($this->callbackId === '') {
-            $this->callbackId = EventLoop::delay(self::MAX_FLUSH_TIME, fn () => $this->flush());
+            $this->callbackId = EventLoop::delay(self::MAX_FLUSH_TIME, fn() => $this->flush());
         }
     }
 

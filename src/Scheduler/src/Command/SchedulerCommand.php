@@ -42,12 +42,12 @@ final class SchedulerCommand extends Command
                     'Next run',
                     'Status',
                 ])
-                ->addRows(\array_map(array: $status->getPeriodicWorkers(), callback: static fn (PeriodicWorkerInfo $w) => [
+                ->addRows(\array_map(array: $status->getPeriodicWorkers(), callback: static fn(PeriodicWorkerInfo $w) => [
                     $w->user === 'root' ? $w->user : "<color;fg=gray>{$w->user}</>",
                     $w->name,
                     $w->schedule ?: '-',
                     $w->nextRunDate?->format('Y-m-d H:i:s') ?? '<color;fg=gray>-</>',
-                    match(true) {
+                    match (true) {
                         $w->nextRunDate !== null => '[<color;fg=green>OK</>]',
                         default => '[<color;fg=red>ERROR</>]',
                     },

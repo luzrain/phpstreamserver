@@ -94,7 +94,7 @@ final readonly class ConsoleFormatter implements FormatterInterface
         if ($data instanceof FlattenException) {
             return \str_replace(
                 ['[exception(', '[previous(', ']: '],
-                ['<color;fg='.self::EXCEPTION_COLOR.'>[exception(', '<color;fg='.self::EXCEPTION_COLOR.'>[previous(', ']</>: '],
+                ['<color;fg=' . self::EXCEPTION_COLOR . '>[exception(', '<color;fg=' . self::EXCEPTION_COLOR . '>[previous(', ']</>: '],
                 $data->toString(),
             );
         }

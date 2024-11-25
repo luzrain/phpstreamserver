@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Metrics\Internal;
 
+use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Plugin\Metrics\Exception\LabelsNotMatchException;
 use PHPStreamServer\Plugin\Metrics\Internal\Message\RemoveMetricMessage;
-use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 
 abstract class Metric
 {
@@ -37,7 +37,7 @@ abstract class Metric
     /**
      * @throws LabelsNotMatchException
      */
-    protected final function checkLabels(array $labels = []): void
+    final protected function checkLabels(array $labels = []): void
     {
         $assignedLabels = \array_keys($labels);
         if ($this->labelsCount !== \count($assignedLabels) || \array_diff($this->labels, $assignedLabels) !== []) {

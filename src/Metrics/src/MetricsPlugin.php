@@ -12,17 +12,17 @@ use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Server\SocketHttpServer;
 use Amp\Socket\ResourceServerSocketFactory;
+use PHPStreamServer\Core\Internal\Container;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
+use PHPStreamServer\Core\Plugin\Plugin;
+use PHPStreamServer\Core\Worker\LoggerInterface;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpErrorHandler;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpServer;
 use PHPStreamServer\Plugin\HttpServer\Listen;
 use PHPStreamServer\Plugin\Metrics\Internal\MessageBusRegistry;
 use PHPStreamServer\Plugin\Metrics\Internal\MessageBusRegistryHandler;
 use PHPStreamServer\Plugin\Metrics\Internal\NotFoundPage;
-use PHPStreamServer\Core\Internal\Container;
-use PHPStreamServer\Core\Plugin\Plugin;
-use PHPStreamServer\Core\Worker\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
 
@@ -74,8 +74,7 @@ final class MetricsPlugin extends Plugin
 
     private function createRequestHandler(MessageBusRegistryHandler $messageBusRegistryHandler): RequestHandler
     {
-        return new class($messageBusRegistryHandler) implements RequestHandler
-        {
+        return new class ($messageBusRegistryHandler) implements RequestHandler {
             public function __construct(private readonly MessageBusRegistryHandler $messageBusRegistryHandler)
             {
             }
