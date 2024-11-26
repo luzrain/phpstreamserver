@@ -131,7 +131,7 @@ final class HttpServerProcess extends WorkerProcess
             connectionTimeout: $this->container->getParameter('httpServerPlugin.httpConnectionTimeout'),
             headerSizeLimit: $this->container->getParameter('httpServerPlugin.httpHeaderSizeLimit'),
             bodySizeLimit: $this->container->getParameter('httpServerPlugin.httpBodySizeLimit'),
-            logger: $this->logger,
+            logger: $this->logger->withChannel('http'),
             networkTrafficCounter: $networkTrafficCounter,
             reloadStrategyTrigger: $this->reloadStrategyTrigger,
             accessLog: $this->accessLog,

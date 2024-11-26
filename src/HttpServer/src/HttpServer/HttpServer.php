@@ -7,7 +7,6 @@ namespace PHPStreamServer\Plugin\HttpServer\HttpServer;
 use Amp\Http\Server\Driver\ConnectionLimitingClientFactory;
 use Amp\Http\Server\Driver\ConnectionLimitingServerSocketFactory;
 use Amp\Http\Server\Driver\DefaultHttpDriverFactory;
-use Amp\Http\Server\Driver\SocketClientFactory;
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\SocketHttpServer;
@@ -19,6 +18,7 @@ use Amp\Socket\ServerTlsContext;
 use Amp\Sync\LocalSemaphore;
 use PHPStreamServer\Core\Plugin\System\Connections\NetworkTrafficCounter;
 use PHPStreamServer\Core\Worker\LoggerInterface;
+use PHPStreamServer\Plugin\HttpServer\Internal\ClientSocketFactory;
 use PHPStreamServer\Plugin\HttpServer\Internal\Middleware\AccessLoggerMiddleware;
 use PHPStreamServer\Plugin\HttpServer\Internal\Middleware\PhpSSMiddleware;
 use PHPStreamServer\Plugin\HttpServer\Internal\Middleware\StaticMiddleware;
@@ -63,10 +63,10 @@ final readonly class HttpServer
         $middleware = [];
         $errorHandler = new HttpErrorHandler($this->logger);
         $serverSocketFactory = new ResourceServerSocketFactory();
-        $clientFactory = new SocketClientFactory($this->logger);
+        $clientSocketFactory = new ClientSocketFactory($this->logger);
 
         if ($this->connectionLimitPerIp !== null) {
-            $clientFactory = new ConnectionLimitingClientFactory($clientFactory, $this->logger, $this->connectionLimitPerIp);
+            $clientSocketFactory = new ConnectionLimitingClientFactory($clientSocketFactory, $this->logger, $this->connectionLimitPerIp);
         }
 
         if ($this->connectionLimit !== null) {
@@ -80,7 +80,7 @@ final readonly class HttpServer
         }
 
         if ($this->accessLog) {
-            $middleware[] = new AccessLoggerMiddleware($this->logger->withChannel('http'));
+            $middleware[] = new AccessLoggerMiddleware($this->logger);
         }
 
         $middleware = [...$middleware, ...$this->middleware];
@@ -95,7 +95,7 @@ final readonly class HttpServer
         $socketHttpServer = new SocketHttpServer(
             logger: $this->logger,
             serverSocketFactory: $serverSocketFactory,
-            clientFactory: $clientFactory,
+            clientFactory: $clientSocketFactory,
             middleware: $middleware,
             allowedMethods: null,
             httpDriverFactory: new DefaultHttpDriverFactory(
