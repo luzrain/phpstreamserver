@@ -23,13 +23,12 @@ final class ClientSocketFactory implements ClientFactory
 
     public function createClient(Socket $socket): ?Client
     {
-        $localAddress = \explode(':', $socket->getLocalAddress()->toString())[0];
-        $remoteAddress = \explode(':', $socket->getRemoteAddress()->toString())[0];
-
         if ($socket->isTlsConfigurationAvailable()) {
             try {
                 $socket->setupTls(new TimeoutCancellation($this->tlsHandshakeTimeout));
             } catch (SocketException $exception) {
+                $localAddress = \explode(':', $socket->getLocalAddress()->toString())[0];
+                $remoteAddress = \explode(':', $socket->getRemoteAddress()->toString())[0];
                 $message = $exception->getMessage();
                 $message = \str_replace(['TLS negotiation failed:', 'stream_socket_enable_crypto():', "\n"], ['', '', ' '], $message);
                 $message = \ltrim($message);
@@ -40,6 +39,8 @@ final class ClientSocketFactory implements ClientFactory
 
                 return null;
             } catch (CancelledException) {
+                $localAddress = \explode(':', $socket->getLocalAddress()->toString())[0];
+                $remoteAddress = \explode(':', $socket->getRemoteAddress()->toString())[0];
                 $this->logger->notice(\sprintf('%s TLS negotiation timed out', $remoteAddress), [
                     'local' => $localAddress,
                     'remote' => $remoteAddress,
