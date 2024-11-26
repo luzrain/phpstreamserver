@@ -10,6 +10,7 @@ use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
 use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
 use Amp\Http\Server\Response;
+use PHPStreamServer\Core\Exception\ServiceNotFoundException;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
 use PHPStreamServer\Core\Plugin\Supervisor\WorkerProcess;
@@ -17,7 +18,6 @@ use PHPStreamServer\Core\Plugin\System\Connections\NetworkTrafficCounter;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpServer;
 use PHPStreamServer\Plugin\HttpServer\Internal\Middleware\MetricsMiddleware;
 use PHPStreamServer\Plugin\Metrics\RegistryInterface;
-use Psr\Container\NotFoundExceptionInterface;
 
 final class HttpServerProcess extends WorkerProcess
 {
@@ -111,7 +111,7 @@ final class HttpServerProcess extends WorkerProcess
             try {
                 $registry = $this->container->getService(RegistryInterface::class);
                 $middleware[] = new MetricsMiddleware($registry);
-            } catch (NotFoundExceptionInterface) {
+            } catch (ServiceNotFoundException) {
             }
         }
 
