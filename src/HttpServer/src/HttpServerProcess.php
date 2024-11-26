@@ -8,6 +8,7 @@ use Amp\Http\Server\HttpErrorException;
 use Amp\Http\Server\Middleware;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler;
+use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
 use Amp\Http\Server\Response;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
@@ -20,12 +21,10 @@ use Psr\Container\NotFoundExceptionInterface;
 
 final class HttpServerProcess extends WorkerProcess
 {
-    private mixed $context = null;
-
     /**
      * @param Listen|string|array<Listen> $listen
-     * @param null|\Closure(self, mixed):void $onStart
-     * @param null|\Closure(Request, mixed): Response $onRequest
+     * @param null|\Closure(self):void $onStart
+     * @param null|\Closure(Request, self): Response $onRequest
      * @param null|\Closure(self):void $onStop
      * @param null|\Closure(self):void $onReload
      * @param array<Middleware> $middleware
@@ -75,23 +74,27 @@ final class HttpServerProcess extends WorkerProcess
     private function onStart(): void
     {
         if ($this->onStart !== null) {
-            ($this->onStart)($this, $this->context);
+            ($this->onStart)($this);
         }
 
-        $this->onRequest ??= static fn(): never => throw new HttpErrorException(404);
+        if ($this->onRequest !== null) {
+            $requestHandler = new class ($this->onRequest, $this) implements RequestHandler {
+                public function __construct(private readonly \Closure $handler, private WorkerProcess $worker)
+                {
+                }
 
-        $requestHandler = new class ($this->onRequest, $this->context) implements RequestHandler {
-            public function __construct(private readonly \Closure $handler, private mixed &$context)
-            {
-            }
-
-            public function handleRequest(Request $request): Response
-            {
-                return ($this->handler)($request, $this->context);
-            }
-        };
-
-        $networkTrafficCounter = new NetworkTrafficCounter($this->container->getService(MessageBusInterface::class));
+                public function handleRequest(Request $request): Response
+                {
+                    return ($this->handler)($request, $this->worker);
+                }
+            };
+            $this->container->setService(RequestHandler::class, $requestHandler);
+        } elseif ($this->container->has(RequestHandler::class)) {
+            $requestHandler = $this->container->get(RequestHandler::class);
+        } else {
+            $requestHandler = new ClosureRequestHandler(static fn(): never => throw new HttpErrorException(404));
+            $this->container->setService(RequestHandler::class, $requestHandler);
+        }
 
         $middleware = [];
 
@@ -111,6 +114,8 @@ final class HttpServerProcess extends WorkerProcess
             } catch (NotFoundExceptionInterface) {
             }
         }
+
+        $networkTrafficCounter = new NetworkTrafficCounter($this->container->getService(MessageBusInterface::class));
 
         /**
          * @psalm-suppress InvalidArgument

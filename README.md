@@ -30,7 +30,7 @@ This application server is designed to replace traditional setup for running php
 ## Getting started
 ### Install composer packages
 ```bash
-$ composer require luzrain/phpstreamserver
+$ composer require phpstreamserver/core
 ```
 
 ### Configure server
@@ -39,7 +39,15 @@ Here is example of simple http server.
 ```php
 // server.php
 
-use Amp\Http\Server\HttpErrorException;use Amp\Http\Server\Request;use Amp\Http\Server\Response;use PHPStreamServer\BundledPlugin\HttpServer\HttpServerPlugin;use PHPStreamServer\BundledPlugin\HttpServer\HttpServerProcess;use PHPStreamServer\BundledPlugin\Scheduler\PeriodicProcess;use PHPStreamServer\BundledPlugin\Scheduler\SchedulerPlugin;use PHPStreamServer\Core\Plugin\Supervisor\WorkerProcess;use PHPStreamServer\Server;
+use Amp\Http\Server\HttpErrorException;
+use Amp\Http\Server\Request;
+use Amp\Http\Server\Response;
+use PHPStreamServer\Core\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\Core\Server;
+use PHPStreamServer\Plugin\HttpServer\HttpServerPlugin;
+use PHPStreamServer\Plugin\HttpServer\HttpServerProcess;
+use PHPStreamServer\Plugin\Scheduler\PeriodicProcess;
+use PHPStreamServer\Plugin\Scheduler\SchedulerPlugin;
 
 $server = new Server();
 
@@ -53,10 +61,10 @@ $server->addWorker(
         name: 'Web Server',
         count: 1,
         listen: '0.0.0.0:8088',
-        onStart: function (HttpServerProcess $worker, mixed &$context): void {
+        onStart: function (HttpServerProcess $worker): void {
             // initialization
         },
-        onRequest: function (Request $request, mixed &$context): Response {
+        onRequest: function (Request $request, HttpServerProcess $worker): Response {
             return match ($request->getUri()->getPath()) {
                 '/' => new Response(body: 'Hello world'),
                 '/ping' => new Response(body: 'pong'),
