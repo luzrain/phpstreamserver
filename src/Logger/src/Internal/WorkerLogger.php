@@ -18,9 +18,6 @@ final class WorkerLogger implements LoggerInterface
 {
     use LoggerTrait;
 
-    private const MAX_FLUSH_SIZE = 1200;
-    private const MAX_FLUSH_TIME = 0.005;
-
     /**
      * @var list<LogEntry>
      */
@@ -53,19 +50,14 @@ final class WorkerLogger implements LoggerInterface
 
         $this->log[] = $event;
 
-        if (\count($this->log) >= self::MAX_FLUSH_SIZE) {
-            $this->flush();
-        }
-
         if ($this->callbackId === '') {
-            $this->callbackId = EventLoop::delay(self::MAX_FLUSH_TIME, fn() => $this->flush());
+            $this->callbackId = EventLoop::defer(fn() => $this->flush());
         }
     }
 
     private function flush(): void
     {
         $log = $this->log;
-        EventLoop::cancel($this->callbackId);
         $this->log = [];
         $this->callbackId = '';
         $this->messageBus->dispatch(new CompositeMessage($log));
