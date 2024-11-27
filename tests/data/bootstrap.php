@@ -4,31 +4,22 @@ declare(strict_types=1);
 
 include __DIR__ . '/../../vendor/autoload.php';
 
-if (!\getServerStatus()->is_running) {
-    \startServer();
-    \register_shutdown_function(stopServer(...));
-}
+\phpss_start();
+\register_shutdown_function(\phpss_stop(...));
 
-function startServer(): void
-{
-    $descriptorspec = [['pipe', 'r'], ['pipe', 'w']];
-    $process = \proc_open(\getServerStartCommandLine('start -d'), $descriptorspec, $pipes);
-    $return = \proc_close($process);
-    !$return ?: exit("Server start failed\n");
-    \usleep(500);
-}
-
-function stopServer(): void
-{
-    \exec(\getServerStartCommandLine('stop'));
-}
-
-function getServerStartCommandLine(string $command): string
+function phpss_create_command(string $command): string
 {
     return \sprintf('exec %s %s/server.php %s', PHP_BINARY, __DIR__, $command);
 }
 
-function getServerStatus(): \stdClass
+function phpss_start(): void
 {
-    return \json_decode(\shell_exec(\getServerStartCommandLine('status-json')));
+    $descriptor = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    \proc_open(\phpss_create_command('start -d'), $descriptor, $pipes);
+    \usleep(100000);
+}
+
+function phpss_stop(): void
+{
+    \shell_exec(\phpss_create_command('stop'));
 }

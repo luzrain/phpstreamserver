@@ -31,27 +31,27 @@ jobs:
       - name: Static analyze
         run: composer run static-analyze
 
-#  tests:
-#    runs-on: ${{ matrix.os }}
-#    name: ${{ matrix.os }} - PHP ${{ matrix.php }}
-#    strategy:
-#      matrix:
-#        os: ['ubuntu-latest', 'macos-latest']
-#        php: ['8.2', '8.3']
-#
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Setup PHP
-#        uses: shivammathur/setup-php@v2
-#        with:
-#          php-version: ${{ matrix.php }}
-#          extensions: posix, pcntl
-#          tools: composer:v2
-#
-#      - name: Composer install
-#        run: composer install
-#
-#      - name: Tests
-#        run: composer run test
+  tests:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} - PHP ${{ matrix.php }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        php: ['8.2', '8.3']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: posix, pcntl
+          tools: composer:v2
+
+      - name: Composer install
+        run: composer install
+
+      - name: Tests
+        run: composer run test

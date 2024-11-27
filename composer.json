@@ -31,11 +31,10 @@
     "require-dev": {
         "amphp/http-client": "^5.1",
         "friendsofphp/php-cs-fixer": "^3.65",
-        "guzzlehttp/guzzle": "^7.9.2",
-        "phpunit/phpunit": "^10.5",
-        "psalm/phar": "^5.26",
-        "symfony/var-dumper": "^6.4.10",
-        "symplify/monorepo-builder": "^11.2"
+        "phpunit/phpunit": "^11.4.3",
+        "psalm/phar": "^5.26.1",
+        "symfony/var-dumper": "^6.4.15",
+        "symplify/monorepo-builder": "^11.2.22"
     },
     "replace": {
         "phpstreamserver/core": "self.version",
@@ -60,7 +59,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "PHPStreamServer\\Core\\Test\\": "src/Core/tests/"
+            "PHPStreamServer\\Test\\": "tests/"
         }
     },
     "config": {

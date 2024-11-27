@@ -2,105 +2,72 @@
 
 declare(strict_types=1);
 
+use Amp\Http\Server\HttpErrorException;
+use Amp\Http\Server\Request;
+use Amp\Http\Server\Response;
+use PHPStreamServer\Core\Plugin\Supervisor\ExternalProcess;
+use PHPStreamServer\Core\Plugin\Supervisor\WorkerProcess;
+use PHPStreamServer\Core\Server;
+use PHPStreamServer\Plugin\HttpServer\HttpServerPlugin;
+use PHPStreamServer\Plugin\HttpServer\HttpServerProcess;
+use PHPStreamServer\Plugin\HttpServer\Listen;
+use PHPStreamServer\Plugin\Scheduler\PeriodicProcess;
+use PHPStreamServer\Plugin\Scheduler\SchedulerPlugin;
+use PHPStreamServer\Test\data\TestPlugin\TestPlugin;
+
 include __DIR__ . '/../../vendor/autoload.php';
 
-use PHPStreamServer\Server;
-use PHPStreamServer\WorkerProcess_OLD;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UploadedFileInterface;
-
-$tempFiles = [];
-$streamResponse = \fopen('php://temp', 'rw');
-\fwrite($streamResponse, 'ok-answer from stream');
 $server = new Server();
-$server->addWorkerProcess(
-    new WorkerProcess_OLD(
-        name: 'Worker 1',
+
+$server->addPlugin(
+    new HttpServerPlugin(),
+    new SchedulerPlugin(),
+    new TestPlugin(),
+);
+
+$server->addWorker(
+    new WorkerProcess(
+        name: 'Worker Process 1',
+        count: 2,
+    ),
+    new WorkerProcess(
+        name: 'Worker Process 2',
         count: 1,
     ),
-    new WorkerProcess_OLD(
-        name: 'Worker 2',
-        count: 2,
+    new ExternalProcess(
+        name: 'External Process 1',
+        count: 1,
+        command: 'sleep 3600',
     ),
-    new WorkerProcess_OLD(
+    new ExternalProcess(
+        name: 'External Process 2',
+        count: 1,
+        command: 'sleep 3600',
+        reloadable: false,
+    ),
+    new HttpServerProcess(
+        listen: [
+            new Listen(listen: '127.0.0.1:9080'),
+            new Listen(listen: '127.0.0.1:9081', tls: true, tlsCertificate: __DIR__ . '/localhost.crt'),
+        ],
         name: 'HTTP Server',
-        count: 2,
-        onStart: static function (WorkerProcess_OLD $worker) use (&$tempFiles, $streamResponse) {
-            $worker->startListener(new Listener(
-                listen: 'tcp://0.0.0.0:9080',
-                protocol: new Http(),
-                onClose: static function () use (&$tempFiles) {
-                    foreach ($tempFiles as $tempFile) {
-                        \is_file($tempFile) && \unlink($tempFile);
-                    }
-                },
-                onMessage: static function (ConnectionInterface $connection, ServerRequestInterface $data) use (&$tempFiles, $streamResponse): void {
-                    $files = $data->getUploadedFiles();
-                    \array_walk_recursive($files, static function (UploadedFileInterface &$file) use (&$tempFiles) {
-                        $tmpFile = \sys_get_temp_dir() . '/' . \uniqid('test');
-                        $tempFiles[] = $tmpFile;
-                        $file->moveTo($tmpFile);
-                        $file = [
-                            'client_filename' => $file->getClientFilename(),
-                            'client_media_type' => $file->getClientMediaType(),
-                            'size' => $file->getSize(),
-                            'sha1' => \hash_file('sha1', $tmpFile),
-                        ];
-                    });
-                    $response = match ($data->getUri()->getPath()) {
-                        '/ok1' => new Response(
-                            body: 'ok-answer',
-                            headers: ['Content-Type' => 'text/plain'],
-                        ),
-                        '/ok2' => new Response(
-                            body: $streamResponse,
-                            headers: ['Content-Type' => 'text/plain'],
-                        ),
-                        '/request' => new Response(
-                            body: \json_encode([
-                                'server_params' => $data->getServerParams(),
-                                'headers' => $data->getHeaders(),
-                                'query' => $data->getQueryParams(),
-                                'request' => $data->getParsedBody(),
-                                'files' => $files,
-                                'cookies' => $data->getCookieParams(),
-                                'raw_request' => empty($files) ? $data->getBody()->getContents() : '',
-                            ]),
-                            headers: ['Content-Type' => 'application/json'],
-                        ),
-                        default => throw HttpException::createNotFoundException(),
-                    };
-                    $connection->send($response);
-                },
-            ));
-            $worker->startListener(new Listener(
-                listen: 'tcp://0.0.0.0:9086',
-                protocol: new Http(
-                    maxBodySize: 102400,
-                ),
-                onMessage: static function (ConnectionInterface $connection, ServerRequestInterface $data): void {
-                    $connection->send(new Response(body: 'ok', headers: ['Content-Type' => 'text/plain']));
-                },
-            ));
+        count: 1,
+        reloadable: false,
+        onRequest: static function (Request $request): Response {
+            return match ($request->getUri()->getPath()) {
+                '/' => new Response(body: 'Hello world'),
+                '/error' => throw new \Exception('test exception'),
+                default => throw new HttpErrorException(404),
+            };
         },
     ),
-    new WorkerProcess_OLD(
-        name: 'HTTPS Server',
-        count: 1,
-        onStart: static function (WorkerProcess_OLD $worker) {
-            $worker->startListener(new Listener(
-                listen: 'tcp://127.0.0.1:9081',
-                tls: true,
-                tlsCertificate: __DIR__ . '/localhost.crt',
-                protocol: new Http(),
-                onMessage: static function (ConnectionInterface $connection, ServerRequestInterface $data): void {
-                    $connection->send(new Response(
-                        body: 'ok-answer-tls',
-                        headers: ['Content-Type' => 'text/plain'],
-                    ));
-                },
-            ));
+    new PeriodicProcess(
+        name: 'Periodic Process 1',
+        schedule: '1 second',
+        onStart: static function (PeriodicProcess $worker) {
+            \file_put_contents(\sys_get_temp_dir() . '/phpss-test-9af00c2f.txt', \time() . "\n");
         },
     ),
 );
+
 exit($server->run());
