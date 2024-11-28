@@ -5,13 +5,14 @@
   </picture>
 </p>
 
-## HTTP Server Plugin for PHPStreamServer
+## Metrics Plugin for PHPStreamServer
 ![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
 ![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
+![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/metrics?label=Downloads&color=f28d1a)
 
 The Metrics Plugin for **PHPStreamServer** extends the core functionality by providing integration with Prometheus,
-providing an endpoint for collecting and exposing application metrics.
-It provides some default metrics to monitor and allows users to define custom metrics as needed.
+providing an endpoint for exposing application metrics.
+It provides default metrics to monitor and allows users to define custom metrics as needed.
 
 ### Features:
  - Provides counter, gauge, histogram and summary metrics.
