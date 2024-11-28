@@ -1,6 +1,7 @@
 {
     "name": "phpstreamserver/phpstreamserver",
     "description": "PHPStreamServer",
+    "type": "library",
     "minimum-stability": "dev",
     "keywords": [
         "phpstreamserver"
