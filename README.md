@@ -1,97 +1,32 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/luzrain/phprunner/assets/25800964/3e1bb7da-5fa8-47cf-8c95-5454b8b5959f">
-    <img alt="PHPStreamServer logo" align="center" width="70%" src="https://github.com/luzrain/phprunner/assets/25800964/5664f293-41a5-424e-9f52-a403b222b17d">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/phpstreamserver/.github/blob/main/assets/phpss_core_light.svg">
+    <img alt="PHPStreamServer logo" align="center" width="70%" src="https://raw.githubusercontent.com/phpstreamserver/.github/refs/heads/main/assets/phpss_core_dark.svg">
   </picture>
 </p>
 
 # PHPStreamServer - PHP Application Server
-![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg?style=flat)
-[![Version](https://img.shields.io/github/v/tag/luzrain/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)](../../releases)
-[![Tests Status](https://img.shields.io/github/actions/workflow/status/luzrain/phpstreamserver/tests.yaml?label=Tests&branch=master)](../../actions/workflows/tests.yaml)
+![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
+![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
+![Tests Status](https://img.shields.io/github/actions/workflow/status/phpstreamserver/phpstreamserver/tests.yaml?label=Tests&branch=main)
 
-> [!NOTE]  
-> This package is now under development
+⚠️ This is the monorepo for the main components of [PHPStreamServer](https://phpstreamserver.dev/) ⚠️
 
-PHPStreamServer is a high performance event-loop based process manager, scheduler and webserver written in PHP.
-This application server is designed to replace traditional setup for running php applications such as nginx, php-fpm, cron, supervisor.
+**PHPStreamServer** is a high performance event-loop based application server and supervisor for PHP written in PHP.  
+PHPStreamServer ships with a number of plugins to extend functionality such as http server, scheduler and logger. See all the plugin packages below.  
+With all the power of plugins it can replace traditional setup for running php applications such as nginx, php-fpm, cron, supervisor.
 
-#### Key features:
-- Process manager;
-- Scheduler;
-- Workers lifecycle management (reload by TTL, max memory, max requests, on exception, on each request);
-- HTTP/2
+## Documentation
 
-#### Requirements and limitations:  
- - Unix based OS (no windows support);
- - php-posix and php-pcntl extensions;
- - php-uv extension is not required, but recommended for better performance.
+Please read the official documentation: https://phpstreamserver.dev/
 
-## Getting started
-### Install composer packages
-```bash
-$ composer require phpstreamserver/core
-```
+## Packages
 
-### Configure server
-Here is example of simple http server.
-
-```php
-// server.php
-
-use Amp\Http\Server\HttpErrorException;
-use Amp\Http\Server\Request;
-use Amp\Http\Server\Response;
-use PHPStreamServer\Core\Plugin\Supervisor\WorkerProcess;
-use PHPStreamServer\Core\Server;
-use PHPStreamServer\Plugin\HttpServer\HttpServerPlugin;
-use PHPStreamServer\Plugin\HttpServer\HttpServerProcess;
-use PHPStreamServer\Plugin\Scheduler\PeriodicProcess;
-use PHPStreamServer\Plugin\Scheduler\SchedulerPlugin;
-
-$server = new Server();
-
-$server->addPlugin(
-    new HttpServerPlugin(),
-    new SchedulerPlugin(),
-);
-
-$server->addWorker(
-    new HttpServerProcess(
-        name: 'Web Server',
-        count: 1,
-        listen: '0.0.0.0:8088',
-        onStart: function (HttpServerProcess $worker): void {
-            // initialization
-        },
-        onRequest: function (Request $request, HttpServerProcess $worker): Response {
-            return match ($request->getUri()->getPath()) {
-                '/' => new Response(body: 'Hello world'),
-                '/ping' => new Response(body: 'pong'),
-                default => throw new HttpErrorException(404),
-            };
-        }
-    ),
-    new WorkerProcess(
-        name: 'Supervised Program',
-        count: 1,
-        onStart: function (WorkerProcess $worker): void {
-            // custom long running process
-        },
-    ),
-    new PeriodicProcess(
-        name: 'Scheduled program',
-        schedule: '*/1 * * * *',
-        onStart: function (PeriodicProcess $worker): void {
-            // runs every 1 minute
-        },
-    ),
-);
-
-exit($server->run());
-```
-
-### Run
-```bash
-$ php server.php start
-```
+| Package                                                                      | Downloads                                                                                                                     | Description                                                                                       |
+|------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| [**Core**](https://packagist.org/packages/phpstreamserver/core)              | ![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/core?label=Downloads&labelColor=ffffff&color=ffffff)         | The core of PHPStreamServer with a built-in supervisor.                                           |
+| [HttpServer](https://packagist.org/packages/phpstreamserver/http-server)     | ![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/http-server?label=Downloads&labelColor=ffffff&color=ffffff)  | Plugin that implements an asynchronous HTTP server.                                               |
+| [Scheduler](https://packagist.org/packages/phpstreamserver/scheduler)        | ![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/scheduler?label=Downloads&labelColor=ffffff&color=ffffff)    | Plugin for scheduling tasks. Works similar to cron.                                               |
+| [Logger](https://packagist.org/packages/phpstreamserver/logger)              | ![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/logger?label=Downloads&labelColor=ffffff&color=ffffff)       | Plugin that implements a powerful PSR-compatible logger that can be used by workers.              |
+| [File Monitor](https://packagist.org/packages/phpstreamserver/file-monitor)  | ![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/file-monitor?label=Downloads&labelColor=ffffff&color=ffffff) | Plugin to monitor files and reload server when files are changed. Useful for development.         |
+| [Metrics](https://packagist.org/packages/phpstreamserver/metrics)            | ![Downloads](https://img.shields.io/packagist/dt/phpstreamserver/metrics?label=Downloads&labelColor=ffffff&color=ffffff)      | Plugin that exposes an endpoint with Prometheus metrics. Custom metrics can be sent from workers. |
