@@ -1,6 +1,6 @@
 {
     "name": "phpstreamserver/http-server",
-    "description": "HttpServer plugin for PHPStreamServer",
+    "description": "Http Server plugin for PHPStreamServer",
     "keywords": [
         "phpstreamserver",
         "http-server",

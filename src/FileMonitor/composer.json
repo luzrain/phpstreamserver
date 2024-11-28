@@ -1,6 +1,6 @@
 {
     "name": "phpstreamserver/file-monitor",
-    "description": "FileMonitor plugin for PHPStreamServer",
+    "description": "File Monitor plugin for PHPStreamServer",
     "keywords": [
         "phpstreamserver",
         "file-monitor"
