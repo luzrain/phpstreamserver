@@ -8,7 +8,7 @@ use PHPStreamServer\Core\Internal\Container;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
 use PHPStreamServer\Core\MessageBus\MessageHandlerInterface;
 use PHPStreamServer\Core\Plugin\Plugin;
-use PHPStreamServer\Core\Worker\LoggerInterface;
+use PHPStreamServer\Core\Worker\LoggerInterface as CoreLoggerInterface;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\MasterLogger;
 use PHPStreamServer\Plugin\Logger\Internal\WorkerLogger;
@@ -34,8 +34,9 @@ final class LoggerPlugin extends Plugin
             return new WorkerLogger($container->getService(MessageBusInterface::class));
         };
 
-        $this->masterContainer->setService(LoggerInterface::class, $masterLogger);
-        $this->workerContainer->registerService(LoggerInterface::class, $workerLoggerFactory);
+        $this->masterContainer->setService(CoreLoggerInterface::class, $masterLogger);
+        $this->workerContainer->registerService(CoreLoggerInterface::class, $workerLoggerFactory);
+        $this->workerContainer->setAlias(LoggerInterface::class, CoreLoggerInterface::class);
 
         $messageBusHandler = $this->masterContainer->getService(MessageHandlerInterface::class);
 
