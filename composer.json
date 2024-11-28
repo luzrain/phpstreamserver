@@ -1,11 +1,12 @@
 {
     "name": "phpstreamserver/phpstreamserver",
-    "description": "PHPStreamServer",
+    "description": "The PHPStreamServer application server",
     "type": "library",
     "minimum-stability": "dev",
     "keywords": [
-        "phpstreamserver"
+        "phpstreamserver", "dev"
     ],
+    "license": "MIT",
     "authors": [
         {
             "name": "Anton Zenkov",
