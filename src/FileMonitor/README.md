@@ -5,25 +5,24 @@
   </picture>
 </p>
 
-# File Monitor Plugin for PHPStreamServer
+## File Monitor Plugin for PHPStreamServer
 ![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
 ![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
 
-The File Monitor Plugin for **PHPStreamServer** extends the core functionality by automatically monitoring file changes within specified directories.  
+The File Monitor Plugin for **PHPStreamServer** extends the core functionality by automatically monitoring file changes within specified directories.
 When changes are detected, the plugin triggers a workers reload. In always-in-memory architectures, the server must to be reloaded to take effect after file changes.  
 Useful for development environments.
 
-## Features:
+### Features
  - Watch specific files in specific directories.
  - Uses inotify signals from the operating system.
 
-## Getting started
-### Install composer packages
+### Install
 ```bash
 $ composer require phpstreamserver/core phpstreamserver/file-monitor
 ```
 
-### Configure server
+### Configure
 Here is an example of a simple server configuration. Each time the files in the directory change, the server is reloaded.
 
 ```php

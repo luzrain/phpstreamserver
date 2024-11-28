@@ -5,14 +5,14 @@
   </picture>
 </p>
 
-# HTTP Server Plugin for PHPStreamServer
+## HTTP Server Plugin for PHPStreamServer
 ![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
 ![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
 
-The HTTP Server Plugin for **PHPStreamServer** extends the core functionality by providing a high performance, asynchronous HTTP server.  
+The HTTP Server Plugin for **PHPStreamServer** extends the core functionality by providing a high performance, asynchronous HTTP server.
 It works in the event loop and always persists in memory, enabling fast request handling and reducing startup overhead.  
 
-## Features:
+### Features:
  - Non-blocking, high concurrency request handling.
  - Protocol support: HTTP/1.1, HTTP/2.
  - HTTPS encrypted connections.
@@ -20,13 +20,12 @@ It works in the event loop and always persists in memory, enabling fast request 
  - Serve static files: Can serve files from a directory, making it easy to host static assets like HTML, CSS, JavaScript, and images.
  - Middleware support: Integrates middleware for flexible request/response processing.
 
-## Getting started
-### Install composer packages
+### Install
 ```bash
 $ composer require phpstreamserver/core phpstreamserver/http-server
 ```
 
-### Configure server
+### Configure
 Here is an example of a simple HTTP server configuration.
 
 ```php

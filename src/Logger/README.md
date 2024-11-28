@@ -5,28 +5,27 @@
   </picture>
 </p>
 
-# Logger Plugin for PHPStreamServer
+## Logger Plugin for PHPStreamServer
 ![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
 ![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
 
-The Logger Plugin for **PHPStreamServer** extends the core functionality by providing a configurable PSR-compatible logger.  
+The Logger Plugin for **PHPStreamServer** extends the core functionality by providing a configurable PSR-compatible logger.
 It allows to capture and route logs from different channels and severities to various destinations, such as files, stdout,
 Graylog servers (via the GELF protocol), and syslog.
 
-## Features:
+### Features
  - Route logs by channel and severity to different destinations.
  - Rotate file logs.
  - Compress file logs.
  - Customizable format: Supports JSON, human-readable and custom formats.
  - Customizable handlers: Implement your own custom log handlers.
 
-## Getting started
-### Install composer packages
+### Install
 ```bash
 $ composer require phpstreamserver/core phpstreamserver/logger
 ```
 
-### Configure server
+### Configure
 Here is an example of a simple server configuration with logger.
 
 ```php

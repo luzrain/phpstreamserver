@@ -5,24 +5,23 @@
   </picture>
 </p>
 
-# Scheduler Plugin for PHPStreamServer
+## Scheduler Plugin for PHPStreamServer
 ![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
 ![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
 
 The Scheduler Plugin for **PHPStreamServer** extends the core functionality by providing a scheduling capability,
 allowing you to run programs or tasks at specific intervals, much like a traditional cron job.
 
-## Features:
+### Features
  - Defining schedules using cron syntax.
  - Defining schedules using relative date format as supported by \DateInterval.
 
-## Getting started
-### Install composer packages
+### Install
 ```bash
 $ composer require phpstreamserver/core phpstreamserver/scheduler
 ```
 
-### Configure server
+### Configure
 Here is an example of a simple server configuration with scheduler.
 
 ```php

@@ -5,25 +5,24 @@
   </picture>
 </p>
 
-# HTTP Server Plugin for PHPStreamServer
+## HTTP Server Plugin for PHPStreamServer
 ![PHP >=8.2](https://img.shields.io/badge/PHP->=8.2-777bb3.svg)
 ![Version](https://img.shields.io/github/v/tag/phpstreamserver/phpstreamserver?label=Version&filter=v*.*.*&sort=semver&color=374151)
 
 The Metrics Plugin for **PHPStreamServer** extends the core functionality by providing integration with Prometheus,
-providing an endpoint for collecting and exposing application metrics.  
+providing an endpoint for collecting and exposing application metrics.
 It provides some default metrics to monitor and allows users to define custom metrics as needed.
 
-## Features:
+### Features:
  - Provides counter, gauge, histogram and summary metrics.
  - User defined metrics.
 
-## Getting started
-### Install composer packages
+## Install
 ```bash
 $ composer require phpstreamserver/core phpstreamserver/metrics
 ```
 
-### Configure server
+### Configure
 Here is an example of a simple server configuration with metrics.  
 After startup, metrics are available at http://127.0.0.1:8081/metrics
 
