@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\HttpServer\ReloadStrategy;
 
 use Amp\Http\Server\Request;
-use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategy;
 
 /**
  * Reload worker after each request.
  */
-final class EachRequestReloadStrategy implements ReloadStrategyInterface
+final class EachRequestReloadStrategy implements ReloadStrategy
 {
     public function shouldReload(mixed $eventObject = null): bool
     {

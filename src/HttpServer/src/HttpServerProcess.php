@@ -12,7 +12,7 @@ use Amp\Http\Server\RequestHandler\ClosureRequestHandler;
 use Amp\Http\Server\Response;
 use PHPStreamServer\Core\Exception\ServiceNotFoundException;
 use PHPStreamServer\Core\MessageBus\MessageBusInterface;
-use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategy;
 use PHPStreamServer\Core\Plugin\Supervisor\WorkerProcess;
 use PHPStreamServer\Core\Plugin\System\Connections\NetworkTrafficCounter;
 use PHPStreamServer\Plugin\HttpServer\HttpServer\HttpServer;
@@ -28,7 +28,7 @@ final class HttpServerProcess extends WorkerProcess
      * @param null|\Closure(self):void $onStop
      * @param null|\Closure(self):void $onReload
      * @param array<Middleware> $middleware
-     * @param array<ReloadStrategyInterface> $reloadStrategies
+     * @param array<ReloadStrategy> $reloadStrategies
      * @param positive-int|null $connectionLimit
      * @param positive-int|null $connectionLimitPerIp
      * @param positive-int|null $concurrencyLimit

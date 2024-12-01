@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\HttpServer\ReloadStrategy;
 
 use Amp\Http\Server\Request;
-use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategyInterface;
+use PHPStreamServer\Core\Plugin\Supervisor\ReloadStrategy\ReloadStrategy;
 
 /**
  * Reload worker on every $maxRequests requests.
  * To prevent simultaneous restart of all workers $dispersionPercentage can be set.
  * 1000 $maxRequests and 20% $dispersionPercentage will restart between 800 and 1000
  */
-final class MaxRequestsReloadStrategy implements ReloadStrategyInterface
+final class MaxRequestsReloadStrategy implements ReloadStrategy
 {
     private int $requestsCount = 0;
     private readonly int $maxRequests;
