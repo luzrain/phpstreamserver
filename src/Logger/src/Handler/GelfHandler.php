@@ -6,8 +6,8 @@ namespace PHPStreamServer\Plugin\Logger\Handler;
 
 use Amp\Future;
 use PHPStreamServer\Plugin\Logger\Formatter\GelfFormatter;
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
-use PHPStreamServer\Plugin\Logger\Handler;
+use PHPStreamServer\Plugin\Logger\Formatter;
+use PHPStreamServer\Plugin\Logger\AbstractHandler;
 use PHPStreamServer\Plugin\Logger\Internal\GelfTransport\GelfHttpTransport;
 use PHPStreamServer\Plugin\Logger\Internal\GelfTransport\GelfTcpTransport;
 use PHPStreamServer\Plugin\Logger\Internal\GelfTransport\GelfTransport;
@@ -18,9 +18,9 @@ use Revolt\EventLoop;
 
 use function Amp\async;
 
-final class GelfHandler extends Handler
+final class GelfHandler extends AbstractHandler
 {
-    private FormatterInterface $formatter;
+    private Formatter $formatter;
     private GelfTransport $transport;
 
     /**

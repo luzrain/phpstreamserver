@@ -8,15 +8,15 @@ use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
 use PHPStreamServer\Core\Console\Colorizer;
 use PHPStreamServer\Plugin\Logger\Formatter\ConsoleFormatter;
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
-use PHPStreamServer\Plugin\Logger\Handler;
+use PHPStreamServer\Plugin\Logger\Formatter;
+use PHPStreamServer\Plugin\Logger\AbstractHandler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 
 use function PHPStreamServer\Core\getStderr;
 use function PHPStreamServer\Core\getStdout;
 
-final class ConsoleHandler extends Handler
+final class ConsoleHandler extends AbstractHandler
 {
     public const OUTPUT_STDOUT = 1;
     public const OUTPUT_STDERR = 2;
@@ -28,7 +28,7 @@ final class ConsoleHandler extends Handler
         private readonly int $output = self::OUTPUT_STDERR,
         LogLevel $level = LogLevel::DEBUG,
         array $channels = [],
-        private readonly FormatterInterface $formatter = new ConsoleFormatter(),
+        private readonly Formatter $formatter = new ConsoleFormatter(),
     ) {
         parent::__construct($level, $channels);
     }

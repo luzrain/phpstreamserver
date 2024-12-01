@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\Logger\Internal;
 
 use PHPStreamServer\Core\Worker\LoggerInterface;
-use PHPStreamServer\Plugin\Logger\HandlerInterface;
+use PHPStreamServer\Plugin\Logger\Handler;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\ContextFlattenNormalizer;
 use Psr\Log\LoggerTrait;
 
@@ -17,7 +17,7 @@ final class MasterLogger implements LoggerInterface
     use LoggerTrait;
 
     /**
-     * @var array<HandlerInterface>
+     * @var array<Handler>
      */
     private array $handlers = [];
     private string $channel = 'server';
@@ -26,7 +26,7 @@ final class MasterLogger implements LoggerInterface
     {
     }
 
-    public function addHandler(HandlerInterface $handler): void
+    public function addHandler(Handler $handler): void
     {
         $this->handlers[] = $handler;
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger\Formatter;
 
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
+use PHPStreamServer\Plugin\Logger\Formatter;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenDateTime;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenEnum;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenException;
@@ -16,7 +16,7 @@ use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
  * Serializes a log record to GELF format
  * @see https://go2docs.graylog.org/current/getting_in_log_data/gelf.html
  */
-final readonly class GelfFormatter implements FormatterInterface
+final readonly class GelfFormatter implements Formatter
 {
     private const VERSION = '1.1';
 

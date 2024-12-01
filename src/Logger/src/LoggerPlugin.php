@@ -17,11 +17,11 @@ use Revolt\EventLoop;
 final class LoggerPlugin extends Plugin
 {
     /**
-     * @var array<HandlerInterface>
+     * @var array<Handler>
      */
     private array $handlers;
 
-    public function __construct(HandlerInterface ...$handlers)
+    public function __construct(Handler ...$handlers)
     {
         $this->handlers = $handlers;
     }

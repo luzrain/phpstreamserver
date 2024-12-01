@@ -8,8 +8,8 @@ use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
 use PHPStreamServer\Plugin\Logger\Formatter\StringFormatter;
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
-use PHPStreamServer\Plugin\Logger\Handler;
+use PHPStreamServer\Plugin\Logger\Formatter;
+use PHPStreamServer\Plugin\Logger\AbstractHandler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 use Revolt\EventLoop;
@@ -17,7 +17,7 @@ use Revolt\EventLoop;
 use function Amp\async;
 use function Amp\delay;
 
-final class FileHandler extends Handler
+final class FileHandler extends AbstractHandler
 {
     private bool $pause = true;
     private \SplFileInfo $logFile;
@@ -38,7 +38,7 @@ final class FileHandler extends Handler
         private readonly int $permission = 0644,
         LogLevel $level = LogLevel::DEBUG,
         array $channels = [],
-        private readonly FormatterInterface $formatter = new StringFormatter(),
+        private readonly Formatter $formatter = new StringFormatter(),
     ) {
         if ($compress && !\extension_loaded('zlib')) {
             throw new \RuntimeException('Install zlib extension to use compression');

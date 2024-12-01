@@ -7,16 +7,16 @@ namespace PHPStreamServer\Plugin\Logger\Handler;
 use Amp\Future;
 use PHPStreamServer\Core\Server;
 use PHPStreamServer\Plugin\Logger\Formatter\StringFormatter;
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
-use PHPStreamServer\Plugin\Logger\Handler;
+use PHPStreamServer\Plugin\Logger\Formatter;
+use PHPStreamServer\Plugin\Logger\AbstractHandler;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 
 use function Amp\async;
 
-final class SyslogHandler extends Handler
+final class SyslogHandler extends AbstractHandler
 {
-    private FormatterInterface $formatter;
+    private Formatter $formatter;
 
     /**
      * @see https://www.php.net/manual/en/function.openlog.php

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger\Formatter;
 
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
+use PHPStreamServer\Plugin\Logger\Formatter;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenDateTime;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenEnum;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenException;
@@ -15,7 +15,7 @@ use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 /**
  * Formats a log records into string
  */
-final readonly class StringFormatter implements FormatterInterface
+final readonly class StringFormatter implements Formatter
 {
     private const DEFAULT_FORMAT = '[{time}] {channel}.{level} {message} {context}';
 

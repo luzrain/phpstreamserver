@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger\Formatter;
 
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
+use PHPStreamServer\Plugin\Logger\Formatter;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenDateTime;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenEnum;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenException;
@@ -15,7 +15,7 @@ use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 /**
  * Serializes a log record to JSON
  */
-final readonly class JsonFormatter implements FormatterInterface
+final readonly class JsonFormatter implements Formatter
 {
     public const DEFAULT_JSON_FLAGS = JSON_UNESCAPED_UNICODE
         | JSON_PRESERVE_ZERO_FRACTION

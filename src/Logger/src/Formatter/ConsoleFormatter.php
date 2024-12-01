@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPStreamServer\Plugin\Logger\Formatter;
 
-use PHPStreamServer\Plugin\Logger\FormatterInterface;
+use PHPStreamServer\Plugin\Logger\Formatter;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenDateTime;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenEnum;
 use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenException;
@@ -13,7 +13,7 @@ use PHPStreamServer\Plugin\Logger\Internal\FlattenNormalizer\FlattenResource;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 
-final readonly class ConsoleFormatter implements FormatterInterface
+final readonly class ConsoleFormatter implements Formatter
 {
     private const ARRAY_BRACES_COLOR = 202;
     private const ARRAY_KEY_COLOR = 113;

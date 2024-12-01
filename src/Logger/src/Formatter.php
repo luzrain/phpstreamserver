@@ -6,7 +6,7 @@ namespace PHPStreamServer\Plugin\Logger;
 
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 
-interface FormatterInterface
+interface Formatter
 {
     public function format(LogEntry $record): string;
 }
