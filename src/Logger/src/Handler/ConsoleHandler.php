@@ -7,9 +7,9 @@ namespace PHPStreamServer\Plugin\Logger\Handler;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Future;
 use PHPStreamServer\Core\Console\Colorizer;
-use PHPStreamServer\Plugin\Logger\Formatter\ConsoleFormatter;
-use PHPStreamServer\Plugin\Logger\Formatter;
 use PHPStreamServer\Plugin\Logger\AbstractHandler;
+use PHPStreamServer\Plugin\Logger\Formatter;
+use PHPStreamServer\Plugin\Logger\Formatter\ConsoleFormatter;
 use PHPStreamServer\Plugin\Logger\Internal\LogEntry;
 use PHPStreamServer\Plugin\Logger\Internal\LogLevel;
 

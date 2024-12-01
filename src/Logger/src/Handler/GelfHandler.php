@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace PHPStreamServer\Plugin\Logger\Handler;
 
 use Amp\Future;
-use PHPStreamServer\Plugin\Logger\Formatter\GelfFormatter;
-use PHPStreamServer\Plugin\Logger\Formatter;
 use PHPStreamServer\Plugin\Logger\AbstractHandler;
+use PHPStreamServer\Plugin\Logger\Formatter;
+use PHPStreamServer\Plugin\Logger\Formatter\GelfFormatter;
 use PHPStreamServer\Plugin\Logger\Internal\GelfTransport\GelfHttpTransport;
 use PHPStreamServer\Plugin\Logger\Internal\GelfTransport\GelfTcpTransport;
 use PHPStreamServer\Plugin\Logger\Internal\GelfTransport\GelfTransport;
