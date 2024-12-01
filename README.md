@@ -1,6 +1,6 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/phpstreamserver/.github/blob/main/assets/phpss_core_light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/phpstreamserver/.github/refs/heads/main/assets/phpss_core_light.svg">
     <img alt="PHPStreamServer logo" align="center" width="70%" src="https://raw.githubusercontent.com/phpstreamserver/.github/refs/heads/main/assets/phpss_core_dark.svg">
   </picture>
 </p>
@@ -17,15 +17,13 @@ PHPStreamServer ships with a number of plugins to extend functionality such as h
 With all the power of plugins, it can replace traditional setup for running php applications like nginx, php-fpm, cron and supervisor.
 
 ### Documentation
-
 Please read the official documentation: https://phpstreamserver.dev/
 
 ### Packages
-
 | Package                                                         | Description                                                                                       |
 |-----------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
 | [**Core**](https://github.com/phpstreamserver/core)             | The core of PHPStreamServer with a built-in supervisor.                                           |
-| [HttpServer](https://github.com/phpstreamserver/http-server)    | Plugin that implements an asynchronous HTTP server.                                               |
+| [Http Server](https://github.com/phpstreamserver/http-server)   | Plugin that implements an asynchronous HTTP server.                                               |
 | [Scheduler](https://github.com/phpstreamserver/scheduler)       | Plugin for scheduling tasks. Works similar to cron.                                               |
 | [Logger](https://github.com/phpstreamserver/logger)             | Plugin that implements a powerful PSR-compatible logger that can be used by workers.              |
 | [File Monitor](https://github.com/phpstreamserver/file-monitor) | Plugin to monitor files and reload server when files are changed. Useful for development.         |
